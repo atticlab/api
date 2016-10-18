@@ -1,0 +1,12 @@
+{
+    "require": {
+        "stellar/isvalidaccount":"dev-master",
+        "monolog/monolog": "^1.21"
+    },
+    "repositories":[
+        {
+            "type":"git",
+            "url":"https://bitbucket.org/atticlab/stellar-php"
+        }
+    ]
+}
