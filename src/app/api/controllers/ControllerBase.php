@@ -19,5 +19,7 @@ class ControllerBase extends \Phalcon\Mvc\Controller
             $this->response->sendHeaders();
             exit;
         }
+
+        $this->request->checkSignature();
     }
 }

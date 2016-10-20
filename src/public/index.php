@@ -1,7 +1,6 @@
 <?php
 
 define('APP_PATH', realpath(__DIR__ . '/..') . '/');
-// define('MODULE', strtolower(current(explode('.', $_SERVER['HTTP_HOST']))));
 define('MODULE', 'api');
 define('MODULE_PATH', APP_PATH . 'app/' . MODULE);
 define('CONFIG_PATH', APP_PATH . 'common/config/');
@@ -10,6 +9,17 @@ class Bootstrap extends \Phalcon\Mvc\Application
 {
     protected function _registerServices()
     {
+        $loader = new \Phalcon\Loader();
+
+        # Register common namespaces
+        $loader->registerNamespaces([
+            'App\Models'      => APP_PATH . 'common/models/',
+            'App\Lib'         => APP_PATH . 'common/lib/',
+            'App\Controllers' => MODULE_PATH . '/controllers'
+        ]);
+
+        $loader->register();
+
         $di = new \Phalcon\DI\FactoryDefault();
 
         require_once(CONFIG_PATH . 'config.php');
@@ -37,16 +47,17 @@ class Bootstrap extends \Phalcon\Mvc\Application
 
         $di->set('dispatcher', function () {
             $ev_manager = $this->getShared('eventsManager');
-            $ev_manager->attach('dispatch:beforeException', function($event, $dispatcher, $exception) {
+            $ev_manager->attach('dispatch:beforeException', function ($event, $dispatcher, $exception) {
                 switch ($exception->getCode()) {
                     case \Phalcon\Mvc\Dispatcher::EXCEPTION_HANDLER_NOT_FOUND:
                     case \Phalcon\Mvc\Dispatcher::EXCEPTION_ACTION_NOT_FOUND:
                         $dispatcher->forward(
-                            array(
+                            [
                                 'controller' => 'index',
                                 'action'     => 'notFound',
-                            )
+                            ]
                         );
+
                         return false;
                 }
             });
@@ -65,18 +76,15 @@ class Bootstrap extends \Phalcon\Mvc\Application
             return $view;
         });
 
+        $di->set('request', function () {
+            return new \App\Lib\Request();
+        });
+
+        $di->set('response', function () {
+            return new \App\Lib\Response();
+        });
+
         $this->setDI($di);
-
-        $loader = new \Phalcon\Loader();
-
-        # Register common namespaces
-        $loader->registerNamespaces([
-            'App\Models'      => APP_PATH . 'common/models/',
-            'App\Lib'         => APP_PATH . 'common/lib/',
-            'App\Controllers' => MODULE_PATH . '/controllers'
-        ]);
-
-        $loader->register();
     }
 
     public function __construct()

@@ -1,7 +1,7 @@
 <?php
 namespace App\Controllers;
 
-use App\Lib\Errors;
+use App\Lib\Response;
 
 class IndexController extends ControllerBase
 {
@@ -12,6 +12,6 @@ class IndexController extends ControllerBase
 
     public function notFoundAction()
     {
-        return Errors::returnJson(Errors::NOT_FOUND);
+        return $this->response->error(Response::ERR_NOT_FOUND);
     }
 }
