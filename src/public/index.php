@@ -86,6 +86,10 @@ class Bootstrap extends \Phalcon\Mvc\Application
             return new \App\Lib\Response();
         });
 
+        $di->set('exception', function () {
+            return new \App\Lib\Exception();
+        });
+
         $this->setDI($di);
     }
 

@@ -139,6 +139,13 @@ class InvoiceUnitTest extends \UnitTestCase
                     empty($encode_data->data->memo)
                 );
             }
+
+            //delete test invoice
+            $cur_invoice = Invoices::get($this->riak, $id);
+            if ($cur_invoice) {
+                $cur_invoice->delete();
+            }
+
         }
 
     }

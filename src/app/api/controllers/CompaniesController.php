@@ -65,7 +65,7 @@ class CompaniesController extends ControllerBase
             $limit = $this->request->get('limit');
         }
 
-        $result = Companies::get($this->riak, $code, $limit);
+        $result = Companies::getList($this->riak, $code, $limit);
 
         if (empty($result)) {
             return $this->response->error(Response::ERR_NOT_FOUND);

@@ -62,7 +62,7 @@ class Companies extends ModelBase
 
     }
 
-    public static function isExist($riak, $code)
+    public static function isExist(Riak $riak, $code)
     {
 
         $response = (new Command\Builder\QueryIndex($riak))
@@ -78,7 +78,9 @@ class Companies extends ModelBase
 
     }
 
-    public static function get($riak, $code = null, $count = null)
+
+
+    public static function getList(Riak $riak, $code = null, $count = null)
     {
 
         $companies = [];
@@ -119,6 +121,13 @@ class Companies extends ModelBase
         }
 
         return $companies;
+    }
+
+    public static function get(Riak $riak, $code){
+
+        $data = new self($riak, $code);
+        return $data->loadData();
+
     }
 
     public function create()

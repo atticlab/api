@@ -26,25 +26,18 @@ class Invoices extends ModelBase
     public $created; // timestamp when invoice was created
     public $is_in_statistic;
 
-    public function __construct(Riak $riak, $get_id = null)
+    public function __construct(Riak $riak, $id = null)
     {
         $this->riak = $riak;
         $this->bucket = new Bucket(self::BUCKET_NAME);
 
         //if need to create new invoice
-        if (empty($get_id)) {
+        if (empty($id)) {
             $id = self::generateUniqueId($riak);
-        } else {
-            $id = $get_id;
         }
 
         $this->id = $id;
         $this->location = new Riak\Location($id, $this->bucket);
-
-        //if need to get exist invoice
-        if (!empty($get_id)) {
-            $this->loadData();
-        }
     }
 
     public function __toString()
@@ -112,7 +105,14 @@ class Invoices extends ModelBase
 
     }
 
-    public static function get($riak, $account = null, $count = null, $page = null)
+    public static function get(Riak $riak, $id){
+
+        $data = new self($riak, $id);
+        return $data->loadData();
+
+    }
+
+    public static function getlist($riak, $account = null, $count = null, $page = null)
     {
 
         $invoices = [];
@@ -166,7 +166,7 @@ class Invoices extends ModelBase
         return $invoices;
     }
 
-    public static function getperaccount($riak, $account, $count = null, $page = null)
+    public static function getlistperaccount($riak, $account, $count = null, $page = null)
     {
 
         $invoices = [];

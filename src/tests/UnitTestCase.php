@@ -11,6 +11,9 @@ abstract class UnitTestCase extends PhalconTestCase
      */
     private $_loaded = false;
 
+    //how to sign new nonce for test
+    //ed25519_sign($data, $secret, $public);
+
 
     public function setUp()
     {

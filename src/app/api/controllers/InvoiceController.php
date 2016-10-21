@@ -35,7 +35,6 @@ class InvoiceController extends ControllerBase
 
     public function createAction()
     {
-
         $invoice = new Invoices($this->riak);
 
         $invoice->expires           = $this->request_timestamp + $this->config->invoice->expired;
@@ -45,8 +44,8 @@ class InvoiceController extends ControllerBase
         $invoice->payer             = false;
         $invoice->memo              = '';
 
-        $invoice->amount  = !empty($this->params['amount']) ? $this->params['amount'] : null;
-        $invoice->asset   = !empty($this->params['asset'])  ? $this->params['asset'] : null;
+        $invoice->amount  = $this->params['amount'] ?? null;
+        $invoice->asset   = $this->params['asset'] ?? null;
 
         //TODO get account from auth data (wait from Eugene)
         $invoice->account = !empty($this->_session) && !empty($this->_session->account) ? $this->_session->account : 'GDWWTT7NBH52BAAFHIQR45IRPFYQSKSKU4NIFJ5DHWG3IGVZ7KMAV4U4';
@@ -56,7 +55,6 @@ class InvoiceController extends ControllerBase
         }
 
         try {
-
             if ($invoice->create()) {
                 return $this->response->single(['id' => $invoice->id]);
             } else {
@@ -93,7 +91,7 @@ class InvoiceController extends ControllerBase
                 return $this->response->error(Response::ERR_NOT_FOUND, 'invoice');
             }
 
-            $invoice = new Invoices($this->riak, $id);
+            $invoice = Invoices::get($this->riak, $id);
 
             if (empty($invoice)) {
                 return $this->response->error(Response::ERR_UNKNOWN);
@@ -111,7 +109,7 @@ class InvoiceController extends ControllerBase
             $invoice->requested = $this->request_timestamp;
 
             //TODO get account from auth data (wait from Eugene)
-            $invoice->payer = !empty($this->_session) && !empty($this->_session->account) ? $this->_session->account : 'GDWWTT7NBH52BAAFHIQR45IRPFYQSKSKU4NIFJ5DHWG3IGVZ7KMAV4U4';
+            $invoice->payer = !empty($this->session) && !empty($this->session->accountId) ? $this->session->accountId : 'GDWWTT7NBH52BAAFHIQR45IRPFYQSKSKU4NIFJ5DHWG3IGVZ7KMAV4U4';
 
             try {
 
@@ -155,11 +153,23 @@ class InvoiceController extends ControllerBase
 
         } else {
             //get all invoices
-            $invoices = Invoices::get($this->riak);
+            $invoices = Invoices::getlist($this->riak);
 
             return $this->response->items($invoices);
 
         }
+
+    }
+
+    public function bansCreateAction(){
+
+        //create new ban record
+
+    }
+
+    public function bansGetAction(){
+
+        //list of ban records
 
     }
 

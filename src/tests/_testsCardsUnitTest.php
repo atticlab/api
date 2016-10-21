@@ -11,7 +11,7 @@ use App\Lib\Response;
 /**
  * Class UnitTest
  */
-class CompaniesUnitTest extends \UnitTestCase
+class AgentsUnitTest extends \UnitTestCase
 {
 
     public static function CreateCompanyProvider()
@@ -153,13 +153,6 @@ class CompaniesUnitTest extends \UnitTestCase
                 1,
                 count($encode_data)
             );
-
-            //delete test company
-            $cur_company = Companies::get($this->riak, $code);
-            if ($cur_company) {
-                $cur_company->delete();
-            }
-
         }
 
     }
