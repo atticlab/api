@@ -4,28 +4,20 @@ namespace App\Lib;
 
 class Response extends \Phalcon\Http\Response
 {
-
-    const ERR_UNKNOWN               = 'unknown_error';
-    const ERR_NOT_FOUND             = 'not_found';
-    const ERR_ALREADY_EXIST         = 'already_exist';
-    const ERR_INV_EXPIRED           = 'invoice_expired';
-    const ERR_INV_REQUESTED         = 'invoice_requested';
-    const ERR_BAD_PARAM             = 'bad_param';
-    const ERR_EMPTY_PARAM           = 'empty_param';
-
-    public static $_http_codes = [
-        self::ERR_NOT_FOUND => 404,
-        self::ERR_ALREADY_EXIST => 403,
-        self::ERR_EMPTY_PARAM => 403,
-        self::ERR_BAD_PARAM => 403,
-        self::ERR_INV_REQUESTED => 403,
-        self::ERR_INV_EXPIRED => 403,
-        self::ERR_UNKNOWN => 500,
-    ];
+    const ERR_UNKNOWN = 'ERR_UNKNOWN';
+    const ERR_NOT_FOUND = 'ERR_NOT_FOUND';
+    const ERR_ALREADY_EXISTS = 'ERR_ALREADY_EXISTS';
+    const ERR_INV_EXPIRED = 'ERR_INV_EXPIRED';
+    const ERR_INV_REQUESTED = 'ERR_INV_REQUESTED';
+    const ERR_BAD_PARAM = 'ERR_BAD_PARAM';
+    const ERR_EMPTY_PARAM = 'ERR_EMPTY_PARAM';
+    const ERR_SERVICE = 'ERR_SERVICE';
+    const ERR_BAD_SIGN = 'ERR_BAD_SIGN';
 
     public function single(array $data = [])
     {
         $data['nonce'] = $this->getDi()->getRequest()->getNonce();
+
         return $this->setJsonContent($data);
     }
 
@@ -34,22 +26,24 @@ class Response extends \Phalcon\Http\Response
         $data = [];
         $data['items'] = $items;
         $data['nonce'] = $this->getDi()->getRequest()->getNonce();
-        return $this->setJsonContent($data);
+
+        $this->setJsonContent($data)->send();
+        exit;
     }
 
     public function error($err_code, $msg = '')
     {
-
-        if (!array_key_exists($err_code, self::$_http_codes)) {
+        if (!defined('self::' . $err_code)) {
             throw new \Exception($err_code . ' - Unknown error code');
         }
 
-        $this->setStatusCode(self::$_http_codes[$err_code]);
+        $this->setStatusCode(400);
 
-        return $this->setJsonContent([
+        $this->setJsonContent([
             'error'   => $err_code,
             'message' => $msg,
             'nonce'   => $this->getDi()->getRequest()->getNonce()
-        ]);
+        ])->send();
+        exit;
     }
 }

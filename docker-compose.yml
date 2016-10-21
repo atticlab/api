@@ -24,16 +24,12 @@ services:
       - ./logs/php:/logs
     env_file:
       - ./.env
+    links:
+      - memcached
 
   memcached:
       restart: always
       container_name: crypto-api-memcached
-      image: crypto/api/memcached
-      build: docker/memcached
+      image: memcached:latest
       volumes:
-        - ./src:/src
         - ./logs/memcached/:/logs
-      ports:
-          - "11211:11211"
-      links:
-          - php

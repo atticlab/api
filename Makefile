@@ -21,22 +21,18 @@ state:
 	docker-compose ps
 
 build:
-	read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
+	@if [ ! -f ./.env ]; then\
+  mkdir -p storage/riak; \
+  sudo rm -rf storage/riak; \
+  git checkout storage/riak/.gitignore; \
+  sudo chmod 777 storage/riak; \
+  read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
+	fi
 	docker-compose build
 	docker-compose up -d
 
-build-hard-no-daemon:
-	read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
-	docker-compose build --no-cache
-	docker-compose up
-
 test:
 	docker exec crypto-api-php bash -c 'cd /src/tests; phpunit'
-
-build-hard:
-    read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
-	docker-compose build --no-cache
-	docker-compose up -d
 
 attach:
 	docker exec -i -t ${c} /bin/bash

@@ -4,16 +4,19 @@ namespace App\lib;
 
 class Exception extends \Exception
 {
-    const BAD_PARAM        = 'EMPTY_PARAM';
-    const EMPTY_PARAM      = 'BAD PARAM';
-    const UNKNOWN          = 'UNKNOWN';
+    const BAD_PARAM = 'BAD_PARAM';
+    const EMPTY_PARAM = 'EMPTY_PARAM';
+    const UNKNOWN = 'UNKNOWN';
 
-    public function __construct($err_code)
+    protected $code;
+
+    public function __construct($err_code, $message = null)
     {
-        if (empty($err_code) || !defined(self::$err_code)) {
-            return parent::__construct(self::UNKNOWN);
+        if (empty($err_code) || !defined('self::' . $err_code)) {
+            $err_code = self::UNKNOWN;
         }
 
-        return parent::__construct($err_code);
+        $this->code = $err_code;
+        $this->message = $message;
     }
 }

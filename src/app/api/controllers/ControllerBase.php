@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\lib\Exception;
+use App\Lib\Response;
 
 class ControllerBase extends \Phalcon\Mvc\Controller
 {
@@ -22,12 +23,26 @@ class ControllerBase extends \Phalcon\Mvc\Controller
             exit;
         }
 
+        /*
         try{
-            throw new \App\Lib\Exception(\App\Lib\Exception::BAD_PARAM);
+            throw new \App\Lib\Exception(\App\Lib\Exception::BAD_PARAM, 'email');
         } catch (Exception $e) {
-            var_dump($e->getMessage());exit;
-        }
+            switch ($e->getCode()) {
+                case \App\Lib\Exception::BAD_PARAM:
+                    return $this->response->error(\App\Lib\Response::ERR_BAD_PARAM, $e->getMessage());
+                    break;
 
-        $this->request->checkSignature();
+                case \App\Lib\Exception::EMPTY_PARAM:
+                    $this->logger->emergency('Lost riak connection!!');
+                    return $this->response->error(\App\Lib\Response::ERR_EMPTY_PARAM, $e->getMessage());
+                    break;
+
+            }
+        }
+        */
+
+        if (!$this->request->checkSignature()) {
+            return $this->response->error(Response::ERR_BAD_SIGN);
+        }
     }
 }

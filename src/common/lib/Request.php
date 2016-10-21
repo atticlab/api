@@ -10,18 +10,18 @@ class Request extends \Phalcon\Http\Request
      */
     public function checkSignature()
     {
-
-        error_log(print_r($this->getHeader('Signed-Nonce'), true));
-
         $session = $this->getDi()->getSession();
-        if (empty($session->nonce)) {
+        $current_nonce = $session->nonce;
+
+        $session->nonce = base64_encode(random_bytes(32));
+        if (empty($current_nonce)) {
             return false;
         }
 
-        error_log(print_r($this->getHeaders(), true));
+//        error_log(print_r($this->getHeaders(), true));
 
         // if bad signature return false
-        return true;
+        return false;
     }
 
     /**
@@ -30,7 +30,6 @@ class Request extends \Phalcon\Http\Request
     public function getNonce()
     {
         $session = $this->getDi()->getSession();
-        $session->nonce = base64_encode(random_bytes(32));
 
         return $session->nonce;
     }
