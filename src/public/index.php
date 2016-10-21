@@ -80,15 +80,11 @@ class Bootstrap extends \Phalcon\Mvc\Application
 
         $di->set('request', function () {
             return new \App\Lib\Request();
-        });
+        }, true);
 
         $di->set('response', function () {
             return new \App\Lib\Response();
-        });
-
-        $di->set('exception', function () {
-            return new \App\Lib\Exception();
-        });
+        }, true);
 
         $this->setDI($di);
     }
