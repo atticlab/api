@@ -21,11 +21,20 @@ state:
 	docker-compose ps
 
 build:
-	docker run --rm -v $(COMPOSER_DIR)/src:/src composer/composer --working-dir=/src install
+	read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
 	docker-compose build
 	docker-compose up -d
 
+build-hard-no-daemon:
+	read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
+	docker-compose build --no-cache
+	docker-compose up
+
+test:
+	docker exec crypto-api-php bash -c 'cd /src/tests; phpunit'
+
 build-hard:
+    read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
 	docker-compose build --no-cache
 	docker-compose up -d
 

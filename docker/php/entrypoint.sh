@@ -11,4 +11,7 @@ crontab -u www-data /crontab
 
 cron
 
+composer --working-dir=/src install
+composer global require "phpunit/phpunit=4.5.*"
+
 php-fpm

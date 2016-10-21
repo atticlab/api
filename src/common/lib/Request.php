@@ -10,10 +10,15 @@ class Request extends \Phalcon\Http\Request
      */
     public function checkSignature()
     {
+
+        error_log(print_r($this->getHeader('Signed-Nonce'), true));
+
         $session = $this->getDi()->getSession();
         if (empty($session->nonce)) {
             return false;
         }
+
+        error_log(print_r($this->getHeaders(), true));
 
         // if bad signature return false
         return true;

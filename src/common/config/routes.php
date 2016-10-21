@@ -1,26 +1,35 @@
 <?php
-	$router->add('/:params', [
+	$router->add('/', [
 		'controller' => 'index',
 		'action' => 'index'
 	]);
 
-	$router->add('/:controller/:action/:params', [
-		'controller' => 1,
-		'action' => 2,
-		'params' => 3
+    $router->add('/nonce', [
+        'controller' => 'nonce',
+        'action' => 'index'
+    ]);
+
+    $router->addGet('/invoice', [
+        'controller' => 'invoice',
+        'action' => 'get',
+    ]);
+
+	$router->addPost('/invoice', [
+		'controller' => 'invoice',
+		'action' => 'create',
 	]);
 
-	$router->add('/:controller/:action', [
-		'controller' => 1,
-		'action' => 2,
-	]);
+    $router->addGet('/companies', [
+        'controller' => 'companies',
+        'action' => 'get',
+    ]);
 
-	$router->add('/:controller', [
-		'controller' => 1,
+	$router->addPost('/companies', [
+		'controller' => 'companies',
+		'action' => 'create',
 	]);
 
 	$router->notFound([
 	    "controller" => "index",
 	    "action" => "notFound"
 	]);
-

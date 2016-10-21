@@ -2,6 +2,7 @@
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\IntrospectionProcessor;
+use SWP\Services\RiakDBService;
 
 # Logger
 $di->setShared('logger', function () use ($config, $di) {
@@ -39,6 +40,23 @@ $di->setShared('session', function () use ($config) {
 
     return $session;
 });
+
+# RiakDB
+$di->setShared('riak', function () use ($config) {
+    $riak = new RiakDBService(
+        8098,
+        array(getenv('RIAK_HOST'))
+    );
+    return $riak->db;
+});
+
+# Memcached
+$di->setShared('memcached', function () use ($config) {
+    $m = new \Memcached();
+    $m->addServer('memcached', 11211);
+    return $m;
+});
+
 
 # Config
 $di->setShared('config', $config);
