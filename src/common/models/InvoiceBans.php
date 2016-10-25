@@ -7,74 +7,57 @@ use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
+use Smartmoney\Stellar\Account;
 
-class Companies extends ModelBase
+class InvoiceBans extends ModelBase
 {
 
-    const BUCKET_NAME = 'companies';
+    const BUCKET_NAME = 'invoice_bans';
 
-    public $code;                //EDRPOU analog
-    public $title;               //company name
-    public $address;             //company registration address
-    public $phone;               //company contact phone
-    public $email;               //company contact email
+    public $accountId;
+    public $blocked;
 
-    public function __construct($code)
+    public function __construct($accountId)
     {
 
         $riak = DI::getDefault()->get('riak');
 
-        $this->riak     = $riak;
-        $this->code     = $code;
+        $this->riak          = $riak;
+        $this->accountId     = $accountId;
 
         $this->bucket   = new Bucket(self::BUCKET_NAME);
-        $this->location = new Riak\Location($code, $this->bucket);
+        $this->location = new Riak\Location($accountId, $this->bucket);
     }
 
     public function __toString()
     {
         return json_encode([
-            'code'      => $this->code,
-            'title'     => $this->title,
-            'address'   => $this->address,
-            'phone'     => $this->phone,
-            'email'     => $this->email
+            'accountId' => $this->accountId,
+            'blocked'   => $this->blocked
         ]);
     }
 
     private function validate(){
 
-        if (empty($this->code)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'code');
+        if (empty($this->accountId)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'accountId');
         }
 
-        if (empty($this->title)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'title');
-        }
-
-        if (empty($this->address)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'address');
-        }
-
-        if (empty($this->phone)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'phone');
-        }
-
-        if (empty($this->email)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'email');
+        if (!Account::isValidAccountId($this->accountId)) {
+            throw new Exception(Exception::BAD_PARAM, 'accountId');
         }
 
     }
 
-    public static function isExist($code)
+    public static function isExist($accountId)
     {
 
         $riak = DI::getDefault()->get('riak');
 
         $response = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('code_bin')
-            ->withScalarValue($code)
+            ->withIndexName('accountId_bin')
+            ->withScalarValue($accountId)
             ->withMaxResults(1)
             ->build()
             ->execute()
@@ -140,9 +123,9 @@ class Companies extends ModelBase
         return $companies;
     }
 
-    public static function get($code){
+    public static function get($accountId){
 
-        $data = new self($code);
+        $data = new self($accountId);
         return $data->loadData();
 
     }
@@ -153,7 +136,7 @@ class Companies extends ModelBase
         $this->validate();
 
         $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('code_bin')
+            ->withName('accountId_bin')
             ->build()
             ->execute();
 
@@ -163,8 +146,8 @@ class Companies extends ModelBase
 
         $command->getObject()->addValueToIndex('found_hack_bin', 'find_all');
 
-        if (isset($this->code)) {
-            $command->getObject()->addValueToIndex('code_bin', $this->code);
+        if (isset($this->accountId)) {
+            $command->getObject()->addValueToIndex('accountId_bin', $this->accountId);
         }
 
         $response = $command->build()->execute();

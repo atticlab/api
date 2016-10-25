@@ -5,7 +5,8 @@ namespace App\Models;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
-use App\Lib\Response;
+use App\Lib\Exception;
+use Phalcon\DI;
 
 class Invoices extends ModelBase
 {
@@ -26,14 +27,17 @@ class Invoices extends ModelBase
     public $created; // timestamp when invoice was created
     public $is_in_statistic;
 
-    public function __construct(Riak $riak, $id = null)
+    public function __construct($id = null)
     {
-        $this->riak = $riak;
+
+        $riak = DI::getDefault()->get('riak');
+
+        $this->riak   = $riak;
         $this->bucket = new Bucket(self::BUCKET_NAME);
 
         //if need to create new invoice
         if (empty($id)) {
-            $id = self::generateUniqueId($riak);
+            $id = self::generateUniqueId();
         }
 
         $this->id = $id;
@@ -51,7 +55,7 @@ class Invoices extends ModelBase
             'asset'             => $this->asset,
             'memo'              => $this->memo,
             'requested'         => $this->requested,
-            'created'       => $this->created,
+            'created'           => $this->created,
             'is_in_statistic'   => $this->is_in_statistic
         ]);
     }
@@ -60,37 +64,39 @@ class Invoices extends ModelBase
     {
 
         if (empty($this->id)) {
-            throw new \Exception('id', Response::ERR_EMPTY_PARAM);
+            throw new Exception(Exception::EMPTY_PARAM, 'id');
         }
 
         if (mb_strlen($this->id) > self::UUID_LENGTH) {
-            throw new \Exception('id', Response::ERR_BAD_PARAM);
+            throw new Exception(Exception::BAD_PARAM, 'id');
         }
 
         if (empty($this->account)) {
-            throw new \Exception('accountId', Response::ERR_EMPTY_PARAM);
+            throw new Exception(Exception::EMPTY_PARAM, 'accountId');
         }
 
         if (empty($this->amount)) {
-            throw new \Exception('amount', Response::ERR_EMPTY_PARAM);
+            throw new Exception(Exception::EMPTY_PARAM, 'amount');
         }
 
         if (!is_numeric($this->amount) || $this->amount <= 0) {
-            throw new \Exception('amount', Response::ERR_BAD_PARAM);
+            throw new Exception(Exception::BAD_PARAM, 'amount');
         }
 
         if (empty($this->asset)) {
-            throw new \Exception('asset', Response::ERR_EMPTY_PARAM);
+            throw new Exception(Exception::EMPTY_PARAM, 'asset');
         }
 
         if (!empty($this->memo) && mb_strlen($this->memo) > self::MEMO_MAX_LENGTH) {
-            throw new \Exception('amount', Response::ERR_BAD_PARAM);
+            throw new Exception(Exception::BAD_PARAM, 'memo');
         }
 
     }
 
-    public static function isExist($riak, $id)
+    public static function isExist($id)
     {
+
+        $riak = DI::getDefault()->get('riak');
 
         $response = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::BUCKET_NAME)
@@ -101,19 +107,20 @@ class Invoices extends ModelBase
             ->execute()
             ->getResults();
 
-        return !empty($response);
+        return $response;
 
     }
 
-    public static function get(Riak $riak, $id){
-
-        $data = new self($riak, $id);
-        return $data->loadData();
-
-    }
-
-    public static function getlist($riak, $account = null, $count = null, $page = null)
+    public static function get($id)
     {
+        $data = new self($id);
+        return $data->loadData();
+    }
+
+    public static function getList($count = null, $page = null)
+    {
+
+        $riak = DI::getDefault()->get('riak');
 
         $invoices = [];
 
@@ -141,7 +148,7 @@ class Invoices extends ModelBase
                 ->getContinuation();
 
             if (empty($continuation)) {
-                return false;
+                return [];
             }
 
             $object
@@ -155,7 +162,7 @@ class Invoices extends ModelBase
 
         foreach ($response as $invoice_code) {
 
-            $data = self::getDataByBucketAndID($riak, self::BUCKET_NAME, $invoice_code);
+            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $invoice_code);
 
             if (!empty($data)) {
                 $invoices[] = $data;
@@ -166,8 +173,10 @@ class Invoices extends ModelBase
         return $invoices;
     }
 
-    public static function getlistperaccount($riak, $account, $count = null, $page = null)
+    public static function getListPerAccount($account, $count = null, $page = null)
     {
+
+        $riak = DI::getDefault()->get('riak');
 
         $invoices = [];
 
@@ -195,7 +204,7 @@ class Invoices extends ModelBase
                 ->getContinuation();
 
             if (empty($continuation)) {
-                return false;
+                return [];
             }
 
             $object
@@ -209,7 +218,7 @@ class Invoices extends ModelBase
 
         foreach ($response as $invoice_code) {
 
-            $data = self::getDataByBucketAndID($riak, self::BUCKET_NAME, $invoice_code);
+            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $invoice_code);
 
             if (!empty($data)) {
                 $invoices[] = $data;
@@ -221,8 +230,9 @@ class Invoices extends ModelBase
     }
 
     //TODO: what about all invoices numbers will be used?
-    public static function generateUniqueId($riak)
+    public static function generateUniqueId()
     {
+
         //generate id
         $id = '';
         for ($i = 0; $i < self::UUID_LENGTH; $i++) {
@@ -230,8 +240,8 @@ class Invoices extends ModelBase
         }
 
         //check if already exist
-        if (self::isExist($riak, $id)) {
-            return self::generateUniqueId($riak);
+        if (self::isExist($id)) {
+            return self::generateUniqueId();
         }
 
         return $id;

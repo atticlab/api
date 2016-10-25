@@ -4,9 +4,10 @@ namespace App\lib;
 
 class Exception extends \Exception
 {
-    const BAD_PARAM = 'BAD_PARAM';
-    const EMPTY_PARAM = 'EMPTY_PARAM';
-    const UNKNOWN = 'UNKNOWN';
+    const BAD_PARAM     = 'BAD_PARAM';
+    const EMPTY_PARAM   = 'EMPTY_PARAM';
+    const UNKNOWN       = 'UNKNOWN';
+    const SERVICE_ERROR = 'SERVICE_ERROR';
 
     protected $code;
 

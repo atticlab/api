@@ -5,6 +5,7 @@ namespace App\Models;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
+use Phalcon\DI;
 
 class ModelBase
 {
@@ -91,7 +92,9 @@ class ModelBase
 
     }
 
-    public static function getDataByBucketAndID($riak, $bucket, $id) {
+    public static function getDataByBucketAndID($bucket, $id) {
+
+        $riak = DI::getDefault()->get('riak');
 
         $data = false;
 

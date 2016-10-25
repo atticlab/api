@@ -2,81 +2,80 @@
 namespace App\Controllers;
 
 use App\Lib\Response;
+use App\Models\InvoiceBans;
 use App\Models\Invoices;
-use Basho\Riak\Exception;
+use App\Lib\Exception;
+use Smartmoney\Stellar\Account;
 
 class InvoiceController extends ControllerBase
 {
 
-    public $request_timestamp;
-    public $request_minute_timestamp;
-    public $request_day_timestamp;
-
-    public function initialize()
-    {
-
-        if (empty($this->request->getClientAddress())) {
-            $this->logger->error('Cannot get client ip address');
-            return $this->response->setStatusCode(401)->send();
-        }
-
-        //get input params
-        if (empty($this->payload)) {
-            $this->params = $this->request->getPost();
-        } else {
-            $this->params = (array)$this->payload;
-        }
-
-        $this->request_timestamp        = time();
-        $this->request_minute_timestamp = $this->request_timestamp - $this->request_timestamp % 60;
-        $this->request_day_timestamp    = $this->request_timestamp - $this->request_timestamp % 86400;
-
-    }
-
     public function createAction()
     {
-        $invoice = new Invoices($this->riak);
 
-        $invoice->expires           = $this->request_timestamp + $this->config->invoice->expired;
-        $invoice->created           = $this->request_timestamp;
+        $allowed_types = [
+            Account::TYPE_ANONYMOUS,
+            Account::TYPE_REGISTERED,
+            Account::TYPE_MERCHANT,
+            Account::TYPE_EXCHANGE,
+            Account::TYPE_SETTLEMENT,
+            Account::TYPE_BANK
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        $invoice = new Invoices();
+
+        $invoice->expires           = time() + $this->config->invoice->expired;
+        $invoice->created           = time();
         $invoice->requested         = false;
         $invoice->is_in_statistic   = false;
         $invoice->payer             = false;
-        $invoice->memo              = '';
 
-        $invoice->amount  = $this->params['amount'] ?? null;
-        $invoice->asset   = $this->params['asset'] ?? null;
+        $invoice->amount  = $this->payload->amount ?? null;
+        $invoice->asset   = $this->payload->asset  ?? null;
+        $invoice->account = $requester;
 
-        //TODO get account from auth data (wait from Eugene)
-        $invoice->account = !empty($this->_session) && !empty($this->_session->account) ? $this->_session->account : 'GDWWTT7NBH52BAAFHIQR45IRPFYQSKSKU4NIFJ5DHWG3IGVZ7KMAV4U4';
-
-        if (!empty($this->params['memo']) && $this->params['memo'] != '') {
-            $invoice->memo = $this->params['memo'];
-        }
+        $invoice->memo    = $this->payload->memo ?? null;
 
         try {
+
             if ($invoice->create()) {
                 return $this->response->single(['id' => $invoice->id]);
-            } else {
-                return $this->response->error(Response::ERR_UNKNOWN);
             }
 
-        } catch (\Exception $e) {
+            $this->logger->emergency('Riak error while creating invoice');
+            throw new Exception(Exception::SERVICE_ERROR);
 
-            $msg  = Response::ERR_UNKNOWN;
-            $code = Response::ERR_UNKNOWN;
+        } catch (Exception $e) {
 
-            if (!empty($e->getMessage())) {
-                $msg  = $e->getMessage();
-                $code = $e->getCode();
-            }
+            $this->handleException($e->getCode(), $e->getMessage());
 
-            return $this->response->error($code, $msg);
         }
     }
 
     public function getAction()
     {
+
+        $allowed_types = [
+            Account::TYPE_ANONYMOUS,
+            Account::TYPE_REGISTERED,
+            Account::TYPE_MERCHANT,
+            Account::TYPE_EXCHANGE,
+            Account::TYPE_DISTRIBUTION,
+            Account::TYPE_BANK,
+            Account::TYPE_ADMIN
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)){
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
 
         if (!empty($this->request->get('id'))) {
             //get invoice by id
@@ -87,36 +86,33 @@ class InvoiceController extends ControllerBase
                 $id = str_pad($id, Invoices::UUID_LENGTH, "0", STR_PAD_LEFT);
             }
 
-            if (!Invoices::isExist($this->riak, $id)) {
+            if (!Invoices::isExist($id)) {
                 return $this->response->error(Response::ERR_NOT_FOUND, 'invoice');
             }
 
-            $invoice = Invoices::get($this->riak, $id);
+            $invoice = Invoices::get($id);
 
             if (empty($invoice)) {
                 return $this->response->error(Response::ERR_UNKNOWN);
             }
 
-            if (isset($invoice->expires) && $invoice->expires < $this->request_timestamp) {
+            if (isset($invoice->expires) && $invoice->expires < time()) {
                 return $this->response->error(Response::ERR_INV_EXPIRED);
             }
 
-            if ($invoice->requested && (int)$invoice->requested <= $this->request_timestamp) {
+            if (isset($invoice->requested) && $invoice->requested > 0 && $invoice->requested <= time()) {
                 return $this->response->error(Response::ERR_INV_REQUESTED);
             }
 
-            //set data about request procedure
-            $invoice->requested = $this->request_timestamp;
-
-            //TODO get account from auth data (wait from Eugene)
-            $invoice->payer = !empty($this->session) && !empty($this->session->accountId) ? $this->session->accountId : 'GDWWTT7NBH52BAAFHIQR45IRPFYQSKSKU4NIFJ5DHWG3IGVZ7KMAV4U4';
+            $invoice->requested = time();
+            $invoice->payer     = $requester;
 
             try {
 
                 if ($invoice->update()) {
 
                     $data = [
-                        'id'       => $invoice->id,
+                        'id'        => $invoice->id,
                         'account'   => $invoice->account,
                         'expires'   => $invoice->expires,
                         'amount'    => $invoice->amount,
@@ -128,32 +124,34 @@ class InvoiceController extends ControllerBase
 
                     return $this->response->single($data);
 
-                } else {
-                    return $this->response->error(Response::ERR_UNKNOWN);
                 }
 
-            } catch (\Exception $e) {
+                $this->logger->emergency('Riak error while updating invoice');
+                throw new Exception(Exception::SERVICE_ERROR);
 
-                $msg  = Response::ERR_UNKNOWN;
-                $code = Response::ERR_UNKNOWN;
+            } catch (Exception $e) {
 
-                if (!empty($e->getMessage())) {
-                    $msg  = $e->getMessage();
-                    $code = $e->getCode();
-                }
+                $this->handleException($e->getCode(), $e->getMessage());
 
-                return $this->response->error($code, $msg);
             }
 
         } elseif (!empty($this->request->get('accountId'))) {
             //get invoices per account
-            $invoices = Invoices::getperaccount($this->riak, $this->request->get('accountId'));
+
+            $limit = $this->request->get('limit') ?? null;
+            $page  = $this->request->get('page')  ?? null;
+
+            $invoices = Invoices::getListPerAccount($this->request->get('accountId'), $limit, $page);
 
             return $this->response->items($invoices);
 
         } else {
             //get all invoices
-            $invoices = Invoices::getlist($this->riak);
+
+            $limit = $this->request->get('limit') ?? null;
+            $page  = $this->request->get('page')  ?? null;
+
+            $invoices = Invoices::getList($limit, $page);
 
             return $this->response->items($invoices);
 
@@ -161,20 +159,70 @@ class InvoiceController extends ControllerBase
 
     }
 
-    public function bansCreateAction(){
+    public function bansCreateAction()
+    {
+
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
 
         //create new ban record
+        $accountId = $this->payload->accountId ?? null;
+        $seconds   = isset($this->payload->seconds) ? $this->payload->seconds : null;
+
+        if ($seconds == null) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'seconds');
+        }
+
+        if ($seconds < 0) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'seconds');
+        }
+
+        $ban           = new InvoiceBans($accountId);
+        $ban->blocked  = $seconds > 0 ? time() + $seconds : 0;
+
+        try {
+
+            if ($ban->create()) {
+                return $this->response->single(['message' => 'success']);
+            }
+
+            $this->logger->emergency('Riak error while creating ban account');
+            throw new Exception(Exception::SERVICE_ERROR);
+
+
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
 
     }
 
-    public function bansGetAction(){
+    public function bansGetAction()
+    {
+
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
 
         //list of ban records
+        $limit = $this->request->get('limit') ?? null;
+        $page  = $this->request->get('page')  ?? null;
 
-    }
+        $bans  = InvoiceBans::getList($limit, $page);
 
-    public function notFoundAction()
-    {
-        return $this->response->error(Response::ERR_NOT_FOUND);
+        return $this->response->items($bans);
+
     }
 }

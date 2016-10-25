@@ -2,7 +2,9 @@
 namespace App\Controllers;
 
 use App\Lib\Response;
+use App\Lib\Exception;
 use App\Models\Companies;
+use Smartmoney\Stellar\Account;
 
 class CompaniesController extends ControllerBase
 {
@@ -10,68 +12,96 @@ class CompaniesController extends ControllerBase
     public function createAction()
     {
 
-        // Create new company
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
 
-        $code = $this->request->getPost('code');
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        // Create new company
+        $code = $this->payload->code ?? null;
 
         if (empty($code)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'code');
         }
 
-        if (Companies::isExist($this->riak, $code)) {
-            return $this->response->error(Response::ERR_ALREADY_EXIST);
+        if (Companies::isExist($code)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'code');
         }
 
-        $company = new Companies($this->riak, $code);
-        $company->title     = $this->request->getPost('title');
-        $company->address   = $this->request->getPost('address');
-        $company->email     = $this->request->getPost('email');
-        $company->phone     = $this->request->getPost('phone');
+        $company = new Companies($code);
+
+        $company->title     = $this->payload->title ?? null;
+        $company->address   = $this->payload->address ?? null;
+        $company->email     = $this->payload->email ?? null;
+        $company->phone     = $this->payload->phone ?? null;
 
         try {
 
             if ($company->create()) {
-                return $this->response->single([
-                    'message' => 'success'
-                ]);
-            } else {
-                return $this->response->error(Response::ERR_UNKNOWN);
+                return $this->response->single(['message' => 'success']);
             }
 
-        } catch (\Exception $e) {
+            $this->logger->emergency('Riak error while creating company');
+            throw new Exception(Exception::SERVICE_ERROR);
 
-            $msg  = Response::ERR_UNKNOWN;
-            $code = Response::ERR_UNKNOWN;
 
-            if (!empty($e->getMessage())) {
-                $msg  = $e->getMessage();
-                $code = $e->getCode();
-            }
+        } catch (Exception $e) {
 
-            return $this->response->error($code, $msg);
+            $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
+
     public function getAction()
     {
 
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
         //company or list of companies
-        $limit = null;
-        $code  = null;
 
-        $code  = $this->request->get('code');
+        if (!empty($this->request->get('code'))) {
+            //get company
+            $code  = $this->request->get('code') ?? null;
 
-        if (empty($code)) {
-            $limit = $this->request->get('limit');
+            if (!Companies::isExist($code)) {
+                return $this->response->error(Response::ERR_NOT_FOUND, 'company');
+            }
+
+            $company = Companies::get($code);
+
+            $data = [
+                'code'      => $company->code,
+                'title'     => $company->title,
+                'address'   => $company->address,
+                'phone'     => $company->phone,
+                'email'     => $company->email
+            ];
+
+            return $this->response->single($data);
+
+        } else {
+            //get list of companies
+            $limit = $this->request->get('limit') ?? null;
+            $page  = $this->request->get('page')  ?? null;
+
+            $result = Companies::getList($limit, $page);
+
+            return $this->response->items($result);
+
         }
-
-        $result = Companies::getList($this->riak, $code, $limit);
-
-        if (empty($result)) {
-            return $this->response->error(Response::ERR_NOT_FOUND);
-        }
-
-        return $this->response->items($result);
 
     }
 }

@@ -24,6 +24,7 @@ class NonceController extends ControllerBase
         $this->request->setAccountId($accountId);
 
         return $this->response->single();
+
     }
 
 }

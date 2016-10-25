@@ -38,3 +38,5 @@ $loader->registerNamespaces([
 ]);
 
 $loader->register();
+
+//TODO: read from another place

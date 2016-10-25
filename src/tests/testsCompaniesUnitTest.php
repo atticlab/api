@@ -4,7 +4,7 @@ namespace Companies;
 
 use \App\Models\Companies;
 use \Phalcon\DI;
-
+use Smartmoney\Stellar\Account;
 use GuzzleHttp\Client;
 use App\Lib\Response;
 
@@ -21,30 +21,34 @@ class CompaniesUnitTest extends \UnitTestCase
 
         return array(
 
-            //example: array (code, title, address, email, phone, http_code, err_code, message)
+            //example: array (requester_type, code, title, address, email, phone, http_code, err_code, message)
 
             //no code
-            array(null, 'test_company_title', 'test_company_address',
-                'test_company@email.com', '1234567890', Response::$_http_codes[Response::ERR_EMPTY_PARAM], Response::ERR_EMPTY_PARAM, 'code'),
+            array('admin', null, 'test_company_title', 'test_company_address',
+                'test_company@email.com', '1234567890', 400, Response::ERR_EMPTY_PARAM, 'code'),
 
             //no title
-            array($code, null, 'test_company_address',
-                'test_company@email.com', '1234567890', Response::$_http_codes[Response::ERR_EMPTY_PARAM], Response::ERR_EMPTY_PARAM, 'title'),
+            array('admin', $code, null, 'test_company_address',
+                'test_company@email.com', '1234567890', 400, Response::ERR_EMPTY_PARAM, 'title'),
 
             //no address
-            array($code, 'test_company_title', null,
-                'test_company@email.com', '1234567890', Response::$_http_codes[Response::ERR_EMPTY_PARAM], Response::ERR_EMPTY_PARAM, 'address'),
+            array('admin', $code, 'test_company_title', null,
+                'test_company@email.com', '1234567890', 400, Response::ERR_EMPTY_PARAM, 'address'),
 
             //no email
-            array($code, 'test_company_title', 'test_company_address',
-                null, '1234567890', Response::$_http_codes[Response::ERR_EMPTY_PARAM], Response::ERR_EMPTY_PARAM, 'email'),
+            array('admin', $code, 'test_company_title', 'test_company_address',
+                null, '1234567890', 400, Response::ERR_EMPTY_PARAM, 'email'),
 
             //no phone
-            array($code, 'test_company_title', 'test_company_address',
-                'test_company@email.com', null, Response::$_http_codes[Response::ERR_EMPTY_PARAM], Response::ERR_EMPTY_PARAM, 'phone'),
+            array('admin', $code, 'test_company_title', 'test_company_address',
+                'test_company@email.com', null, 400, Response::ERR_EMPTY_PARAM, 'phone'),
+
+            //bad account type
+            array('anonym', $code, 'test_company_title', 'test_company_address',
+                'test_company@email.com', '1234567890', 400, Response::ERR_BAD_TYPE, null),
 
             //all ok - will create company - !!!MUST BE LAST IN ARRAY!!!
-            array($code, 'test_company_title', 'test_company_address',
+            array('admin', $code, 'test_company_title', 'test_company_address',
                 'test_company@email.com', '1234567890', 200, null, 'success'),
 
         );
@@ -54,29 +58,34 @@ class CompaniesUnitTest extends \UnitTestCase
     /**
      * @dataProvider CreateCompanyProvider
      */
-    public function testCreateCompany($code, $title, $address, $email, $phone, $http_code, $err_code, $msg)
+    public function testCreateCompany($requester_type, $code, $title, $address, $email, $phone, $http_code, $err_code, $msg)
     {
 
         parent::setUp();
 
-        // Initialize Guzzle client
         $client = new Client();
 
         //[TEST] create new company ------------------
-        if (!empty($code) && Companies::isExist($this->di['riak'], $code)) {
+        if (!empty($code) && Companies::isExist($code)) {
 
             do {
                 //find free company code
                 $code = 'test_company_' . rand(1, 999);
-            } while (Companies::isExist($this->di['riak'], $code));
+            } while (Companies::isExist($code));
 
         }
+
+        $user_data = $this->test_config[$requester_type];
+        $user_data['secret_key'] = Account::decodeCheck('seed', $user_data['seed']);
 
         // Create a POST request
         $response = $client->request(
             'POST',
             'http://192.168.1.155:8180/companies',
             [
+                'headers' => [
+                    'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                ],
                 'http_errors' => false,
                 'form_params' => [
                     "code"      => $code,
@@ -95,34 +104,28 @@ class CompaniesUnitTest extends \UnitTestCase
 
         //test http code
         $this->assertEquals(
-            $real_http_code,
-            $http_code
+            $http_code,
+            $real_http_code
         );
 
         //test error code
-        if (!empty($encode_data->code)) {
+        if ($err_code) {
             $this->assertEquals(
-                $encode_data->code,
-                $err_code
+                $err_code,
+                $encode_data->error
             );
         }
 
-        //test error message
-        if (!empty($encode_data->message)) {
+        //test message
+        if ($msg) {
             $this->assertEquals(
-                $encode_data->message,
-                $msg
+                $msg,
+                $encode_data->message
             );
         }
 
         //when we make test that success create company
-        if($real_http_code == 200) {
-
-            //test success data
-            $this->assertEquals(
-                $encode_data->message,
-                $msg
-            );
+        if ($real_http_code == 200) {
 
             //[TEST] get early created company by code -------------------
 
@@ -131,6 +134,9 @@ class CompaniesUnitTest extends \UnitTestCase
                 'GET',
                 'http://192.168.1.155:8180/companies',
                 [
+                    'headers' => [
+                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                    ],
                     'http_errors' => false,
                     'query' => ['code' => $code]
                 ]
@@ -147,15 +153,13 @@ class CompaniesUnitTest extends \UnitTestCase
             );
 
             $this->assertInternalType('object', $encode_data);
-            $this->assertInternalType('array',  $encode_data->items);
 
-            $this->assertEquals(
-                1,
-                count($encode_data)
+            $this->assertTrue(
+                !empty($encode_data->code)
             );
 
             //delete test company
-            $cur_company = Companies::get($this->riak, $code);
+            $cur_company = Companies::get($code);
             if ($cur_company) {
                 $cur_company->delete();
             }
@@ -164,10 +168,33 @@ class CompaniesUnitTest extends \UnitTestCase
 
     }
 
-    public function testGetCompanies(){
+    public static function GetCompaniesProvider()
+    {
+
+        return array(
+
+            //example: array (requester_type, http_code, err_code)
+
+            //bad account type
+            array('anonym', 400, Response::ERR_BAD_TYPE),
+
+            //all ok - will get list of companies
+            array('admin', 200, null),
+
+        );
+
+    }
+
+    /**
+     * @dataProvider GetCompaniesProvider
+     */
+    public function testGetCompanies($requester_type, $http_code, $err_code){
 
         // Initialize Guzzle client
         $client = new Client();
+
+        $user_data = $this->test_config[$requester_type];
+        $user_data['secret_key'] = Account::decodeCheck('seed', $user_data['seed']);
 
         //[TEST] get all companies -------------------
 
@@ -176,6 +203,9 @@ class CompaniesUnitTest extends \UnitTestCase
             'GET',
             'http://192.168.1.155:8180/companies',
             [
+                'headers' => [
+                    'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                ],
                 'http_errors' => false
             ]
         );
@@ -186,12 +216,24 @@ class CompaniesUnitTest extends \UnitTestCase
         $encode_data    = json_decode($body);
 
         $this->assertEquals(
-            200,
+            $http_code,
             $real_http_code
         );
 
-        $this->assertInternalType('object', $encode_data);
-        $this->assertInternalType('array',  $encode_data->items);
+        //test error code
+        if ($err_code) {
+            $this->assertEquals(
+                $err_code,
+                $encode_data->error
+            );
+        }
+
+        if ($real_http_code == 200) {
+
+            $this->assertInternalType('object', $encode_data);
+            $this->assertInternalType('array',  $encode_data->items);
+
+        }
 
     }
 
@@ -200,16 +242,22 @@ class CompaniesUnitTest extends \UnitTestCase
         // Initialize Guzzle client
         $client = new Client();
 
+        $user_data = $this->test_config['admin'];
+        $user_data['secret_key'] = Account::decodeCheck('seed', $user_data['seed']);
+
         do {
             //find free company code
             $code = 'test_company_' . rand(1, 999);
-        } while (Companies::isExist($this->di['riak'], $code));
+        } while (Companies::isExist($code));
 
         // Create a GET request
         $response = $client->request(
             'GET',
             'http://192.168.1.155:8180/companies',
             [
+                'headers' => [
+                    'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                ],
                 'http_errors' => false,
                 'query' => [
                     'code' => $code
@@ -217,24 +265,15 @@ class CompaniesUnitTest extends \UnitTestCase
             ]
         );
 
-        $real_http_code = $response->getStatusCode();
         $stream         = $response->getBody();
         $body           = $stream->getContents();
         $encode_data    = json_decode($body);
 
-        //test http code
-        $this->assertEquals(
-            $real_http_code,
-            Response::$_http_codes[Response::ERR_NOT_FOUND]
-        );
-
         //test error code
-        if (!empty($encode_data->code)) {
-            $this->assertEquals(
-                $encode_data->code,
-                Response::ERR_NOT_FOUND
-            );
-        }
+        $this->assertEquals(
+            Response::ERR_NOT_FOUND,
+            $encode_data->error
+        );
 
     }
 }

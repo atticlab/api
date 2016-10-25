@@ -477,7 +477,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/atticlab/stellar-php",
-                "reference": "3cb2090198748f553b34582f1475d936cf87beb9"
+                "reference": "0ede02d7b0aee896a6a3eaf179530ff732932cde"
             },
             "require": {
                 "ext-curl": "*",
@@ -489,7 +489,7 @@
                     "Smartmoney\\Stellar\\": "src"
                 }
             },
-            "time": "2016-09-20 10:29:04"
+            "time": "2016-10-25 12:13:21"
         },
         {
             "name": "swiftmailer/swiftmailer",
