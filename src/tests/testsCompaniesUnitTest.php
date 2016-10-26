@@ -108,8 +108,18 @@ class CompaniesUnitTest extends \UnitTestCase
             $real_http_code
         );
 
-        //test error code
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
+            //test error code
             $this->assertEquals(
                 $err_code,
                 $encode_data->error
@@ -118,6 +128,12 @@ class CompaniesUnitTest extends \UnitTestCase
 
         //test message
         if ($msg) {
+
+            //test message data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'message')
+            );
+
             $this->assertEquals(
                 $msg,
                 $encode_data->message
@@ -132,13 +148,12 @@ class CompaniesUnitTest extends \UnitTestCase
             // Create a GET request
             $response = $client->request(
                 'GET',
-                'http://192.168.1.155:8180/companies',
+                'http://192.168.1.155:8180/companies/' . $code,
                 [
                     'headers' => [
                         'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                     ],
-                    'http_errors' => false,
-                    'query' => ['code' => $code]
+                    'http_errors' => false
                 ]
             );
 
@@ -152,11 +167,16 @@ class CompaniesUnitTest extends \UnitTestCase
                 $real_http_code
             );
 
-            $this->assertInternalType('object', $encode_data);
-
             $this->assertTrue(
-                !empty($encode_data->code)
+                !empty($encode_data)
             );
+
+            //test answer data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'code')
+            );
+
+            $this->assertInternalType('object', $encode_data);
 
             //delete test company
             $cur_company = Companies::get($code);
@@ -220,8 +240,18 @@ class CompaniesUnitTest extends \UnitTestCase
             $real_http_code
         );
 
-        //test error code
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
+            //test error code
             $this->assertEquals(
                 $err_code,
                 $encode_data->error
@@ -229,6 +259,10 @@ class CompaniesUnitTest extends \UnitTestCase
         }
 
         if ($real_http_code == 200) {
+
+            $this->assertTrue(
+                property_exists($encode_data, 'items')
+            );
 
             $this->assertInternalType('object', $encode_data);
             $this->assertInternalType('array',  $encode_data->items);
@@ -253,21 +287,27 @@ class CompaniesUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/companies',
+            'http://192.168.1.155:8180/companies/' . $code,
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                 ],
-                'http_errors' => false,
-                'query' => [
-                    'code' => $code
-                ]
+                'http_errors' => false
             ]
         );
 
         $stream         = $response->getBody();
         $body           = $stream->getContents();
         $encode_data    = json_decode($body);
+
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
+        //test error data structure
+        $this->assertTrue(
+            property_exists($encode_data, 'error')
+        );
 
         //test error code
         $this->assertEquals(

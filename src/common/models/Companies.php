@@ -84,7 +84,7 @@ class Companies extends ModelBase
 
     }
 
-    public static function getList($count = null, $page = null)
+    public static function getList($limit = null, $offset = null)
     {
 
         $riak = DI::getDefault()->get('riak');
@@ -96,20 +96,20 @@ class Companies extends ModelBase
             ->withIndexName('found_hack_bin')
             ->withScalarValue('find_all');
 
-        if (!empty($count)) {
+        if (!empty($limit)) {
             $object
-                ->withMaxResults($count);
+                ->withMaxResults($limit);
         }
 
         //paginator
-        if (!empty($count) && !empty($page) && $page > 1) {
+        if (!empty($offset) && $offset > 0) {
 
-            //get withContinuation for N page by getting previous (page-1)*count records
+            //get withContinuation for N page by getting previous {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
                 ->buildBucket(self::BUCKET_NAME)
                 ->withIndexName('found_hack_bin')
                 ->withScalarValue('find_all')
-                ->withMaxResults(($page-1)*$count)
+                ->withMaxResults($offset)
                 ->build()
                 ->execute()
                 ->getContinuation();

@@ -35,10 +35,10 @@ class CompaniesController extends ControllerBase
 
         $company = new Companies($code);
 
-        $company->title     = $this->payload->title ?? null;
-        $company->address   = $this->payload->address ?? null;
-        $company->email     = $this->payload->email ?? null;
-        $company->phone     = $this->payload->phone ?? null;
+        $company->title   = $this->payload->title   ?? null;
+        $company->address = $this->payload->address ?? null;
+        $company->email   = $this->payload->email   ?? null;
+        $company->phone   = $this->payload->phone   ?? null;
 
         try {
 
@@ -57,7 +57,7 @@ class CompaniesController extends ControllerBase
 
     }
 
-    public function getAction()
+    public function listAction()
     {
 
         $allowed_types = [
@@ -70,38 +70,50 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        //company or list of companies
+        //get list of companies
+        $limit  = $this->request->get('limit')  ?? null;
+        $offset = $this->request->get('offset') ?? null;
 
-        if (!empty($this->request->get('code'))) {
-            //get company
-            $code  = $this->request->get('code') ?? null;
+        $result = Companies::getList($limit, $offset);
 
-            if (!Companies::isExist($code)) {
-                return $this->response->error(Response::ERR_NOT_FOUND, 'company');
-            }
+        return $this->response->items($result);
 
-            $company = Companies::get($code);
+    }
 
-            $data = [
-                'code'      => $company->code,
-                'title'     => $company->title,
-                'address'   => $company->address,
-                'phone'     => $company->phone,
-                'email'     => $company->email
-            ];
+    public function getAction($code)
+    {
 
-            return $this->response->single($data);
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
 
-        } else {
-            //get list of companies
-            $limit = $this->request->get('limit') ?? null;
-            $page  = $this->request->get('page')  ?? null;
+        $requester = $this->request->getAccountId();
 
-            $result = Companies::getList($limit, $page);
-
-            return $this->response->items($result);
-
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
         }
+
+        if (empty($code)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'code');
+        }
+
+        if (!Companies::isExist($code)) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'company');
+        }
+
+        $company = Companies::get($code);
+
+        $data = [
+            'code'      => $company->code,
+            'title'     => $company->title,
+            'address'   => $company->address,
+            'phone'     => $company->phone,
+            'email'     => $company->email
+        ];
+
+        return $this->response->single($data);
+
+
 
     }
 }

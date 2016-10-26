@@ -42,9 +42,14 @@
 	]);
 
     //companies
-    $router->addGet('/companies', [
+    $router->addGet('/companies/{id}', [
         'controller' => 'companies',
         'action' => 'get',
+    ]);
+
+    $router->addGet('/companies', [
+        'controller' => 'companies',
+        'action' => 'list',
     ]);
 
 	$router->addPost('/companies', [
