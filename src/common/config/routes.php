@@ -11,23 +11,33 @@
     ]);
 
     //invoices
-    $router->addGet('/invoice', [
-        'controller' => 'invoice',
-        'action' => 'get',
+    $router->addGet('/invoices', [
+        'controller' => 'invoices',
+        'action' => 'list',
     ]);
 
-	$router->addPost('/invoice', [
-		'controller' => 'invoice',
+    $router->addGet('/invoices/{id}', [
+        'controller' => 'invoices',
+        'action' => 'get'
+    ]);
+
+	$router->addPost('/invoices', [
+		'controller' => 'invoices',
 		'action' => 'create',
 	]);
 
-    $router->addGet('/invoice/bans', [
-        'controller' => 'invoice',
-        'action' => 'bansGet',
+    $router->addGet('/invoices/bans', [
+        'controller' => 'invoices',
+        'action' => 'bansList',
     ]);
 
-	$router->addPost('/invoice/bans', [
-		'controller' => 'invoice',
+//    $router->addGet('/invoices/bans/{id}', [
+//        'controller' => 'invoices',
+//        'action' => 'bansGet',
+//    ]);
+
+	$router->addPost('/invoices/bans', [
+		'controller' => 'invoices',
 		'action' => 'bansCreate',
 	]);
 

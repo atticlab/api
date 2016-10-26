@@ -9,55 +9,55 @@ use App\Lib\Exception;
 use Phalcon\DI;
 use Smartmoney\Stellar\Account;
 
-class InvoiceBans extends ModelBase
+class InvoicesBans extends ModelBase
 {
 
-    const BUCKET_NAME = 'invoice_bans';
+    const BUCKET_NAME = 'invoices_bans';
 
-    public $accountId;
+    public $account_id;
     public $blocked;
 
-    public function __construct($accountId)
+    public function __construct($account_id)
     {
 
         $riak = DI::getDefault()->get('riak');
 
-        $this->riak          = $riak;
-        $this->accountId     = $accountId;
+        $this->riak       = $riak;
+        $this->account_id = $account_id;
 
-        $this->bucket   = new Bucket(self::BUCKET_NAME);
-        $this->location = new Riak\Location($accountId, $this->bucket);
+        $this->bucket     = new Bucket(self::BUCKET_NAME);
+        $this->location   = new Riak\Location($account_id, $this->bucket);
     }
 
     public function __toString()
     {
         return json_encode([
-            'accountId' => $this->accountId,
-            'blocked'   => $this->blocked
+            'account_id' => $this->account_id,
+            'blocked'    => $this->blocked
         ]);
     }
 
     private function validate(){
 
-        if (empty($this->accountId)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'accountId');
+        if (empty($this->account_id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'account_id');
         }
 
-        if (!Account::isValidAccountId($this->accountId)) {
-            throw new Exception(Exception::BAD_PARAM, 'accountId');
+        if (!Account::isValidAccountId($this->account_id)) {
+            throw new Exception(Exception::BAD_PARAM, 'account_id');
         }
 
     }
 
-    public static function isExist($accountId)
+    public static function isExist($account_id)
     {
 
         $riak = DI::getDefault()->get('riak');
 
         $response = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('accountId_bin')
-            ->withScalarValue($accountId)
+            ->withIndexName('account_id_bin')
+            ->withScalarValue($account_id)
             ->withMaxResults(1)
             ->build()
             ->execute()
@@ -67,32 +67,32 @@ class InvoiceBans extends ModelBase
 
     }
 
-    public static function getList($count = null, $page = null)
+    public static function getList($limit = null, $offset = null)
     {
 
         $riak = DI::getDefault()->get('riak');
 
-        $companies = [];
+        $bans = [];
 
         $object = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::BUCKET_NAME)
             ->withIndexName('found_hack_bin')
             ->withScalarValue('find_all');
 
-        if (!empty($count)) {
+        if (!empty($limit)) {
             $object
-                ->withMaxResults($count);
+                ->withMaxResults($limit);
         }
 
         //paginator
-        if (!empty($count) && !empty($page) && $page > 1) {
+        if (!empty($offset) && $offset > 0) {
 
-            //get withContinuation for N page by getting previous (page-1)*count records
+            //get withContinuation for N page by getting previous {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
                 ->buildBucket(self::BUCKET_NAME)
                 ->withIndexName('found_hack_bin')
                 ->withScalarValue('find_all')
-                ->withMaxResults(($page-1)*$count)
+                ->withMaxResults($offset)
                 ->build()
                 ->execute()
                 ->getContinuation();
@@ -110,22 +110,22 @@ class InvoiceBans extends ModelBase
             ->execute()
             ->getResults();
 
-        foreach ($response as $code) {
+        foreach ($response as $account_id) {
 
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $code);
+            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $account_id);
 
             if (!empty($data)) {
-                $companies[] = $data;
+                $bans[] = $data;
             }
 
         }
 
-        return $companies;
+        return $bans;
     }
 
-    public static function get($accountId){
+    public static function get($account_id){
 
-        $data = new self($accountId);
+        $data = new self($account_id);
         return $data->loadData();
 
     }
@@ -136,7 +136,7 @@ class InvoiceBans extends ModelBase
         $this->validate();
 
         $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('accountId_bin')
+            ->withName('account_id_bin')
             ->build()
             ->execute();
 
@@ -146,8 +146,8 @@ class InvoiceBans extends ModelBase
 
         $command->getObject()->addValueToIndex('found_hack_bin', 'find_all');
 
-        if (isset($this->accountId)) {
-            $command->getObject()->addValueToIndex('accountId_bin', $this->accountId);
+        if (isset($this->account_id)) {
+            $command->getObject()->addValueToIndex('account_id_bin', $this->account_id);
         }
 
         $response = $command->build()->execute();

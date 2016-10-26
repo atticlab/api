@@ -1,8 +1,8 @@
 <?php
 
-namespace Invoice;
+namespace Invoices;
 
-use App\Models\InvoiceBans;
+use App\Models\InvoicesBans;
 use App\Models\Invoices;
 use \Phalcon\DI;
 use Smartmoney\Stellar\Account;
@@ -13,7 +13,7 @@ use App\Lib\Response;
 /**
  * Class UnitTest
  */
-class InvoiceUnitTest extends \UnitTestCase
+class InvoicesUnitTest extends \UnitTestCase
 {
 
     public static function CreateInvoiceProvider()
@@ -64,7 +64,7 @@ class InvoiceUnitTest extends \UnitTestCase
         // Create a POST request
         $response = $client->request(
             'POST',
-            'http://192.168.1.155:8180/invoice',
+            'http://' . $this->api_host .'/invoices',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -89,7 +89,17 @@ class InvoiceUnitTest extends \UnitTestCase
             $real_http_code
         );
 
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
             //test error code
             $this->assertEquals(
                 $err_code,
@@ -99,6 +109,12 @@ class InvoiceUnitTest extends \UnitTestCase
 
         //test message
         if ($msg) {
+
+            //test message data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'message')
+            );
+
             $this->assertEquals(
                 $msg,
                 $encode_data->message
@@ -108,7 +124,11 @@ class InvoiceUnitTest extends \UnitTestCase
         //when we make test that success create invoice
         if ($real_http_code == 200) {
 
-            //test success message - invoice code
+            //test success data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'id')
+            );
+
             $this->assertInternalType('object', $encode_data);
             $this->assertInternalType('string', $encode_data->id);
 
@@ -119,19 +139,27 @@ class InvoiceUnitTest extends \UnitTestCase
             // Create a GET request
             $response = $client->request(
                 'GET',
-                'http://192.168.1.155:8180/invoice',
+                'http://' . $this->api_host .'/invoices/' . $id,
                 [
                     'headers' => [
                         'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                     ],
-                    'http_errors' => false,
-                    'query' => ['id' => $id]
+                    'http_errors' => false
                 ]
             );
 
             $stream         = $response->getBody();
             $body           = $stream->getContents();
             $encode_data    = json_decode($body);
+
+            $this->assertTrue(
+                !empty($encode_data)
+            );
+
+            //test answer data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'id')
+            );
 
             $this->assertInternalType('object', $encode_data);
             $this->assertInternalType('string', $encode_data->id);
@@ -167,10 +195,9 @@ class InvoiceUnitTest extends \UnitTestCase
 
         //[TEST] get all invoices -------------------
 
-        // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/invoice',
+            'http://' . $this->api_host .'/invoices',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -189,8 +216,17 @@ class InvoiceUnitTest extends \UnitTestCase
             $real_http_code
         );
 
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
+        //test answer data structure
+        $this->assertTrue(
+            property_exists($encode_data, 'items')
+        );
+
         $this->assertInternalType('object', $encode_data);
-        $this->assertInternalType('array', $encode_data->items);
+        $this->assertInternalType('array',  $encode_data->items);
 
     }
 
@@ -209,13 +245,12 @@ class InvoiceUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/invoice',
+            'http://' . $this->api_host .'/invoices/' . $id,
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                 ],
-                'http_errors' => false,
-                'query' => ['id' => $id]
+                'http_errors' => false
             ]
         );
 
@@ -223,8 +258,16 @@ class InvoiceUnitTest extends \UnitTestCase
         $body           = $stream->getContents();
         $encode_data    = json_decode($body);
 
-        //test error code
+        $this->assertTrue(
+            !empty($encode_data)
+        );
 
+        //test error data structure
+        $this->assertTrue(
+            property_exists($encode_data, 'error')
+        );
+
+        //test error code
         $this->assertEquals(
             Response::ERR_NOT_FOUND,
             $encode_data->error
@@ -240,13 +283,13 @@ class InvoiceUnitTest extends \UnitTestCase
 
         return array(
 
-            //example: array (requester_type, accountId, seconds, http_code, err_code, message)
+            //example: array (requester_type, account_id, seconds, http_code, err_code, message)
 
-            //no accountId
-            array('admin', null, 600, 400, Response::ERR_EMPTY_PARAM, 'accountId'),
+            //no account_id
+            array('admin', null, 600, 400, Response::ERR_EMPTY_PARAM, 'account_id'),
 
-            //bad accountId
-            array('admin', 'bad_account_id', 600, 400, Response::ERR_BAD_PARAM, 'accountId'),
+            //bad account_id
+            array('admin', 'bad_account_id', 600, 400, Response::ERR_BAD_PARAM, 'account_id'),
 
             //no seconds
             array('admin', $test_acc_id, null, 400, Response::ERR_EMPTY_PARAM, 'seconds'),
@@ -267,7 +310,7 @@ class InvoiceUnitTest extends \UnitTestCase
     /**
      * @dataProvider BanAccountProvider
      */
-    public function testBanAccount($requester_type, $accountId, $seconds, $http_code, $err_code, $msg)
+    public function testBanAccount($requester_type, $account_id, $seconds, $http_code, $err_code, $msg)
     {
 
         // Initialize Guzzle client
@@ -279,15 +322,15 @@ class InvoiceUnitTest extends \UnitTestCase
         // Add ban
         $response = $client->request(
             'POST',
-            'http://192.168.1.155:8180/invoice/bans',
+            'http://' . $this->api_host .'/invoices/bans',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                 ],
                 'http_errors' => false,
                 'form_params' => [
-                    "accountId" => $accountId,
-                    "seconds"   => $seconds
+                    "account_id" => $account_id,
+                    "seconds"    => $seconds
                 ]
             ]
         );
@@ -303,7 +346,17 @@ class InvoiceUnitTest extends \UnitTestCase
             $real_http_code
         );
 
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
             //test error code
             $this->assertEquals(
                 $err_code,
@@ -311,9 +364,14 @@ class InvoiceUnitTest extends \UnitTestCase
             );
         }
 
-
         //test message
         if ($msg) {
+
+            //test message data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'message')
+            );
+
             $this->assertEquals(
                 $msg,
                 $encode_data->message
@@ -323,8 +381,48 @@ class InvoiceUnitTest extends \UnitTestCase
         //when we make test that success ban account
         if ($real_http_code == 200) {
 
+//            //[TEST] get early banned account -------------------
+//
+//            // Create a GET request
+//            $response = $client->request(
+//                'GET',
+//                'http://' . $this->api_host .'/invoices/bans/' . $account_id,
+//                [
+//                    'headers' => [
+//                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+//                    ],
+//                    'http_errors' => false
+//                ]
+//            );
+//
+//            $stream         = $response->getBody();
+//            $body           = $stream->getContents();
+//            $encode_data    = json_decode($body);
+//
+//            $this->assertTrue(
+//                !empty($encode_data)
+//            );
+//
+//            //test answer data structure
+//            $this->assertTrue(
+//                property_exists($encode_data, 'account_id')
+//            );
+//
+//            $this->assertTrue(
+//                property_exists($encode_data, 'blocked')
+//            );
+//
+//            $this->assertInternalType('object', $encode_data);
+//
+//            $this->assertInternalType('string', $encode_data->account_id);
+//
+//            $this->assertEquals(
+//                $account_id,
+//                $encode_data->account_id
+//            );
+
             //delete test ban
-            $cur_ban = InvoiceBans::get($accountId);
+            $cur_ban = InvoicesBans::get($account_id);
             if ($cur_ban) {
                 $cur_ban->delete();
             }
@@ -346,7 +444,7 @@ class InvoiceUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/invoice/bans',
+            'http://' . $this->api_host .'/invoices/bans',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -365,7 +463,17 @@ class InvoiceUnitTest extends \UnitTestCase
             $real_http_code
         );
 
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         $this->assertInternalType('object', $encode_data);
+
+        //test items data structure
+        $this->assertTrue(
+            property_exists($encode_data, 'items')
+        );
+
         $this->assertInternalType('array', $encode_data->items);
 
     }

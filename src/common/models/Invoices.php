@@ -117,7 +117,7 @@ class Invoices extends ModelBase
         return $data->loadData();
     }
 
-    public static function getList($count = null, $page = null)
+    public static function getList($limit = null, $offset = null)
     {
 
         $riak = DI::getDefault()->get('riak');
@@ -129,20 +129,20 @@ class Invoices extends ModelBase
             ->withIndexName('id_bin')
             ->withRangeValue(str_repeat('0', self::UUID_LENGTH), str_repeat('9', self::UUID_LENGTH));
 
-        if (!empty($count)) {
+        if (!empty($limit)) {
             $object
-                ->withMaxResults($count);
+                ->withMaxResults($limit);
         }
 
         //paginator
-        if (!empty($count) && !empty($page) && $page > 1) {
+        if (!empty($offset) && $offset > 0) {
 
-            //get withContinuation for N page by getting previous (page-1)*count records
+            //get withContinuation for N page by getting previous {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
                 ->buildBucket(self::BUCKET_NAME)
                 ->withIndexName('id_bin')
                 ->withRangeValue(str_repeat('0', self::UUID_LENGTH), str_repeat('9', self::UUID_LENGTH))
-                ->withMaxResults(($page-1)*$count)
+                ->withMaxResults($offset)
                 ->build()
                 ->execute()
                 ->getContinuation();
@@ -173,7 +173,7 @@ class Invoices extends ModelBase
         return $invoices;
     }
 
-    public static function getListPerAccount($account, $count = null, $page = null)
+    public static function getListPerAccount($account, $limit = null, $offset = null)
     {
 
         $riak = DI::getDefault()->get('riak');
@@ -185,20 +185,20 @@ class Invoices extends ModelBase
             ->withScalarValue($account);
 
 
-        if (!empty($count)) {
+        if (!empty($limit)) {
             $object
-                ->withMaxResults($count);
+                ->withMaxResults($limit);
         }
 
         //paginator
-        if (!empty($count) && !empty($page) && $page > 1) {
+        if (!empty($offset) && $offset > 0) {
 
-            //get withContinuation for N page by get previos (page-1)*count records
+            //get withContinuation for N page by get previos {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
                 ->buildBucket(self::BUCKET_NAME)
                 ->withIndexName('account_bin')
                 ->withScalarValue($account)
-                ->withMaxResults(($page-1)*$count)
+                ->withMaxResults($offset)
                 ->build()
                 ->execute()
                 ->getContinuation();

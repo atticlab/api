@@ -13,6 +13,7 @@ abstract class UnitTestCase extends PhalconTestCase
      */
     private $_loaded = false;
     protected $test_config = null;
+    protected $api_host = null;
 
     //how to sign new nonce for test
     //ed25519_sign($data, $secret, $public);
@@ -57,6 +58,7 @@ abstract class UnitTestCase extends PhalconTestCase
         }
 
         $this->test_config = $test_data;
+        $this->api_host    = '192.168.1.155:8180';
 
     }
 
