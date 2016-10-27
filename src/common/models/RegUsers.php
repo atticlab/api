@@ -8,7 +8,7 @@ use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
 
-class RegUsers extends ModelBase
+class RegUsers extends ModelBase implements ModelInterface
 {
     const BUCKET_NAME = 'regusers';
     const INDEX_NAME = 'ipn_code_bin';
@@ -23,12 +23,15 @@ class RegUsers extends ModelBase
     public $ipn_code;             //IPN code
     public $passport;             //passport series and number
 
+    public function validate() {
+        parent::validateIsAllPresent();
+    }
+
     public function __construct($ipn_code)
     {
         parent::__construct($ipn_code);
         $this->ipn_code = $ipn_code;
     }
-
 
     public static function get($code)
     {
@@ -38,8 +41,6 @@ class RegUsers extends ModelBase
 
     public function create()
     {
-        $this->validateIsAllPresent();
-        
         $command = parent::prepareCreate();
 
         if (isset($this->ipn_code)) {

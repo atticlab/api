@@ -41,6 +41,7 @@ class ModelBase
 
     public function __construct($index)
     {
+        self::checkConsts();
         $riak = DI::getDefault()->get('riak');
 
         $this->riak = $riak;
@@ -87,7 +88,7 @@ class ModelBase
 
     public function update()
     {
-        $this->validateIsAllPresent();
+        $this->validate();
 
         if (empty($this->object)) {
             throw new \Exception('object_not_loaded');
@@ -177,8 +178,8 @@ class ModelBase
 
         $object = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('found_hack_bin')
-            ->withScalarValue('find_all');
+            ->withIndexName(self::BUCKET_NAME.'_bin')
+            ->withScalarValue(self::BUCKET_NAME);
 
         if (!empty($limit)) {
             $object
@@ -191,8 +192,8 @@ class ModelBase
             //get withContinuation for N page by getting previous {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
                 ->buildBucket(self::BUCKET_NAME)
-                ->withIndexName('found_hack_bin')
-                ->withScalarValue('find_all')
+                ->withIndexName(self::BUCKET_NAME.'_bin')
+                ->withScalarValue(self::BUCKET_NAME)
                 ->withMaxResults($offset)
                 ->build()
                 ->execute()
@@ -226,6 +227,8 @@ class ModelBase
 
     public function prepareCreate()
     {
+        $this->validate();
+
         $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
             ->withName(self::KEY_NAME)
             ->build()
@@ -235,7 +238,7 @@ class ModelBase
             ->buildObject($this)
             ->atLocation($this->location);
 
-        $command->getObject()->addValueToIndex('found_hack_bin', 'find_all');
+        $command->getObject()->addValueToIndex(self::BUCKET_NAME.'_bin', self::BUCKET_NAME);
 
         return $command;
     }
