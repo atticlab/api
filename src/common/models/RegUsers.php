@@ -3,16 +3,15 @@
 namespace App\Models;
 
 use \Basho\Riak;
-use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
-use App\Lib\Exception;
 use Phalcon\DI;
 
 class RegUsers extends ModelBase implements ModelInterface
 {
-    const BUCKET_NAME = 'regusers';
-    const INDEX_NAME = 'ipn_code_bin';
+    protected $BUCKET_NAME = 'regusers';
+    protected $INDEX_NAME =  'ipn_code_bin';
 
+    public $ipn_code;             //IPN code
     public $asset;                //asset
     public $surname;              //family name
     public $name;                 //user name
@@ -20,11 +19,10 @@ class RegUsers extends ModelBase implements ModelInterface
     public $email;                //email
     public $phone;                //phone
     public $address;              //address
-    public $ipn_code;             //IPN code
     public $passport;             //passport series and number
 
     public function validate() {
-        parent::validateIsAllPresent();
+        $this->validateIsAllPresent();
     }
 
     public function __construct($ipn_code)
@@ -33,19 +31,20 @@ class RegUsers extends ModelBase implements ModelInterface
         $this->ipn_code = $ipn_code;
     }
 
-    public static function get($code)
-    {
-        $data = new self($code);
-        return $data->loadData();
-    }
-
     public function create()
     {
-        $command = parent::prepareCreate();
-
+        $command = $this->prepareCreate();
         if (isset($this->ipn_code)) {
-            $command->getObject()->addValueToIndex(self::KEY_NAME, $this->ipn_code);
+            $command->getObject()->addValueToIndex($this->INDEX_NAME, $this->ipn_code);
         }
+        $response = $command->build()->execute();
+
+        return $response->isSuccess();
+    }
+
+    public function update() {
+        $command = $this->prepareUpdate();
+        //good place to update secondary indexes
         $response = $command->build()->execute();
 
         return $response->isSuccess();

@@ -26,7 +26,6 @@ class RegusersController extends ControllerBase
     {
         //registered user or list of registered users
         $reguser = new RegUsers(123333);
-
         return $this->response->single(['obj' => $reguser]);
     }
 

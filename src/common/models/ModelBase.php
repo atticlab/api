@@ -5,6 +5,12 @@ namespace App\Models;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
+use Basho\Riak\Command\Builder\DeleteObject;
+use Basho\Riak\Command\Builder\FetchObject;
+use Basho\Riak\Command\Builder\QueryIndex;
+use Basho\Riak\Command\Builder\Search\StoreIndex;
+use Basho\Riak\Command\Builder\StoreObject;
+use Exception;
 use Phalcon\DI;
 
 class ModelBase
@@ -26,14 +32,17 @@ class ModelBase
      */
     protected $location;
 
+    protected $BUCKET_NAME = null;
+    protected $INDEX_NAME =  null;
+
     protected function checkConsts()
     {
-        if (empty(self::BUCKET_NAME)) {
+        if (empty($this->BUCKET_NAME)) {
             throw new Exception(Exception::EMPTY_PARAM, 'BUCKET_NAME');
             return;
         }
 
-        if (empty(self::INDEX_NAME)) {
+        if (empty($this->INDEX_NAME)) {
             throw new Exception(Exception::EMPTY_PARAM, 'INDEX_NAME');
             return;
         }
@@ -41,12 +50,12 @@ class ModelBase
 
     public function __construct($index)
     {
-        self::checkConsts();
+        $this->checkConsts();
         $riak = DI::getDefault()->get('riak');
 
         $this->riak = $riak;
 
-        $this->bucket = new Bucket(self::BUCKET_NAME);
+        $this->bucket = new Bucket($this->BUCKET_NAME);
         $this->location = new Riak\Location($index, $this->bucket);
     }
 
@@ -66,65 +75,59 @@ class ModelBase
      **/
     public function loadData()
     {
-
-        $response = (new Command\Builder\FetchObject($this->riak))
+        $response = (new FetchObject($this->riak))
             ->atLocation($this->location)
             ->build()
             ->execute();
 
-        if ($response->isSuccess() && $response->getObject()) {
-
+        if ($response->isSuccess()) {
             $this->object = $response->getObject();
-
-            $this->setFromJSON($this->object->getData());
-            $this->lockVersion = $this->object->getVclock();
-            return $this;
-
+        } elseif ($response->isNotFound()) {
+            throw new Exception('not_found');
+        } else {
+            throw new Exception('unknown_error: ' . $response->getStatusCode());
         }
 
-        return false;
+        if (empty($this->object)) {
+            throw new Exception('not_found');
+        }
 
+        $this->object = $response->getObject();
+        $this->setFromJSON($this->object->getData());
+        return $this;
     }
 
-    public function update()
+    public function prepareUpdate()
     {
         $this->validate();
 
         if (empty($this->object)) {
-            throw new \Exception('object_not_loaded');
+            throw new Exception('object_not_loaded');
         }
 
         $save = $this->object->setData(json_encode($this));
-        $updateCommand = (new Command\Builder\StoreObject($this->riak))
+        $updateCommand = (new StoreObject($this->riak))
             ->withObject($save)
-            ->atLocation($this->location)
-            ->build();
-
-        $result = $updateCommand->execute();
-
-        return $result->isSuccess();
+            ->atLocation($this->location);
+        return $updateCommand;
     }
 
     public function delete()
     {
-        $deleteCommand = (new Command\Builder\DeleteObject($this->riak))
+        $deleteCommand = (new DeleteObject($this->riak))
             ->atLocation($this->location)
             ->build();
 
         $result = $deleteCommand->execute();
 
         return $result->isSuccess();
-
     }
 
-    public static function getDataByBucketAndID($bucket, $id)
+    public function getDataByID($id)
     {
-        $riak = DI::getDefault()->get('riak');
-
         $data = false;
-
-        $response = (new \Basho\Riak\Command\Builder\FetchObject($riak))
-            ->buildLocation($id, $bucket)
+        $response = (new FetchObject($this->riak))
+            ->buildLocation($id, $this->BUCKET_NAME)
             ->build()
             ->execute();
 
@@ -133,7 +136,6 @@ class ModelBase
         }
 
         return $data;
-
     }
 
     public function __toString()
@@ -150,15 +152,13 @@ class ModelBase
         }
     }
 
-    public static function isExist($index)
+    /*public function isExist($index)
     {
-        self::checkConsts();
+        $this->checkConsts();
 
-        $riak = DI::getDefault()->get('riak');
-
-        $response = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName(self::INDEX_NAME)
+        $response = (new QueryIndex($this->riak))
+            ->buildBucket($this->BUCKET_NAME)
+            ->withIndexName($this->INDEX_NAME)
             ->withScalarValue($index)
             ->withMaxResults(1)
             ->build()
@@ -166,20 +166,18 @@ class ModelBase
             ->getResults();
 
         return $response;
-    }
+    }*/
 
-    public static function getList($limit = null, $offset = null)
+    public function getList($limit = null, $offset = null)
     {
-        self::checkConsts();
-
-        $riak = DI::getDefault()->get('riak');
+        $this->checkConsts();
 
         $models = [];
 
-        $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName(self::BUCKET_NAME.'_bin')
-            ->withScalarValue(self::BUCKET_NAME);
+        $object = (new QueryIndex($this->riak))
+            ->buildBucket($this->BUCKET_NAME)
+            ->withIndexName($this->BUCKET_NAME . '_bin')
+            ->withScalarValue($this->BUCKET_NAME);
 
         if (!empty($limit)) {
             $object
@@ -190,10 +188,10 @@ class ModelBase
         if (!empty($offset) && $offset > 0) {
 
             //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::BUCKET_NAME)
-                ->withIndexName(self::BUCKET_NAME.'_bin')
-                ->withScalarValue(self::BUCKET_NAME)
+            $continuation = (new QueryIndex($this->riak))
+                ->buildBucket($this->BUCKET_NAME)
+                ->withIndexName($this->BUCKET_NAME . '_bin')
+                ->withScalarValue($this->BUCKET_NAME)
                 ->withMaxResults($offset)
                 ->build()
                 ->execute()
@@ -203,8 +201,7 @@ class ModelBase
                 return [];
             }
 
-            $object
-                ->withContinuation($continuation);
+            $object->withContinuation($continuation);
         }
 
         $response = $object
@@ -214,7 +211,7 @@ class ModelBase
 
         foreach ($response as $code) {
 
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $code);
+            $data = $this->getDataByBucketAndID($this->BUCKET_NAME, $code);
 
             if (!empty($data)) {
                 $models[] = $data;
@@ -229,16 +226,16 @@ class ModelBase
     {
         $this->validate();
 
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName(self::KEY_NAME)
+        $response = (new StoreIndex($this->riak))
+            ->withName($this->INDEX_NAME)
             ->build()
             ->execute();
 
-        $command = (new Command\Builder\StoreObject($this->riak))
+        $command = (new StoreObject($this->riak))
             ->buildObject($this)
             ->atLocation($this->location);
 
-        $command->getObject()->addValueToIndex(self::BUCKET_NAME.'_bin', self::BUCKET_NAME);
+        $command->getObject()->addValueToIndex($this->BUCKET_NAME . '_bin', $this->BUCKET_NAME);
 
         return $command;
     }
