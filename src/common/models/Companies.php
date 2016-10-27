@@ -31,17 +31,6 @@ class Companies extends ModelBase
         $this->location = new Riak\Location($code, $this->bucket);
     }
 
-    public function __toString()
-    {
-        return json_encode([
-            'code'      => $this->code,
-            'title'     => $this->title,
-            'address'   => $this->address,
-            'phone'     => $this->phone,
-            'email'     => $this->email
-        ]);
-    }
-
     private function validate(){
 
         if (empty($this->code)) {

@@ -29,14 +29,6 @@ class InvoicesBans extends ModelBase
         $this->location   = new Riak\Location($account_id, $this->bucket);
     }
 
-    public function __toString()
-    {
-        return json_encode([
-            'account_id' => $this->account_id,
-            'blocked'    => $this->blocked
-        ]);
-    }
-
     private function validate(){
 
         if (empty($this->account_id)) {

@@ -44,22 +44,6 @@ class Invoices extends ModelBase
         $this->location = new Riak\Location($id, $this->bucket);
     }
 
-    public function __toString()
-    {
-        return json_encode([
-            'id'                => $this->id,
-            'account'           => $this->account,
-            'payer'             => $this->payer,
-            'expires'           => $this->expires,
-            'amount'            => $this->amount,
-            'asset'             => $this->asset,
-            'memo'              => $this->memo,
-            'requested'         => $this->requested,
-            'created'           => $this->created,
-            'is_in_statistic'   => $this->is_in_statistic
-        ]);
-    }
-
     private function validate()
     {
 
