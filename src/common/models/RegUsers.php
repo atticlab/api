@@ -8,9 +8,6 @@ use Phalcon\DI;
 
 class RegUsers extends ModelBase implements ModelInterface
 {
-    protected $BUCKET_NAME = 'regusers';
-    protected $INDEX_NAME =  'ipn_code_bin';
-
     public $ipn_code;             //IPN code
     public $asset;                //asset
     public $surname;              //family name
@@ -33,22 +30,13 @@ class RegUsers extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate();
-        if (isset($this->ipn_code)) {
-            $command->getObject()->addValueToIndex($this->INDEX_NAME, $this->ipn_code);
-        }
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
+        $command = $this->prepareCreate($this->ipn_code);
+        return $this->build($command);
     }
 
     public function update() {
         $command = $this->prepareUpdate();
         //good place to update secondary indexes
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
+        return $this->build($command);
     }
-
-
 }

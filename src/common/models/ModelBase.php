@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Controllers\RegusersController;
 use App\Lib\Response;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
@@ -19,47 +20,40 @@ class ModelBase
     /**
      * @var Riak $riak
      */
-    protected $riak;
+    protected $_riak;
     /**
      * @var Basho\Riak\Object
      */
-    protected $object;
+    protected $_object;
     /**
      * @var Riak\Bucket $bucket
      */
-    protected $bucket;
+    protected $_bucket;
     /**
      * @var Riak\Location $location
      */
-    protected $location;
+    protected $_location;
 
-    protected $BUCKET_NAME = null;
-    protected $INDEX_NAME =  null;
+    private static $BUCKET_NAME;
+    private static $INDEX_NAME;
 
-    protected function checkConsts()
+    public static function setPrimaryAttributes()
     {
-        if (empty($this->BUCKET_NAME)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'BUCKET_NAME');
-        }
-
-        if (empty($this->INDEX_NAME)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'INDEX_NAME');
-        }
+        self::$BUCKET_NAME = get_called_class();
+        self::$INDEX_NAME = 'index_bin';
     }
 
     public function __construct($index)
     {
-        $this->checkConsts();
-        $riak = DI::getDefault()->get('riak');
-
-        $this->riak = $riak;
-
         if (empty($index)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'INDEX_NAME');
+            throw new Exception(Exception::EMPTY_PARAM, 'NO_INDEX');
         }
 
-        $this->bucket = new Bucket($this->BUCKET_NAME);
-        $this->location = new Riak\Location($index, $this->bucket);
+        self::setPrimaryAttributes();
+        $riak = DI::getDefault()->get('riak');
+        $this->_riak = $riak;
+        $this->_bucket = new Bucket(self::$BUCKET_NAME);
+        $this->_location = new Riak\Location($index, $this->_bucket);
     }
 
     protected function setFromJSON($data)
@@ -72,91 +66,90 @@ class ModelBase
         }
     }
 
-    /**
-     * Loads data from RIAK and populates object with values
-     *
-     **/
     public function loadData()
     {
-        $response = (new FetchObject($this->riak))
-            ->atLocation($this->location)
+        $response = (new FetchObject($this->_riak))
+            ->atLocation($this->_location)
             ->build()
             ->execute();
 
         if ($response->isSuccess()) {
-            $this->object = $response->getObject();
+            $this->_object = $response->getObject();
         } elseif ($response->isNotFound()) {
             throw new Exception(Response::ERR_NOT_FOUND);
         } else {
             throw new Exception(Exception::UNKNOWN . ': ' . $response->getStatusCode());
         }
 
-        if (empty($this->object)) {
+        if (empty($this->_object)) {
             throw new Exception(Response::ERR_NOT_FOUND);
         }
 
-        $this->setFromJSON($this->object->getData());
+        $this->setFromJSON($this->_object->getData());
         return $this;
+    }
+
+    public function addIndex(&$command, $index_name, $index_value)
+    {
+        (new StoreIndex($this->_riak))
+            ->withName($index_name)
+            ->build()
+            ->execute();
+        $command->getObject()->addValueToIndex($index_name, $index_value);
+    }
+
+    public function build($command)
+    {
+        return $command->build()->execute()->isSuccess();
+    }
+
+    public function prepareCreate($primary_index_value)
+    {
+        if (empty($this->_object)) {
+            throw new Exception(Response::ERR_NOT_FOUND);
+        }
+        $this->validate();
+        $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
+        $command = (new StoreObject($this->_riak))
+            ->buildObject($this)
+            ->atLocation($this->_location);
+        $this->addIndex($command, $found_all_idx, self::$BUCKET_NAME);
+        $this->addIndex($command, self::$INDEX_NAME, $primary_index_value);
+        return $command;
     }
 
     public function prepareUpdate()
     {
-        $this->validate();
-
-        if (empty($this->object)) {
+        if (empty($this->_object)) {
             throw new Exception(Response::ERR_NOT_FOUND);
         }
 
-        $save = $this->object->setData(json_encode($this));
-        $updateCommand = (new StoreObject($this->riak))
-            ->withObject($save)
-            ->atLocation($this->location);
-
-        return $updateCommand;
-    }
-
-    public function prepareCreate()
-    {
         $this->validate();
-
-        $response = (new StoreIndex($this->riak))
-            ->withName($this->INDEX_NAME)
-            ->build()
-            ->execute();
-
-        $response = (new StoreIndex($this->riak))
-            ->withName($this->BUCKET_NAME . '_bin')
-            ->build()
-            ->execute();
-
-        $command = (new StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        $command->getObject()->addValueToIndex($this->BUCKET_NAME . '_bin', $this->BUCKET_NAME);
-
+        $save = $this->_object->setData(json_encode($this));
+        $command = (new StoreObject($this->_riak))
+            ->withObject($save)
+            ->atLocation($this->_location);
         return $command;
     }
 
     public function delete()
     {
-        $deleteCommand = (new DeleteObject($this->riak))
-            ->atLocation($this->location)
-            ->build();
-
-        $result = $deleteCommand->execute();
-
-        return $result->isSuccess();
+        return (new DeleteObject($this->_riak))
+            ->atLocation($this->_location)
+            ->build()
+            ->execute()
+            ->isSuccess();
     }
 
-    public function getDataByID($id)
+    public static function getDataByID($id)
     {
+        self::setPrimaryAttributes();
         $data = false;
-        $response = (new FetchObject($this->riak))
-            ->buildLocation($id, $this->BUCKET_NAME)
+        $riak = DI::getDefault()->get('riak');
+        $response = (new FetchObject($riak))
+            ->buildLocation($id, self::$BUCKET_NAME)
             ->build()
             ->execute();
-
         if ($response->isSuccess() && $response->getObject()) {
             $data = json_decode($response->getObject()->getData());
         }
@@ -164,46 +157,29 @@ class ModelBase
         return $data;
     }
 
-    public function __toString()
+    public static function isExist($id)
     {
-        return json_encode(get_object_vars($this));
-    }
-
-    protected function validateIsAllPresent()
-    {
-        foreach (get_object_vars($this) as $key => $value) {
-            if (empty($value)) {
-                throw new Exception(Exception::EMPTY_PARAM, $key);
-            }
-        }
-    }
-
-    /*public function isExist($index)
-    {
-        $this->checkConsts();
-
-        $response = (new QueryIndex($this->riak))
-            ->buildBucket($this->BUCKET_NAME)
-            ->withIndexName($this->INDEX_NAME)
-            ->withScalarValue($index)
+        self::setPrimaryAttributes();
+        $riak = DI::getDefault()->get('riak');
+        return (new Command\Builder\QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName(self::$INDEX_NAME)
+            ->withScalarValue($id)
             ->withMaxResults(1)
             ->build()
             ->execute()
             ->getResults();
+    }
 
-        return $response;
-    }*/
-
-    public function getList($limit = null, $offset = null)
+    public static function find($limit = null, $offset = null)
     {
-        $this->checkConsts();
-
+        self::setPrimaryAttributes();
         $models = [];
-
-        $object = (new QueryIndex($this->riak))
-            ->buildBucket($this->BUCKET_NAME)
-            ->withIndexName($this->BUCKET_NAME . '_bin')
-            ->withScalarValue($this->BUCKET_NAME);
+        $riak = DI::getDefault()->get('riak');
+        $object = (new QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName(self::$BUCKET_NAME . '_bin')
+            ->withScalarValue(self::$BUCKET_NAME);
 
         if (!empty($limit)) {
             $object
@@ -214,10 +190,10 @@ class ModelBase
         if (!empty($offset) && $offset > 0) {
 
             //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new QueryIndex($this->riak))
-                ->buildBucket($this->BUCKET_NAME)
-                ->withIndexName($this->BUCKET_NAME . '_bin')
-                ->withScalarValue($this->BUCKET_NAME)
+            $continuation = (new QueryIndex($riak))
+                ->buildBucket(self::$BUCKET_NAME)
+                ->withIndexName(self::$BUCKET_NAME . '_bin')
+                ->withScalarValue(self::$BUCKET_NAME)
                 ->withMaxResults($offset)
                 ->build()
                 ->execute()
@@ -237,7 +213,7 @@ class ModelBase
 
         foreach ($response as $code) {
 
-            $data = $this->getDataByBucketAndID($this->BUCKET_NAME, $code);
+            $data = self::getDataByID($code);
 
             if (!empty($data)) {
                 $models[] = $data;
@@ -246,5 +222,35 @@ class ModelBase
         }
 
         return $models;
+    }
+
+    public static function findFirst($id)
+    {
+        return (new self($id))->loadData();
+    }
+
+    private function getModelProperties()
+    {
+        $data = [];
+        foreach (get_object_vars($this) as $key => $value) {
+            if (strpos($key, '_') !== 0) {
+                $data[$key] = $value;
+            }
+        }
+        return $data;
+    }
+
+    public function __toString() //TODO ??
+    {
+        return json_encode($this->getModelProperties());
+    }
+
+    protected function validateIsAllPresent()
+    {
+        foreach ($this->getModelProperties() as $key => $value) {
+            if (empty($value)) {
+                throw new Exception(Exception::EMPTY_PARAM, $key);
+            }
+        }
     }
 }
