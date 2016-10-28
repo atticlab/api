@@ -82,7 +82,7 @@ class CompaniesUnitTest extends \UnitTestCase
         // Create a POST request
         $response = $client->request(
             'POST',
-            'http://192.168.1.155:8180/companies',
+            'http://' . $this->api_host .'/companies',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -149,7 +149,7 @@ class CompaniesUnitTest extends \UnitTestCase
             // Create a GET request
             $response = $client->request(
                 'GET',
-                'http://192.168.1.155:8180/companies/' . $code,
+                'http://' . $this->api_host .'/companies/' . $code,
                 [
                     'headers' => [
                         'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -222,7 +222,7 @@ class CompaniesUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/companies',
+            'http://' . $this->api_host .'/companies',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -288,7 +288,7 @@ class CompaniesUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/companies/' . $code,
+            'http://' . $this->api_host .'/companies/' . $code,
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])

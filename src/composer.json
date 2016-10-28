@@ -4,6 +4,7 @@
         "phalcon/incubator": "^2.0",
         "basho/riak": "3.0.*",
         "guzzlehttp/guzzle": "~6.0",
+        "ramsey/uuid": "^3.5",
         "monolog/monolog": "^1.21"
     },
     "repositories":[

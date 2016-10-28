@@ -36,7 +36,6 @@ class CompaniesController extends ControllerBase
         try {
             $company = new Companies($code);
         } catch (Exception $e) {
-
             $this->handleException($e->getCode(), $e->getMessage());
         }
 

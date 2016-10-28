@@ -176,7 +176,7 @@ class InvoicesUnitTest extends \UnitTestCase
             }
 
             //delete test invoice
-            $cur_invoice = Invoices::get($id);
+            $cur_invoice = Invoices::findFirst($id);
             if ($cur_invoice) {
                 $cur_invoice->delete();
             }
@@ -422,7 +422,7 @@ class InvoicesUnitTest extends \UnitTestCase
 //            );
 
             //delete test ban
-            $cur_ban = InvoicesBans::get($account_id);
+            $cur_ban = InvoicesBans::findFirst($account_id);
             if ($cur_ban) {
                 $cur_ban->delete();
             }

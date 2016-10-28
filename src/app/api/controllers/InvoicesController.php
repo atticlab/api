@@ -28,7 +28,7 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        $ban_data = InvoicesBans::get($requester);
+        $ban_data = InvoicesBans::getDataByID($requester);
 
         if (!empty($ban_data) && !empty($ban_data->blocked)  && $ban_data->blocked > time()) {
             return $this->response->error(Response::ERR_ACC_BLOCKED);
@@ -83,7 +83,7 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        $ban_data = InvoicesBans::get($requester);
+        $ban_data = InvoicesBans::getDataByID($requester);
 
         if (!empty($ban_data) && !empty($ban_data->blocked) && $ban_data->blocked > time()) {
             return $this->response->error(Response::ERR_ACC_BLOCKED);
@@ -101,7 +101,7 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'invoice');
         }
 
-        $invoice = Invoices::get($id);
+        $invoice = Invoices::findFirst($id);
 
         if (isset($invoice->expires) && $invoice->expires < time()) {
             return $this->response->error(Response::ERR_INV_EXPIRED);
@@ -137,9 +137,7 @@ class InvoicesController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-
             $this->handleException($e->getCode(), $e->getMessage());
-
         }
 
     }
@@ -163,7 +161,7 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        $ban_data = InvoicesBans::get($requester);
+        $ban_data = InvoicesBans::getDataByID($requester);
 
         if (!empty($ban_data) && !empty($ban_data->blocked) && $ban_data->blocked > time()) {
             return $this->response->error(Response::ERR_ACC_BLOCKED);
@@ -174,10 +172,10 @@ class InvoicesController extends ControllerBase
 
         if (!empty($this->request->get('account_id'))) {
             //get invoices per account
-            $invoices = Invoices::getListPerAccount($this->request->get('account_id'), $limit, $offset);
+            $invoices = Invoices::findPerAccount($this->request->get('account_id'), $limit, $offset);
         } else {
             //get all invoices
-            $invoices = Invoices::getList($limit, $offset);
+            $invoices = Invoices::find($limit, $offset);
         }
 
         return $this->response->items($invoices);
@@ -201,6 +199,10 @@ class InvoicesController extends ControllerBase
         $account_id = $this->payload->account_id ?? null;
         $seconds    = isset($this->payload->seconds) ? $this->payload->seconds : null; //$seconds can be 0, it means unban
 
+        if (empty($account_id)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_id');
+        }
+
         if ($seconds == null) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'seconds');
         }
@@ -209,8 +211,13 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'seconds');
         }
 
-        $ban           = new InvoicesBans($account_id);
-        $ban->blocked  = $seconds > 0 ? time() + $seconds : 0;
+        try {
+            $ban = new InvoicesBans($account_id);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
+
+        $ban->blocked = $seconds > 0 ? time() + $seconds : 0;
 
         try {
 
@@ -250,7 +257,7 @@ class InvoicesController extends ControllerBase
 //        }
 //
 //        //get ban by account_id
-//        $data = InvoicesBans::get($account_id);
+//        $data = InvoicesBans::getDataByID($account_id);
 //
 //        $seconds_left = 0; //left seconds to unban
 //
@@ -280,7 +287,7 @@ class InvoicesController extends ControllerBase
         $limit  = $this->request->get('limit') ?? null;
         $offset = $this->request->get('offset')  ?? null;
 
-        $bans   = InvoicesBans::getList($limit, $offset);
+        $bans   = InvoicesBans::find($limit, $offset);
 
         return $this->response->items($bans);
 

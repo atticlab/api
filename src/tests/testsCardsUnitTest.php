@@ -17,32 +17,39 @@ class CardsUnitTest extends \UnitTestCase
     public static function CreateCardProvider()
     {
 
-        $test_seed = '';
+        $crypt_seed = 'crypt_seed';
+        $account_id = 'GDXJJRGKHDIH3HQW5OMVUXXAR25EBX6GRDU5XVPEAWH2WOZYQ2ZHXI35'; //zanonym4/123123
 
         return array(
 
-            //example: array (requester_type, seed, amount, asset, http_code, err_code, message)
+            //example: array (requester_type, account_id, seed, type, amount, asset, http_code, err_code, message)
+
+            //no account_id
+            array('agent', null, $crypt_seed, 0, 100, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'account_id'),
 
             //no seed
-            array('agent', null, 100, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'seed'),
-
-            //bad seed
-            array('agent', 'bad_seed', 100, 'EUAH', 400, Response::ERR_BAD_PARAM, 'seed'),
+            array('agent', $account_id, null, 0, 100, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'seed'),
 
             //no amount
-            array('agent', $test_seed, null, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'amount'),
+            array('agent', $account_id, $crypt_seed, 0, null, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'amount'),
 
             //bad amount
-            array('agent', $test_seed, -100, 'EUAH', 400, Response::ERR_BAD_PARAM, 'amount'),
+            array('agent', $account_id, $crypt_seed, 0, -100, 'EUAH', 400, Response::ERR_BAD_PARAM, 'amount'),
 
             //no asset
-            array('agent', $test_seed, 100, null, 400, Response::ERR_EMPTY_PARAM, 'asset'),
+            array('agent', $account_id, $crypt_seed, 0, 100, null, 400, Response::ERR_EMPTY_PARAM, 'asset'),
+
+            //no type
+            array('agent', $account_id, $crypt_seed, null, 100, 'EUAH', 400, Response::ERR_EMPTY_PARAM, 'type'),
+
+            //bad type
+            array('agent', $account_id, $crypt_seed, 666, 100, 'EUAH', 400, Response::ERR_BAD_PARAM, 'type'),
 
             //bad requester account type
-            array('anonym', $test_seed, 100, 'EUAH', 400, Response::ERR_BAD_TYPE, null),
+            array('anonym', $account_id, $crypt_seed, 0, 100, 'EUAH', 400, Response::ERR_BAD_TYPE, null),
 
             //all ok - will create card
-            array('agent', $test_seed, 100, 'EUAH', 200, null, null),
+            array('agent', $account_id, $crypt_seed, 0, 100, 'EUAH', 200, null, 'success'),
 
         );
 
@@ -51,7 +58,7 @@ class CardsUnitTest extends \UnitTestCase
     /**
      * @dataProvider CreateCardProvider
      */
-    public function testCreateCard($requester_type, $seed, $amount, $asset, $http_code, $err_code, $msg)
+    public function testCreateCard($requester_type, $account_id, $seed, $type, $amount, $asset, $http_code, $err_code, $msg)
     {
 
         parent::setUp();
@@ -66,16 +73,18 @@ class CardsUnitTest extends \UnitTestCase
         // Create a POST request
         $response = $client->request(
             'POST',
-            'http://192.168.1.155:8180/cards',
+            'http://' . $this->api_host .'/cards',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                 ],
                 'http_errors' => false,
                 'form_params' => [
-                    "seed"      => $seed,
-                    "amount"    => $amount,
-                    "asset"     => $asset
+                    "account_id" => $account_id,
+                    "seed"       => $seed,
+                    "amount"     => $amount,
+                    "asset"      => $asset,
+                    "type"       => $type
                 ]
             ]
         );
@@ -91,44 +100,52 @@ class CardsUnitTest extends \UnitTestCase
             $real_http_code
         );
 
-        //test error code
+        $this->assertTrue(
+            !empty($encode_data)
+        );
+
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
+            //test error code
             $this->assertEquals(
                 $err_code,
                 $encode_data->error
             );
         }
 
-        //check ERROR message (in case of success - answer will return with different structure
-        if ($real_http_code != 200) {
-            //test message
-            if ($msg) {
-                $this->assertEquals(
-                    $msg,
-                    $encode_data->message
-                );
-            }
+        //test message
+        if ($msg) {
+
+            //test message data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'message')
+            );
+
+            $this->assertEquals(
+                $msg,
+                $encode_data->message
+            );
         }
 
         //when we make test that success create card
         if ($real_http_code == 200) {
 
-            $this->assertTrue(
-                !empty($encode_data->card_id)
-            );
-
-            //[TEST] get early created card by card_id -------------------
+            //[TEST] get early created card by account_id -------------------
 
             // Create a GET request
             $response = $client->request(
                 'GET',
-                'http://192.168.1.155:8180/cards',
+                'http://' . $this->api_host .'/cards/' . $account_id,
                 [
                     'headers' => [
                         'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                     ],
-                    'http_errors' => false,
-                    'query' => ['card_id' => $encode_data->card_id]
+                    'http_errors' => false
                 ]
             );
 
@@ -142,14 +159,24 @@ class CardsUnitTest extends \UnitTestCase
                 $real_http_code
             );
 
+            $this->assertTrue(
+                !empty($encode_data)
+            );
+
             $this->assertInternalType('object', $encode_data);
 
             $this->assertTrue(
-                !empty($encode_data->card_id)
+                property_exists($encode_data, 'account_id')
+            );
+
+            $this->assertEquals(
+                $account_id,
+                $encode_data->account_id
             );
 
             //delete test company
-            $cur_card = Cards::get($encode_data->card_id);
+            $cur_card = Cards::findFirst($encode_data->account_id);
+
             if ($cur_card) {
                 $cur_card->delete();
             }
@@ -191,7 +218,7 @@ class CardsUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://192.168.1.155:8180/cards',
+            'http://' . $this->api_host .'/cards',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -210,8 +237,14 @@ class CardsUnitTest extends \UnitTestCase
             $real_http_code
         );
 
-        //test error code
         if ($err_code) {
+
+            //test error data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'error')
+            );
+
+            //test error code
             $this->assertEquals(
                 $err_code,
                 $encode_data->error
@@ -219,6 +252,10 @@ class CardsUnitTest extends \UnitTestCase
         }
 
         if ($real_http_code == 200) {
+
+            $this->assertTrue(
+                property_exists($encode_data, 'items')
+            );
 
             $this->assertInternalType('object', $encode_data);
             $this->assertInternalType('array',  $encode_data->items);

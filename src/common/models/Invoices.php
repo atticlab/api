@@ -28,7 +28,7 @@ class Invoices extends ModelBase implements ModelInterface
 
     public function __construct($id = null)
     {
-        //if $id - null - need to create new invoice
+        //if $id null - need to create new invoice
         if (empty($id)) {
             $id = self::generateUniqueId();
         }
@@ -146,9 +146,7 @@ class Invoices extends ModelBase implements ModelInterface
 
     public function create()
     {
-
-
-        $command = $this->prepareCreate($this->code);
+        $command = $this->prepareCreate($this->id);
         //create secondary indexes here with addIndex method
 
         if (isset($this->account)) {
@@ -163,9 +161,11 @@ class Invoices extends ModelBase implements ModelInterface
     {
         $command = $this->prepareUpdate();
         //good place to update secondary indexes with addIndex method
+
         if (isset($this->account)) {
             $this->addIndex($command, 'account_bin', $this->account);
         }
+
         return $this->build($command);
     }
 

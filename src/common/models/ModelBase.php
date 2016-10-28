@@ -40,7 +40,7 @@ abstract class ModelBase
     public static function setPrimaryAttributes()
     {
         $class_name = explode('\\', get_called_class());
-        $real_class_name = $class_name[count($class_name) - 1];
+        $real_class_name = mb_strtolower($class_name[count($class_name) - 1]);
 
         self::$BUCKET_NAME = $real_class_name;
         self::$INDEX_NAME = 'index_bin';
@@ -57,6 +57,7 @@ abstract class ModelBase
         $this->_riak = $riak;
         $this->_bucket = new Bucket(self::$BUCKET_NAME);
         $this->_location = new Riak\Location($index, $this->_bucket);
+
     }
 
     protected function setFromJSON($data)
@@ -108,6 +109,7 @@ abstract class ModelBase
 
     public function prepareCreate($primary_index_value)
     {
+
         $this->validate();
         $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
         $command = (new StoreObject($this->_riak))
