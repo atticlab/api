@@ -51,6 +51,8 @@ class RegUsersUnitTest extends \UnitTestCase
             $result_array[] = array_merge(array($requester_type), $cuttted_params, $errors[$i]);
             $i++;
         }
+        //add fully filled data at the end
+        $result_array[] = array_merge(array($requester_type), $params, array(200, null, null));
 
         return $result_array;
     }
@@ -184,7 +186,7 @@ class RegUsersUnitTest extends \UnitTestCase
             $this->assertInternalType('object', $encode_data);
 
             //delete test company
-            $cur_company = RegUsers::get($ipn_code);
+            $cur_company = RegUsers::findFirst($ipn_code);
             if ($cur_company) {
                 $cur_company->delete();
             }
