@@ -29,16 +29,16 @@ class MerchantUnitTest extends \UnitTestCase
             array('merchant', 'bad_url', 'store_name', 400, Response::ERR_BAD_PARAM, 'url'),
 
             //no name
-            array('merchant', 'test.google.com', null, 400, Response::ERR_EMPTY_PARAM, 'name'),
+            array('merchant', 'google2.com', null, 400, Response::ERR_EMPTY_PARAM, 'name'),
 
             //bad name
-            array('merchant', 'test.google.com', 'name_more_than_20_symbols', 400, Response::ERR_BAD_PARAM, 'name'),
+            array('merchant', 'google2.com', 'name_more_than_20_symbols', 400, Response::ERR_BAD_PARAM, 'name'),
 
             //bad type
-            array('anonym', 'test.google.com', 'store_name', 400, Response::ERR_BAD_TYPE, null),
+            array('anonym', 'google2.com', 'store_name', 400, Response::ERR_BAD_TYPE, null),
 
             //all ok - will create store
-            array('merchant', 'test.google.com', 'store_name', 200, null, null),
+            array('merchant', 'google2.com', 'store_name', 200, null, null),
 
         );
 
@@ -123,13 +123,104 @@ class MerchantUnitTest extends \UnitTestCase
 
             $url = MerchantStores::formatUrl($url);
 
-            //base64 is needed for riak!!!
-            //"url" can not be used like primary key
-            //because riak dont save that object (but will return success!!!)
-            $url = base64_encode($url);
+            $cur_store = MerchantStores::findFirst($url);
+
+            //create order for new merchant
+
+            /* //required fields (* - optional)
+             * merchant_id,
+             * amount,
+             * currency (in iso - UAH, USD, etc.),
+             * order_id (on merchant site),
+             * server_url,
+             * success_url,
+             * fail_url,
+             * signature,
+             * details *
+             */
+
+            $store_id     = $cur_store->store_id;
+            $amount       = 1;
+            $currency     = 'UAH';
+            $order_id     = 1;
+            $server_url   = base64_decode($cur_store->url) . '/server';
+            $success_url  = base64_decode($cur_store->url) . '/success';
+            $fail_url     = base64_decode($cur_store->url) . '/fail';
+            $details      = 'test details';
+
+            $data = [
+                'store_id' => $store_id,
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => $currency,
+                'order_id' => (string)$order_id,
+                'details' => $details,
+            ];
+            ksort($data);
+            $base64_data = base64_encode(json_encode($data));
+            $verify_signature = base64_encode(hash('sha256', ($cur_store->secret_key . $base64_data)));
+
+            $signature = $verify_signature;
+
+            // Initialize Guzzle client
+            $client = new Client();
+
+            $user_data = $this->test_config['anonym'];
+            $user_data['secret_key'] = Account::decodeCheck('seed', $user_data['seed']);
+
+            //[TEST] create order -------------------
+
+            // Create a POST request
+            $response = $client->request(
+                'POST',
+                'http://' . $this->api_host .'/merchant/orders',
+                [
+                    'headers' => [
+                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                    ],
+                    'http_errors' => false,
+                    'form_params' => [
+                         "store_id" => $store_id,
+                         "amount" => $amount,
+                         "currency" => $currency,
+                         "order_id" => $order_id,
+                         "server_url" => $server_url,
+                         "success_url" => $success_url,
+                         "fail_url" => $fail_url,
+                         "signature" => $signature,
+                         "details" => $details,
+                    ]
+                ]
+            );
+
+            $real_http_code = $response->getStatusCode();
+            $stream         = $response->getBody();
+            $body           = $stream->getContents();
+            $encode_data    = json_decode($body);
+
+            $this->assertEquals(
+                200,
+                $real_http_code
+            );
+
+            $this->assertTrue(
+                !empty($encode_data)
+            );
+
+            $this->assertInternalType('object', $encode_data);
+
+            //test answer data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'id')
+            );
+
+            $cur_order = MerchantOrders::findFirst($encode_data->id);
+
+            //delete test order
+            if ($cur_order) {
+                $cur_order->delete();
+            }
 
             //delete test store
-            $cur_store = MerchantStores::findFirst($url);
             if ($cur_store) {
                 $cur_store->delete();
             }
@@ -216,5 +307,4 @@ class MerchantUnitTest extends \UnitTestCase
         }
 
     }
-
 }

@@ -12,67 +12,109 @@ use Smartmoney\Stellar\Account;
 class MerchantOrders extends ModelBase
 {
 
-    const BUCKET_NAME = 'orders';
-    const INDEX_NAME  = 'account_id_bin';
+    const STATUS_WAIT_PAYMENT = 1; //create order record in db, wait payment
+    const STATUS_WAIT_ANSWER = 2; //payment complete, wait answer from merchant domain
+    const STATUS_PARTIAL_PAYMENT = 3; //amount of payment is less than amount of order
+    const STATUS_FAIL = 4;
+    const STATUS_SUCCESS = 5;
 
-    public $field;
+    const ID_LENGTH = 11;
 
-    public function __construct($field)
-    {
+    public $id; //random 11 symbols (a-zA-Z0-9)
+    public $store_id; //merchant id
+    public $amount; //amount of order
+    public $payment_amount; //amount of payment
+    public $currency; //currency of order
+    public $external_order_id; //id of order that was generated on merchant site
+    public $details; //description of payment
+    public $error_details; //description of error
+    public $server_url; //url on merchant site for sending answer from merchant server
+    public $success_url; //url for redirect user if payment status success
+    public $fail_url; //url for redirect user if payment status fail
+    public $status; //status of order
+    public $date; //date of order create
+    public $payment_date; //date of payment complete
+    public $bot_request_count; //count of bot request tries
+    public $server_url_data; //ready formating data for sending to order server_url
+    public $payer; //account id of payer
+    //public $answers_server_url; //save all answers from merchant server url
+    public $tx; //transaction id
 
-        $riak = DI::getDefault()->get('riak');
+    public static function generateID(){
 
-        $this->riak  = $riak;
-        $this->field = $field;
+        do {
+            $id = '';
 
-        $this->bucket     = new Bucket(self::BUCKET_NAME);
-        $this->location   = new Riak\Location($field, $this->bucket);
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $charactersLength = strlen($characters);
+            for ($i = 0; $i < self::ID_LENGTH; $i++) {
+                $id .= $characters[rand(0, $charactersLength - 1)];
+            }
+        } while (self::isExist($id));
+
+        return $id;
+
     }
 
-    public function __toString()
+    public function __construct($id = null)
     {
-        return json_encode([
-            'field' => $this->field
-        ]);
+        //if $id null - need to create new invoice
+        if (empty($id)) {
+            $id = self::generateID();
+        }
+
+        parent::__construct($id);
+        $this->id = $id;
     }
 
     public function validate(){
 
-        if (empty($this->field)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'field');
+        if (empty($this->id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'id');
+        }
+
+        if (empty($this->store_id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'store_id');
+        }
+
+        if (!MerchantStores::getDataByStoreID($this->store_id)) {
+            throw new Exception(Exception::BAD_PARAM, 'store_id');
+        }
+
+        if (empty($this->amount)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'amount');
+        }
+
+        if (!is_numeric($this->amount) || $this->amount <= 0) {
+            throw new Exception(Exception::BAD_PARAM, 'amount');
+        }
+
+        if (empty($this->currency)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'currency');
+        }
+
+        if (empty($this->external_order_id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'external_order_id');
+        }
+
+        if (empty($this->status)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'status');
         }
 
     }
 
-    public static function isExist($account_id)
+    public static function findStoreOrders($store_id, $limit = null, $offset = null)
     {
+        self::setPrimaryAttributes();
+
+        $orders = [];
 
         $riak = DI::getDefault()->get('riak');
 
-        $response = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName(self::INDEX_NAME)
-            ->withScalarValue($account_id)
-            ->withMaxResults(1)
-            ->build()
-            ->execute()
-            ->getResults();
-
-        return $response;
-
-    }
-
-    public static function getList($agent_id, $limit = null, $offset = null)
-    {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $companies = [];
-
-        $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('agent_id_bin')
-            ->withScalarValue($agent_id);
+        $object = (new QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName('store_id_bin')
+            ->withScalarValue($store_id);
 
         if (!empty($limit)) {
             $object
@@ -83,10 +125,10 @@ class MerchantOrders extends ModelBase
         if (!empty($offset) && $offset > 0) {
 
             //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::BUCKET_NAME)
-                ->withIndexName('agent_id_bin')
-                ->withScalarValue($agent_id)
+            $continuation = (new QueryIndex($riak))
+                ->buildBucket(self::$BUCKET_NAME)
+                ->withIndexName('store_id_bin')
+                ->withScalarValue($store_id)
                 ->withMaxResults($offset)
                 ->build()
                 ->execute()
@@ -96,8 +138,7 @@ class MerchantOrders extends ModelBase
                 return [];
             }
 
-            $object
-                ->withContinuation($continuation);
+            $object->withContinuation($continuation);
         }
 
         $response = $object
@@ -105,106 +146,42 @@ class MerchantOrders extends ModelBase
             ->execute()
             ->getResults();
 
-        foreach ($response as $code) {
+        foreach ($response as $order) {
 
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $code);
+            $data = self::getDataByID($order);
 
             if (!empty($data)) {
-                $companies[] = $data;
+                $orders[] = $data;
             }
 
         }
 
-        return $companies;
-    }
-
-    /**
-     * @param $code
-     * @return $this|bool
-     */
-    public static function get($account_id){
-
-        $data = new self($account_id);
-        return $data->loadData();
-
-    }
-
-    /**
-     * @param $id - card account id
-     * @return array
-     */
-    public static function getSingle($account_id, $agent_id)
-    {
-
-        $data = self::getDataByBucketAndID(self::BUCKET_NAME, $account_id);
-
-        if (!empty($data->agent_id) && $data->agent_id != $agent_id) {
-            return false;
-        }
-
-        return (array)$data;
+        return $orders;
     }
 
     public function create()
     {
+        $command = $this->prepareCreate($this->id);
+        //create secondary indexes here with addIndex method
 
-        $this->validate();
-
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName(self::INDEX_NAME)
-            ->build()
-            ->execute();
-
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('agent_id_bin')
-            ->build()
-            ->execute();
-
-        $command = (new Command\Builder\StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        if (isset($this->account_id)) {
-            $command->getObject()->addValueToIndex(self::INDEX_NAME, $this->account_id);
+        if (isset($this->account)) {
+            $this->addIndex($command, 'store_id_bin', $this->account);
         }
 
-        if (isset($this->agent_id)) {
-            $command->getObject()->addValueToIndex('agent_id_bin', $this->agent_id);
-        }
-
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
+        return $this->build($command);
 
     }
 
     public function update()
     {
+        $command = $this->prepareUpdate();
+        //good place to update secondary indexes with addIndex method
 
-        $this->validate();
-
-        if (empty($this->object)) {
-            throw new \Exception('object_not_loaded');
+        if (isset($this->account)) {
+            $this->addIndex($command, 'store_id_bin', $this->account);
         }
 
-        $result = (new Command\Builder\StoreObject($this->riak))
-            ->withObject($this->object->setData(json_encode($this)))
-            ->atLocation($this->location)
-            ->build()
-            ->execute();
-
-        $command = (new Command\Builder\StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        if (isset($this->agent_id)) {
-            $command->getObject()->addValueToIndex('agent_id_bin', $this->agent_id);
-        }
-
-        $command->build()->execute();
-
-        return $result->isSuccess();
-
+        return $this->build($command);
     }
 
 }

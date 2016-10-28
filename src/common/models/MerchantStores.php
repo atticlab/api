@@ -8,6 +8,7 @@ use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
 use Smartmoney\Stellar\Account;
+use Basho\Riak\Command\Builder\FetchObject;
 
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
@@ -20,7 +21,7 @@ class MerchantStores extends ModelBase
     public $name;               //"human" name of store
     public $merchant_id;        //merchant account id
     public $date;               //date of registrations
-    public $store_id;           //secret key for verify data
+    public $store_id;           //store id (uuid v5)
     public $secret_key;         //secret key for verify data
 
     public function __construct($url)
@@ -163,6 +164,29 @@ class MerchantStores extends ModelBase
 //        return (array)$data;
 //    }
 
+    public static function getDataByStoreID($id)
+    {
+
+        self::setPrimaryAttributes();
+        $riak = DI::getDefault()->get('riak');
+
+        $url = (new Command\Builder\QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName('store_id_bin')
+            ->withScalarValue($id)
+            ->withMaxResults(1)
+            ->build()
+            ->execute()
+            ->getResults();
+
+        if (empty($url[0])){
+            return false;
+        }
+
+        return self::getDataByID($url[0]);
+
+    }
+
     public function create()
     {
 
@@ -171,6 +195,10 @@ class MerchantStores extends ModelBase
 
         if (isset($this->merchant_id)) {
             $this->addIndex($command, 'merchant_id_bin', $this->merchant_id);
+        }
+
+        if (isset($this->store_id)) {
+            $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
 
         return $this->build($command);
@@ -183,6 +211,10 @@ class MerchantStores extends ModelBase
 
         if (isset($this->merchant_id)) {
             $this->addIndex($command, 'merchant_id_bin', $this->merchant_id);
+        }
+
+        if (isset($this->store_id)) {
+            $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
 
         return $this->build($command);
