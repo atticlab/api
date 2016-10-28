@@ -32,6 +32,7 @@ class Companies extends ModelBase implements ModelInterface
     {
 
         $command = $this->prepareCreate($this->code);
+        //create secondary indexes here with addIndex method
         return $this->build($command);
 
     }

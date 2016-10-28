@@ -67,12 +67,7 @@ class CompaniesUnitTest extends \UnitTestCase
 
         //[TEST] create new company ------------------
 
-
-
-
         if (!empty($code) && Companies::isExist($code)) {
-
-            $company = new Companies($code);
 
             do {
                 //find free company code
@@ -185,7 +180,7 @@ class CompaniesUnitTest extends \UnitTestCase
             $this->assertInternalType('object', $encode_data);
 
             //delete test company
-            $cur_company = Companies::get($code);
+            $cur_company = Companies::findFirst($code);
             if ($cur_company) {
                 $cur_company->delete();
             }

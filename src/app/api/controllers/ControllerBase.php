@@ -52,6 +52,14 @@ class ControllerBase extends \Phalcon\Mvc\Controller
                 return $this->response->error(Response::ERR_SERVICE, $msg);
                 break;
 
+            case Exception::NOT_FOUND:
+                return $this->response->error(Response::ERR_NOT_FOUND, $msg);
+                break;
+
+            case Exception::UNKNOWN:
+                return $this->response->error(Response::ERR_UNKNOWN, $msg);
+                break;
+
             default:
                 $this->logger->emergency('Unknown error with code ' . $code . ' and message ' . $msg);
                 return $this->response->error(Response::ERR_UNKNOWN);

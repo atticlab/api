@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Controllers\RegusersController;
 use App\Lib\Response;
-use App\lib\Exception;
+use App\Lib\Exception;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -15,7 +15,7 @@ use Basho\Riak\Command\Builder\Search\StoreIndex;
 use Basho\Riak\Command\Builder\StoreObject;
 use Phalcon\DI;
 
-class ModelBase
+abstract class ModelBase
 {
     /**
      * @var Riak $riak
@@ -34,8 +34,8 @@ class ModelBase
      */
     protected $_location;
 
-    private static $BUCKET_NAME;
-    private static $INDEX_NAME;
+    protected static $BUCKET_NAME;
+    protected static $INDEX_NAME;
 
     public static function setPrimaryAttributes()
     {
@@ -49,7 +49,7 @@ class ModelBase
     public function __construct($index)
     {
         if (empty($index)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'NO_INDEX');
+            throw new Exception(Exception::EMPTY_PARAM, 'PRIMARY_INDEX');
         }
 
         self::setPrimaryAttributes();
@@ -79,13 +79,13 @@ class ModelBase
         if ($response->isSuccess()) {
             $this->_object = $response->getObject();
         } elseif ($response->isNotFound()) {
-            throw new Exception(Response::ERR_NOT_FOUND);
+            throw new Exception(Exception::NOT_FOUND);
         } else {
             throw new Exception(Exception::UNKNOWN . ': ' . $response->getStatusCode());
         }
 
         if (empty($this->_object)) {
-            throw new Exception(Response::ERR_NOT_FOUND);
+            throw new Exception(Exception::EMPTY_PARAM, 'object');
         }
 
         $this->setFromJSON($this->_object->getData());
@@ -121,7 +121,7 @@ class ModelBase
     public function prepareUpdate()
     {
         if (empty($this->_object)) {
-            throw new Exception(Response::ERR_NOT_FOUND);
+            throw new Exception(Exception::NOT_FOUND);
         }
 
         $this->validate();
@@ -226,7 +226,10 @@ class ModelBase
 
     public static function findFirst($id)
     {
-        return (new self($id))->loadData();
+        $class = get_called_class();
+        $data  = new $class($id);
+
+        return $data->loadData();
     }
 
     private function getModelProperties()

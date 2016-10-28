@@ -8,10 +8,9 @@ use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
 
-class Invoices extends ModelBase
+class Invoices extends ModelBase implements ModelInterface
 {
 
-    const BUCKET_NAME = 'invoices';
     const UUID_LENGTH = 6;
     const MEMO_MAX_LENGTH = 14;
 
@@ -29,22 +28,16 @@ class Invoices extends ModelBase
 
     public function __construct($id = null)
     {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $this->riak   = $riak;
-        $this->bucket = new Bucket(self::BUCKET_NAME);
-
-        //if need to create new invoice
+        //if $id - null - need to create new invoice
         if (empty($id)) {
             $id = self::generateUniqueId();
         }
 
+        parent::__construct($id);
         $this->id = $id;
-        $this->location = new Riak\Location($id, $this->bucket);
     }
 
-    private function validate()
+    public function validate()
     {
 
         if (empty($this->id)) {
@@ -77,31 +70,7 @@ class Invoices extends ModelBase
 
     }
 
-    public static function isExist($id)
-    {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $response = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('id_bin')
-            ->withScalarValue($id)
-            ->withMaxResults(1)
-            ->build()
-            ->execute()
-            ->getResults();
-
-        return $response;
-
-    }
-
-    public static function get($id)
-    {
-        $data = new self($id);
-        return $data->loadData();
-    }
-
-    public static function getList($limit = null, $offset = null)
+    public static function findPerAccount($account, $limit = null, $offset = null)
     {
 
         $riak = DI::getDefault()->get('riak');
@@ -109,65 +78,8 @@ class Invoices extends ModelBase
         $invoices = [];
 
         $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('id_bin')
-            ->withRangeValue(str_repeat('0', self::UUID_LENGTH), str_repeat('9', self::UUID_LENGTH));
-
-        if (!empty($limit)) {
-            $object
-                ->withMaxResults($limit);
-        }
-
-        //paginator
-        if (!empty($offset) && $offset > 0) {
-
-            //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::BUCKET_NAME)
-                ->withIndexName('id_bin')
-                ->withRangeValue(str_repeat('0', self::UUID_LENGTH), str_repeat('9', self::UUID_LENGTH))
-                ->withMaxResults($offset)
-                ->build()
-                ->execute()
-                ->getContinuation();
-
-            if (empty($continuation)) {
-                return [];
-            }
-
-            $object
-                ->withContinuation($continuation);
-        }
-
-        $response = $object
-            ->build()
-            ->execute()
-            ->getResults();
-
-        foreach ($response as $invoice_code) {
-
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $invoice_code);
-
-            if (!empty($data)) {
-                $invoices[] = $data;
-            }
-
-        }
-
-        return $invoices;
-    }
-
-    public static function getListPerAccount($account, $limit = null, $offset = null)
-    {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $invoices = [];
-
-        $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)->withIndexName('account_bin')
+            ->buildBucket(self::$BUCKET_NAME)->withIndexName('account_bin')
             ->withScalarValue($account);
-
 
         if (!empty($limit)) {
             $object
@@ -179,7 +91,7 @@ class Invoices extends ModelBase
 
             //get withContinuation for N page by get previos {$offset} records
             $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::BUCKET_NAME)
+                ->buildBucket(self::$BUCKET_NAME)
                 ->withIndexName('account_bin')
                 ->withScalarValue($account)
                 ->withMaxResults($offset)
@@ -202,7 +114,7 @@ class Invoices extends ModelBase
 
         foreach ($response as $invoice_code) {
 
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $invoice_code);
+            $data = self::getDataByID($invoice_code);
 
             if (!empty($data)) {
                 $invoices[] = $data;
@@ -234,53 +146,27 @@ class Invoices extends ModelBase
 
     public function create()
     {
-        $this->validate();
 
-        //create new invoice record
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('id_bin')
-            ->build()
-            ->execute();
 
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('account_bin')
-            ->build()
-            ->execute();
-
-        $command = (new Command\Builder\StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        if (isset($this->id)) {
-            $command->getObject()->addValueToIndex('id_bin', $this->id);
-        }
+        $command = $this->prepareCreate($this->code);
+        //create secondary indexes here with addIndex method
 
         if (isset($this->account)) {
-            $command->getObject()->addValueToIndex('account_bin', $this->account);
+            $this->addIndex($command, 'account_bin', $this->account);
         }
 
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
+        return $this->build($command);
 
     }
 
     public function update()
     {
-        $this->validate();
-
-        if (empty($this->object)) {
-            throw new \Exception('object_not_loaded');
+        $command = $this->prepareUpdate();
+        //good place to update secondary indexes with addIndex method
+        if (isset($this->account)) {
+            $this->addIndex($command, 'account_bin', $this->account);
         }
-
-        $result = (new Command\Builder\StoreObject($this->riak))
-            ->withObject($this->object->setData(json_encode($this)))
-            ->atLocation($this->location)
-            ->build()
-            ->execute();
-
-        return $result->isSuccess();
-
+        return $this->build($command);
     }
 
 }

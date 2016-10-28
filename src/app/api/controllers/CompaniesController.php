@@ -108,6 +108,8 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'company');
         }
 
+        $cmp_test = Companies::findFirst($code);
+
         $company = Companies::getDataByID($code);
 
         $data = [

@@ -8,6 +8,7 @@ class Exception extends \Exception
     const EMPTY_PARAM   = 'EMPTY_PARAM';
     const UNKNOWN       = 'UNKNOWN';
     const SERVICE_ERROR = 'SERVICE_ERROR';
+    const NOT_FOUND     = 'NOT_FOUND';
 
     protected $code;
 
