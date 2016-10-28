@@ -13,7 +13,6 @@ class ControllerBase extends \Phalcon\Mvc\Controller
 
     public function beforeExecuteRoute($dispatcher)
     {
-
         $this->payload = json_decode(file_get_contents('php://input'));
 
         if (empty($this->payload)) {

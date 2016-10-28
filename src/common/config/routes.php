@@ -83,31 +83,36 @@ $router->addPost('/agents/enrollments/approve', [
     'action' => 'enrollmentsApprove',
 ]);
 
-//registered users
-$router->addGet('/regusers', [
-    'controller' => 'regusers',
-    'action' => 'get',
-]);
+    //registered users
+    $router->addGet('/regusers/{id}', [
+        'controller' => 'regUsers',
+        'action' => 'get',
+    ]);
 
-$router->addPost('/regusers', [
-    'controller' => 'regusers',
-    'action' => 'create',
-]);
+    $router->addGet('/regusers', [
+        'controller' => 'regusers',
+        'action' => 'list',
+    ]);
 
-$router->addPost('/regusers/enrollments', [
-    'controller' => 'regusers',
-    'action' => 'enrollmentsCreate',
-]);
+    $router->addPost('/regusers', [
+        'controller' => 'regUsers',
+        'action' => 'create',
+    ]);
 
-$router->addGet('/regusers/enrollments', [
-    'controller' => 'regusers',
-    'action' => 'enrollmentsList',
-]);
+    $router->addPost('/regusers/enrollments', [
+        'controller' => 'regUsers',
+        'action' => 'enrollmentsCreate',
+    ]);
 
-$router->addPost('/regusers/enrollments/approve', [
-    'controller' => 'regusers',
-    'action' => 'enrollmentsApprove',
-]);
+    $router->addGet('/regusers/enrollments', [
+        'controller' => 'regUsers',
+        'action' => 'enrollmentsList',
+    ]);
+
+    $router->addPost('/regusers/enrollments/approve', [
+        'controller' => 'regUsers',
+        'action' => 'enrollmentsApprove',
+    ]);
 
 //cards
 $router->addGet('/cards/{id}', [
