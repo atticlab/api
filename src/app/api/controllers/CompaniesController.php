@@ -36,6 +36,7 @@ class CompaniesController extends ControllerBase
         try {
             $company = new Companies($code);
         } catch (Exception $e) {
+
             $this->handleException($e->getCode(), $e->getMessage());
         }
 
@@ -77,12 +78,10 @@ class CompaniesController extends ControllerBase
         $offset = $this->request->get('offset') ?? null;
 
         try {
-            $result = Companies::getList($limit, $offset);
+            $result = Companies::find($limit, $offset);
         } catch (Exception $e) {
             $this->handleException($e->getCode(), $e->getMessage());
         }
-
-
 
         return $this->response->items($result);
 
@@ -109,12 +108,7 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'company');
         }
 
-        try {
-            $company = new Companies($code);
-            $company->loadData();
-        }  catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
-        }
+        $company = Companies::getDataByID($code);
 
         $data = [
             'code'      => $company->code,

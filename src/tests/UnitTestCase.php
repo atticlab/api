@@ -58,7 +58,7 @@ abstract class UnitTestCase extends PhalconTestCase
         }
 
         $this->test_config = $test_data;
-        $this->api_host    = '127.0.0.1:8180';
+        $this->api_host    = '192.168.1.155:8180';
 
     }
 
@@ -86,7 +86,7 @@ abstract class UnitTestCase extends PhalconTestCase
         // send request for take nonce
         $response = $client->request(
             'GET',
-            'http://'.$this->api_host.':8180/nonce',
+            'http://' . $this->api_host . '/nonce',
             [
                 'http_errors' => false,
                 'query' => ['accountId' => Account::encodeCheck('accountId', base64_encode($public_key))]

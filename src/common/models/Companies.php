@@ -12,9 +12,6 @@ use App\Lib;
 class Companies extends ModelBase implements ModelInterface
 {
 
-    protected $BUCKET_NAME = 'companies';
-    protected $INDEX_NAME =  'code_bin';
-
     public $code;                //EDRPOU analog
     public $title;               //company name
     public $address;             //company registration address
@@ -27,36 +24,23 @@ class Companies extends ModelBase implements ModelInterface
         $this->code = $code;
     }
 
-    public function validate(){
-
+    public function validate() {
         $this->validateIsAllPresent();
-
     }
 
     public function create()
     {
 
-        $command = $this->prepareCreate();
-
-        if (isset($this->code)) {
-            $command->getObject()->addValueToIndex($this->INDEX_NAME, $this->code);
-        }
-
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
+        $command = $this->prepareCreate($this->code);
+        return $this->build($command);
 
     }
 
     public function update()
     {
-
         $command = $this->prepareUpdate();
         //good place to update secondary indexes
-        $response = $command->build()->execute();
-
-        return $response->isSuccess();
-
+        return $this->build($command);
     }
 
 }

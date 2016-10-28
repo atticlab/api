@@ -70,7 +70,7 @@ class CompaniesUnitTest extends \UnitTestCase
 
 
 
-        if (!empty($code))
+        if (!empty($code) && Companies::isExist($code)) {
 
             $company = new Companies($code);
 

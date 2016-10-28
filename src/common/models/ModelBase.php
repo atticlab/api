@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Controllers\RegusersController;
 use App\Lib\Response;
+use App\lib\Exception;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -12,7 +13,6 @@ use Basho\Riak\Command\Builder\FetchObject;
 use Basho\Riak\Command\Builder\QueryIndex;
 use Basho\Riak\Command\Builder\Search\StoreIndex;
 use Basho\Riak\Command\Builder\StoreObject;
-use App\lib\Exception;
 use Phalcon\DI;
 
 class ModelBase
@@ -39,7 +39,10 @@ class ModelBase
 
     public static function setPrimaryAttributes()
     {
-        self::$BUCKET_NAME = get_called_class();
+        $class_name = explode('\\', get_called_class());
+        $real_class_name = $class_name[count($class_name) - 1];
+
+        self::$BUCKET_NAME = $real_class_name;
         self::$INDEX_NAME = 'index_bin';
     }
 
@@ -105,9 +108,6 @@ class ModelBase
 
     public function prepareCreate($primary_index_value)
     {
-        if (empty($this->_object)) {
-            throw new Exception(Response::ERR_NOT_FOUND);
-        }
         $this->validate();
         $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
         $command = (new StoreObject($this->_riak))
