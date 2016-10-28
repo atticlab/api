@@ -58,7 +58,7 @@ abstract class UnitTestCase extends PhalconTestCase
         }
 
         $this->test_config = $test_data;
-        $this->api_host    = '192.168.1.155:8180';
+        $this->api_host    = '192.168.1.106:8180';
 
     }
 
