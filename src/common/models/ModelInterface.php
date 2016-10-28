@@ -1,7 +1,10 @@
 <?php
+
+namespace App\Models;
+
 interface ModelInterface
 {
-    public function validator();
+    public function validate();
     public function create();
     public function update();
 }

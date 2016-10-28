@@ -33,7 +33,11 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'code');
         }
 
-        $company = new Companies($code);
+        try {
+            $company = new Companies($code);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
 
         $company->title   = $this->payload->title   ?? null;
         $company->address = $this->payload->address ?? null;
@@ -49,9 +53,7 @@ class CompaniesController extends ControllerBase
             $this->logger->emergency('Riak error while creating company');
             throw new Exception(Exception::SERVICE_ERROR);
 
-
         } catch (Exception $e) {
-
             $this->handleException($e->getCode(), $e->getMessage());
         }
 
@@ -74,7 +76,13 @@ class CompaniesController extends ControllerBase
         $limit  = $this->request->get('limit')  ?? null;
         $offset = $this->request->get('offset') ?? null;
 
-        $result = Companies::getList($limit, $offset);
+        try {
+            $result = Companies::getList($limit, $offset);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
+
+
 
         return $this->response->items($result);
 
@@ -101,7 +109,12 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'company');
         }
 
-        $company = Companies::get($code);
+        try {
+            $company = new Companies($code);
+            $company->loadData();
+        }  catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
 
         $data = [
             'code'      => $company->code,

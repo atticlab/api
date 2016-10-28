@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Lib\Response;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -10,7 +11,7 @@ use Basho\Riak\Command\Builder\FetchObject;
 use Basho\Riak\Command\Builder\QueryIndex;
 use Basho\Riak\Command\Builder\Search\StoreIndex;
 use Basho\Riak\Command\Builder\StoreObject;
-use Exception;
+use App\lib\Exception;
 use Phalcon\DI;
 
 class ModelBase
@@ -39,12 +40,10 @@ class ModelBase
     {
         if (empty($this->BUCKET_NAME)) {
             throw new Exception(Exception::EMPTY_PARAM, 'BUCKET_NAME');
-            return;
         }
 
         if (empty($this->INDEX_NAME)) {
             throw new Exception(Exception::EMPTY_PARAM, 'INDEX_NAME');
-            return;
         }
     }
 
@@ -54,6 +53,10 @@ class ModelBase
         $riak = DI::getDefault()->get('riak');
 
         $this->riak = $riak;
+
+        if (empty($index)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'INDEX_NAME');
+        }
 
         $this->bucket = new Bucket($this->BUCKET_NAME);
         $this->location = new Riak\Location($index, $this->bucket);
@@ -83,16 +86,15 @@ class ModelBase
         if ($response->isSuccess()) {
             $this->object = $response->getObject();
         } elseif ($response->isNotFound()) {
-            throw new Exception('not_found');
+            throw new Exception(Response::ERR_NOT_FOUND);
         } else {
-            throw new Exception('unknown_error: ' . $response->getStatusCode());
+            throw new Exception(Exception::UNKNOWN . ': ' . $response->getStatusCode());
         }
 
         if (empty($this->object)) {
-            throw new Exception('not_found');
+            throw new Exception(Response::ERR_NOT_FOUND);
         }
 
-        $this->object = $response->getObject();
         $this->setFromJSON($this->object->getData());
         return $this;
     }
@@ -102,14 +104,38 @@ class ModelBase
         $this->validate();
 
         if (empty($this->object)) {
-            throw new Exception('object_not_loaded');
+            throw new Exception(Response::ERR_NOT_FOUND);
         }
 
         $save = $this->object->setData(json_encode($this));
         $updateCommand = (new StoreObject($this->riak))
             ->withObject($save)
             ->atLocation($this->location);
+
         return $updateCommand;
+    }
+
+    public function prepareCreate()
+    {
+        $this->validate();
+
+        $response = (new StoreIndex($this->riak))
+            ->withName($this->INDEX_NAME)
+            ->build()
+            ->execute();
+
+        $response = (new StoreIndex($this->riak))
+            ->withName($this->BUCKET_NAME . '_bin')
+            ->build()
+            ->execute();
+
+        $command = (new StoreObject($this->riak))
+            ->buildObject($this)
+            ->atLocation($this->location);
+
+        $command->getObject()->addValueToIndex($this->BUCKET_NAME . '_bin', $this->BUCKET_NAME);
+
+        return $command;
     }
 
     public function delete()
@@ -220,23 +246,5 @@ class ModelBase
         }
 
         return $models;
-    }
-
-    public function prepareCreate()
-    {
-        $this->validate();
-
-        $response = (new StoreIndex($this->riak))
-            ->withName($this->INDEX_NAME)
-            ->build()
-            ->execute();
-
-        $command = (new StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        $command->getObject()->addValueToIndex($this->BUCKET_NAME . '_bin', $this->BUCKET_NAME);
-
-        return $command;
     }
 }

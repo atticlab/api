@@ -7,11 +7,13 @@ use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
+use App\Lib;
 
-class Companies extends ModelBase
+class Companies extends ModelBase implements ModelInterface
 {
 
-    const BUCKET_NAME = 'companies';
+    protected $BUCKET_NAME = 'companies';
+    protected $INDEX_NAME =  'code_bin';
 
     public $code;                //EDRPOU analog
     public $title;               //company name
@@ -21,139 +23,23 @@ class Companies extends ModelBase
 
     public function __construct($code)
     {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $this->riak     = $riak;
-        $this->code     = $code;
-
-        $this->bucket   = new Bucket(self::BUCKET_NAME);
-        $this->location = new Riak\Location($code, $this->bucket);
+        parent::__construct($code);
+        $this->code = $code;
     }
 
-    private function validate(){
+    public function validate(){
 
-        if (empty($this->code)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'code');
-        }
-
-        if (empty($this->title)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'title');
-        }
-
-        if (empty($this->address)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'address');
-        }
-
-        if (empty($this->phone)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'phone');
-        }
-
-        if (empty($this->email)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'email');
-        }
-
-    }
-
-    public static function isExist($code)
-    {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $response = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('code_bin')
-            ->withScalarValue($code)
-            ->withMaxResults(1)
-            ->build()
-            ->execute()
-            ->getResults();
-
-        return $response;
-
-    }
-
-    public static function getList($limit = null, $offset = null)
-    {
-
-        $riak = DI::getDefault()->get('riak');
-
-        $companies = [];
-
-        $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::BUCKET_NAME)
-            ->withIndexName('found_hack_bin')
-            ->withScalarValue('find_all');
-
-        if (!empty($limit)) {
-            $object
-                ->withMaxResults($limit);
-        }
-
-        //paginator
-        if (!empty($offset) && $offset > 0) {
-
-            //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::BUCKET_NAME)
-                ->withIndexName('found_hack_bin')
-                ->withScalarValue('find_all')
-                ->withMaxResults($offset)
-                ->build()
-                ->execute()
-                ->getContinuation();
-
-            if (empty($continuation)) {
-                return [];
-            }
-
-            $object
-                ->withContinuation($continuation);
-        }
-
-        $response = $object
-            ->build()
-            ->execute()
-            ->getResults();
-
-        foreach ($response as $code) {
-
-            $data = self::getDataByBucketAndID(self::BUCKET_NAME, $code);
-
-            if (!empty($data)) {
-                $companies[] = $data;
-            }
-
-        }
-
-        return $companies;
-    }
-
-    public static function get($code){
-
-        $data = new self($code);
-        return $data->loadData();
+        $this->validateIsAllPresent();
 
     }
 
     public function create()
     {
 
-        $this->validate();
-
-        $response = (new \Basho\Riak\Command\Builder\Search\StoreIndex($this->riak))
-            ->withName('code_bin')
-            ->build()
-            ->execute();
-
-        $command = (new Command\Builder\StoreObject($this->riak))
-            ->buildObject($this)
-            ->atLocation($this->location);
-
-        $command->getObject()->addValueToIndex('found_hack_bin', 'find_all');
+        $command = $this->prepareCreate();
 
         if (isset($this->code)) {
-            $command->getObject()->addValueToIndex('code_bin', $this->code);
+            $command->getObject()->addValueToIndex($this->INDEX_NAME, $this->code);
         }
 
         $response = $command->build()->execute();
@@ -165,19 +51,11 @@ class Companies extends ModelBase
     public function update()
     {
 
-        $this->validate();
+        $command = $this->prepareUpdate();
+        //good place to update secondary indexes
+        $response = $command->build()->execute();
 
-        if (empty($this->object)) {
-            throw new \Exception('object_not_loaded');
-        }
-
-        $result = (new Command\Builder\StoreObject($this->riak))
-            ->withObject($this->object->setData(json_encode($this)))
-            ->atLocation($this->location)
-            ->build()
-            ->execute();
-
-        return $result->isSuccess();
+        return $response->isSuccess();
 
     }
 

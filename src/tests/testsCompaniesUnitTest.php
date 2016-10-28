@@ -66,7 +66,13 @@ class CompaniesUnitTest extends \UnitTestCase
         $client = new Client();
 
         //[TEST] create new company ------------------
-        if (!empty($code) && Companies::isExist($code)) {
+
+
+
+
+        if (!empty($code))
+
+            $company = new Companies($code);
 
             do {
                 //find free company code
