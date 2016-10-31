@@ -283,11 +283,10 @@ abstract class ModelBase
         return $data->loadData();
     }
 
-    /** private and service functions */
     /**
      * Sets model's service fields as bucket name and primary index name
      */
-    private static function setPrimaryAttributes()
+    public static function setPrimaryAttributes()
     {
         $class_name = explode('\\', get_called_class());
         $real_class_name = mb_strtolower($class_name[count($class_name) - 1]);
@@ -295,6 +294,8 @@ abstract class ModelBase
         self::$BUCKET_NAME = $real_class_name;
         self::$INDEX_NAME = 'index_bin';
     }
+
+    /** private and service functions */
 
     /**
      * A way to obtain all model's fields (without service BaseModel fields, which begins from '_'-symbol)
