@@ -53,7 +53,7 @@ class RegusersController extends ControllerBase
                 return $this->response->single(['message' => 'success']);
             }
 
-            $this->logger->emergency('Riak error while creating company');
+            $this->logger->emergency('Riak error while creating reguser');
             return $this->response->error(Response::SERVICE_ERROR);
         } catch (Exception $e) {
             $this->handleException($e->getCode(), $e->getMessage());
