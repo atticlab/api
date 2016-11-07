@@ -60,7 +60,7 @@ $router->addPost('/companies', [
 //agents
 $router->addGet('/agents', [
     'controller' => 'agents',
-    'action' => 'get',
+    'action' => 'list',
 ]);
 
 $router->addPost('/agents', [

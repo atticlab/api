@@ -210,6 +210,26 @@ abstract class ModelBase
     }
 
     /**
+     * Static method to check if data exists by custom index
+     * @param $index - name of index WITHOUT _bin
+     * @param $value - value of index
+     * @return array -- returns object
+     */
+    public static function isExistByIndex($index, $value)
+    {
+        self::setPrimaryAttributes();
+        $riak = DI::getDefault()->get('riak');
+        return (new Command\Builder\QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName($index . '_bin')
+            ->withScalarValue($value)
+            ->withMaxResults(1)
+            ->build()
+            ->execute()
+            ->getResults();
+    }
+
+    /**
      * A way to obtain list of model's objects from DB
      * @param null $limit
      * @param null $offset

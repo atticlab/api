@@ -24,6 +24,27 @@ class RegUsers extends ModelBase implements ModelInterface
 
     public function validate() {
         $this->validateIsAllPresent();
+
+        if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception(Exception::ERR_BAD_PARAM, 'email');
+        }
+
+        if (RegUsers::isExistByIndex('ipn_code', $this->ipn_code)) {
+            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'ipn_code');
+        }
+
+        if (RegUsers::isExistByIndex('passport', $this->passport)) {
+            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'passport');
+        }
+
+        if (RegUsers::isExistByIndex('email', $this->email)) {
+            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'email');
+        }
+
+        if (RegUsers::isExistByIndex('phone', $this->phone)) {
+            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'phone');
+        }
+
     }
 
     public static function generateID(){
@@ -51,26 +72,6 @@ class RegUsers extends ModelBase implements ModelInterface
 
         parent::__construct($id);
         $this->id = $id;
-    }
-
-    /**
-     * Static method to check if data exists by custom index
-     * @param $index - name of index WITHOUT _bin
-     * @param $value - value of index
-     * @return array -- returns object
-     */
-    public static function isExistByIndex($index, $value)
-    {
-        self::setPrimaryAttributes();
-        $riak = DI::getDefault()->get('riak');
-        return (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::$BUCKET_NAME)
-            ->withIndexName($index . '_bin')
-            ->withScalarValue($value)
-            ->withMaxResults(1)
-            ->build()
-            ->execute()
-            ->getResults();
     }
 
     public function create()

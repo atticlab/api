@@ -27,42 +27,6 @@ class RegusersController extends ControllerBase
         $email    = $this->payload->email   ?? null;
         $phone    = $this->payload->phone   ?? null;
 
-        if (empty($ipn_code)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'ipn_code');
-        }
-
-        if (empty($passport)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'passport');
-        }
-
-        if (empty($email)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'email');
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->response->error(Response::ERR_BAD_PARAM, 'email');
-        }
-
-        if (empty($phone)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'phone');
-        }
-
-        if (RegUsers::isExistByIndex('ipn_code', $ipn_code)) {
-            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'ipn_code');
-        }
-
-        if (RegUsers::isExistByIndex('passport', $passport)) {
-            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'passport');
-        }
-
-        if (RegUsers::isExistByIndex('email', $email)) {
-            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'email');
-        }
-
-        if (RegUsers::isExistByIndex('phone', $phone)) {
-            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'phone');
-        }
-
         try {
             $reguser = new RegUsers();
         } catch (Exception $e) {
