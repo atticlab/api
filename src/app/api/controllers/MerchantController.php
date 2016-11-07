@@ -98,22 +98,54 @@ class MerchantController extends ControllerBase
 
     }
 
-//    public function ordersListAction($store_id)
-//    {
-//
-//        var_dump($store_id);
-//        die('aloha');
-//
-//    }
-//
-//    public function ordersGetAction($order_id)
-//    {
-//
-//        var_dump($order_id);
-//        die('aloha');
-//
-//    }
-//
+    public function ordersListAction($store_id)
+    {
+
+        $allowed_types = [
+            Account::TYPE_MERCHANT
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        $limit  = $this->request->get('limit')   ?? null;
+        $offset = $this->request->get('offset')  ?? null;
+
+        //get all orders for store
+        try {
+            $orders = MerchantOrders::findStoreOrders($store_id, $limit, $offset);
+            return $this->response->items($orders);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
+
+    }
+
+    public function ordersGetAction($order_id)
+    {
+
+        $allowed_types = [
+            Account::TYPE_MERCHANT
+        ];
+
+        $requester = $this->request->getAccountId();
+
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        try {
+            $order_data = MerchantOrders::getOrder($order_id, $requester);
+            return $this->response->single($order_data);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
+
+    }
+
     public function ordersCreateAction()
     {
 

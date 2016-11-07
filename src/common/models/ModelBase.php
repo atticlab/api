@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Controllers\RegusersController;
-use App\Lib\Response;
 use App\Lib\Exception;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
@@ -80,16 +78,16 @@ abstract class ModelBase
             ->build()
             ->execute();
 
-        if ($response->isSuccess()) {
+        if ($response->isSuccess() && !$response->isNotFound()) {
             $this->_object = $response->getObject();
         } elseif ($response->isNotFound()) {
-            throw new Exception(Exception::NOT_FOUND);
+            throw new Exception(Exception::NOT_FOUND, 'object');
         } else {
             throw new Exception(Exception::UNKNOWN . ': ' . $response->getStatusCode());
         }
 
         if (empty($this->_object)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'object');
+            throw new Exception(Exception::NOT_FOUND, 'object');
         }
 
         $this->setFromJSON($this->_object->getData());
@@ -277,6 +275,11 @@ abstract class ModelBase
      */
     public static function findFirst($id)
     {
+
+        if (empty($id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'primary_index');
+        }
+
         $class = get_called_class();
         $data  = new $class($id);
 

@@ -18,10 +18,10 @@ class RegUsersUnitTest extends \UnitTestCase
     public static function CreateRegUserProvider()
     {
 
-        $ind_code = rand(1, 999999);
+        $ipn_code = rand(1, 999999);
         $requester_type = 'admin';
-        $params = array($ind_code, 'EUAH', 'John', 'Smith', 'Harconnen', 'johnsmith@mail.com', '1106216',
-            'nowhere', 'KL1109445');
+        $params = array($ipn_code, 'EUAH', 'John', 'Smith', 'Harconnen', 'for0wo3rk0@gmail.com', '511231',
+            'nowhere', 'tte4423434e4422123s33stt');
         $params_keys = array(
             "ipn_code",
             "asset",
@@ -69,12 +69,12 @@ class RegUsersUnitTest extends \UnitTestCase
         $client = new Client();
 
         //[TEST] create new reguser ------------------
-        if (!empty($ipn_code) && RegUsers::isExist($ipn_code)) {
+        if (!empty($ipn_code) && RegUsers::isExistByIndex('ipn_code', $ipn_code)) {
 
             do {
                 //find free company code
                 $ipn_code = rand(1, 999999);
-            } while (RegUsers::isExist($ipn_code));
+            } while (RegUsers::isExistByIndex('ipn_code', $ipn_code));
 
         }
 
@@ -84,7 +84,7 @@ class RegUsersUnitTest extends \UnitTestCase
         // Create a POST request
         $response = $client->request(
             'POST',
-            'http://' . $this->api_host . '/regusers',
+            'http://' . $this->api_host . '/reguser',
             [
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
@@ -155,8 +155,9 @@ class RegUsersUnitTest extends \UnitTestCase
             // Create a GET request
             $response = $client->request(
                 'GET',
-                'http://' . $this->api_host . '/regusers/' . $ipn_code,
+                'http://' . $this->api_host . '/reguser',
                 [
+                    'query' => ['ipn_code' => $ipn_code],
                     'headers' => [
                         'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                     ],
@@ -178,15 +179,25 @@ class RegUsersUnitTest extends \UnitTestCase
                 !empty($encode_data)
             );
 
+
             //test answer data structure
             $this->assertTrue(
                 property_exists($encode_data, 'ipn_code')
             );
 
+            $this->assertEquals(
+                $ipn_code,
+                $encode_data->ipn_code
+            );
+
+            $this->assertTrue(
+                property_exists($encode_data, 'id')
+            );
+
             $this->assertInternalType('object', $encode_data);
 
             //delete test company
-            $cur_company = RegUsers::findFirst($ipn_code);
+            $cur_company = RegUsers::findFirst($encode_data->id);
             if ($cur_company) {
                 $cur_company->delete();
             }
@@ -296,8 +307,9 @@ class RegUsersUnitTest extends \UnitTestCase
         // Create a GET request
         $response = $client->request(
             'GET',
-            'http://' . $this->api_host . '/regusers/' . $ipn_code,
+            'http://' . $this->api_host . '/reguser',
             [
+                'query' => ['ipn_code' => $ipn_code],
                 'headers' => [
                     'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
                 ],

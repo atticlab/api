@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Lib\Response;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -83,9 +84,17 @@ class Cards extends ModelBase implements ModelInterface
     public static function findAgentCards($agent_id, $limit = null, $offset = null)
     {
 
+        if (empty($agent_id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'agent_id');
+        }
+
+        if (!Account::isValidAccountId($agent_id)) {
+            throw new Exception(Exception::BAD_PARAM, 'agent_id');
+        }
+
         $riak = DI::getDefault()->get('riak');
 
-        $companies = [];
+        $cards = [];
 
         $object = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::$BUCKET_NAME)
@@ -128,12 +137,12 @@ class Cards extends ModelBase implements ModelInterface
             $data = self::getDataByID($code);
 
             if (!empty($data)) {
-                $companies[] = $data;
+                $cards[] = $data;
             }
 
         }
 
-        return $companies;
+        return $cards;
     }
 
     /**
@@ -146,7 +155,7 @@ class Cards extends ModelBase implements ModelInterface
         $data = self::getDataByID($account_id);
 
         if (empty($data->agent_id) || $data->agent_id != $agent_id) {
-            return false;
+            return [];
         }
 
         return (array)$data;

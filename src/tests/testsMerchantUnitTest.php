@@ -29,16 +29,16 @@ class MerchantUnitTest extends \UnitTestCase
             array('merchant', 'bad_url', 'store_name', 400, Response::ERR_BAD_PARAM, 'url'),
 
             //no name
-            array('merchant', 'google2.com', null, 400, Response::ERR_EMPTY_PARAM, 'name'),
+            array('merchant', 'google6.com', null, 400, Response::ERR_EMPTY_PARAM, 'name'),
 
             //bad name
-            array('merchant', 'google2.com', 'name_more_than_20_symbols', 400, Response::ERR_BAD_PARAM, 'name'),
+            array('merchant', 'google6.com', 'name_more_than_20_symbols', 400, Response::ERR_BAD_PARAM, 'name'),
 
             //bad type
-            array('anonym', 'google2.com', 'store_name', 400, Response::ERR_BAD_TYPE, null),
+            array('anonym', 'google6.com', 'store_name', 400, Response::ERR_BAD_TYPE, null),
 
             //all ok - will create store
-            array('merchant', 'google2.com', 'store_name', 200, null, null),
+            array('merchant', 'google6.com', 'store_name', 200, null, null),
 
         );
 
@@ -214,6 +214,80 @@ class MerchantUnitTest extends \UnitTestCase
             );
 
             $cur_order = MerchantOrders::findFirst($encode_data->id);
+
+            //[TEST] get orders for store -------------------
+
+            $user_data = $this->test_config['merchant'];
+            $user_data['secret_key'] = Account::decodeCheck('seed', $user_data['seed']);
+
+            // Create a GET request
+            $response = $client->request(
+                'GET',
+                'http://' . $this->api_host .'/merchant/stores/' . $cur_store->store_id . '/orders',
+                [
+                    'headers' => [
+                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                    ],
+                    'http_errors' => false
+                ]
+            );
+
+            $real_http_code = $response->getStatusCode();
+            $stream         = $response->getBody();
+            $body           = $stream->getContents();
+            $encode_data    = json_decode($body);
+
+            $this->assertEquals(
+                200,
+                $real_http_code
+            );
+
+            $this->assertTrue(
+                property_exists($encode_data, 'items')
+            );
+
+            $this->assertInternalType('object', $encode_data);
+            $this->assertInternalType('array',  $encode_data->items);
+
+            //[TEST] get order by id -------------------
+
+            // Create a GET request
+            $response = $client->request(
+                'GET',
+                'http://' . $this->api_host .'/merchant/orders/' . $cur_order->id,
+                [
+                    'headers' => [
+                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                    ],
+                    'http_errors' => false
+                ]
+            );
+
+            $real_http_code = $response->getStatusCode();
+            $stream         = $response->getBody();
+            $body           = $stream->getContents();
+            $encode_data    = json_decode($body);
+
+            $this->assertEquals(
+                200,
+                $real_http_code
+            );
+
+            $this->assertTrue(
+                !empty($encode_data)
+            );
+
+            //test answer data structure
+            $this->assertTrue(
+                property_exists($encode_data, 'id')
+            );
+
+            $this->assertEquals(
+                $cur_order->id,
+                $encode_data->id
+            );
+
+            //clear test data
 
             //delete test order
             if ($cur_order) {

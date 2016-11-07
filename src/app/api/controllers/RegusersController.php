@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Lib\Exception;
+use App\Models\Enrollments;
 use App\Models\RegUsers;
 use Smartmoney\Stellar\Account;
 
@@ -22,39 +23,109 @@ class RegusersController extends ControllerBase
 
         // Create new reguser
         $ipn_code = $this->payload->ipn_code ?? null;
+        $passport = $this->payload->passport   ?? null;
+        $email    = $this->payload->email   ?? null;
+        $phone    = $this->payload->phone   ?? null;
 
         if (empty($ipn_code)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'ipn_code');
         }
 
-        if (RegUsers::isExist($ipn_code)) {
+        if (empty($passport)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'passport');
+        }
+
+        if (empty($email)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'email');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'email');
+        }
+
+        if (empty($phone)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'phone');
+        }
+
+        if (RegUsers::isExistByIndex('ipn_code', $ipn_code)) {
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'ipn_code');
         }
 
-        try {
-            $reguser = new RegUsers($ipn_code);
-        } catch (Exception $e) {
-
-            $this->handleException($e->getCode(), $e->getMessage());
+        if (RegUsers::isExistByIndex('passport', $passport)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'passport');
         }
+
+        if (RegUsers::isExistByIndex('email', $email)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'email');
+        }
+
+        if (RegUsers::isExistByIndex('phone', $phone)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'phone');
+        }
+
+        try {
+            $reguser = new RegUsers();
+        } catch (Exception $e) {
+            return $this->handleException($e->getCode(), $e->getMessage());
+        }
+
+        $reguser->ipn_code = $ipn_code;
+        $reguser->passport = $passport;
+        $reguser->email    = $email;
+        $reguser->phone    = $phone;
 
         $reguser->asset = $this->payload->asset   ?? null;
         $reguser->surname = $this->payload->surname ?? null;
         $reguser->name = $this->payload->name   ?? null;
         $reguser->middle_name = $this->payload->middle_name   ?? null;
-        $reguser->email = $this->payload->email   ?? null;
-        $reguser->phone = $this->payload->phone   ?? null;
         $reguser->address = $this->payload->address   ?? null;
-        $reguser->passport = $this->payload->passport   ?? null;
-        $reguser->phone = $this->payload->phone   ?? null;
 
         try {
             if ($reguser->create()) {
-                return $this->response->single(['message' => 'success']);
+
+                //create enrollment for reguser
+
+                try {
+                    $enrollment = new Enrollments();
+                } catch (Exception $e) {
+                    return $this->handleException($e->getCode(), $e->getMessage());
+                }
+
+                $random = new \Phalcon\Security\Random;
+
+                $enrollment->type           = Enrollments::TYPE_USER;
+                $enrollment->target_id      = $reguser->id;
+                $enrollment->stage          = Enrollments::STAGE_CREATED;
+                $enrollment->asset          = $this->payload->asset ?? null;
+                $enrollment->otp            = $random->base64Safe(8);
+                $enrollment->expiration     = time() + 60 * 60 * 24;
+
+                try {
+
+                    if ($enrollment->create()) {
+
+                        // Send email to registered user
+                        $sent = $this->mailer->send($reguser->email, 'Welcome to smartmoney',
+                            ['user_enrollment_created', ['password' => $enrollment->otp]]);
+
+                        if (!$sent) {
+                            $this->logger->emergency('Cannot send email with welcome code to registered user (' . $reguser->email . ')');
+                        }
+
+                        return $this->response->single(['message' => 'success']);
+
+                    }
+
+                    $this->logger->emergency('Riak error while creating enrollment for reguser');
+                    return $this->response->error(Response::ERR_SERVICE);
+
+                } catch (Exception $e) {
+                    return $this->handleException($e->getCode(), $e->getMessage());
+                }
             }
 
             $this->logger->emergency('Riak error while creating reguser');
-            return $this->response->error(Response::SERVICE_ERROR);
+            return $this->response->error(Response::ERR_SERVICE);
         } catch (Exception $e) {
             $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -84,7 +155,7 @@ class RegusersController extends ControllerBase
         return $this->response->items($result);
     }
 
-    public function getAction($code)
+    public function getAction()
     {
         $allowed_types = [
             Account::TYPE_ADMIN
@@ -96,17 +167,35 @@ class RegusersController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        if (empty($code)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'code');
+        $ipn_code = $this->request->get('ipn_code')  ?? null;
+        $passport = $this->request->get('passport')  ?? null;
+        $email    = $this->request->get('email')     ?? null;
+        $phone    = $this->request->get('phone')     ?? null;
+
+        if (empty($ipn_code) && empty($passport) && empty($phone) && empty($email)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'criteria');
         }
 
-        if (!RegUsers::isExist($code)) {
-            return $this->response->error(Response::ERR_NOT_FOUND, 'company');
+        if (!empty($ipn_code)) {
+            $data = RegUsers::isExistByIndex('ipn_code', $ipn_code);
+        } elseif (!empty($passport)) {
+            $data = RegUsers::isExistByIndex('passport', $passport);
+        } elseif (!empty($phone)) {
+            $data = RegUsers::isExistByIndex('phone', $phone);
+        } elseif (!empty($email)) {
+            $data = RegUsers::isExistByIndex('email', $email);
         }
 
-        $reguser = RegUsers::getDataByID($code);
+        if (empty($data)){
+            return $this->response->error(Response::ERR_NOT_FOUND, 'registered_user');
+        }
+
+        $id = $data[0];
+
+        $reguser = RegUsers::getDataByID($id);
 
         $data = [
+            'id' => $reguser->id,
             'ipn_code' => $reguser->ipn_code,
             'asset' => $reguser->asset,
             'surname' => $reguser->surname,
@@ -115,8 +204,7 @@ class RegusersController extends ControllerBase
             'email' => $reguser->email,
             'phone' => $reguser->phone,
             'address' => $reguser->address,
-            'passport' => $reguser->passport,
-            'phone' => $reguser->phone
+            'passport' => $reguser->passport
         ];
 
         return $this->response->single($data);

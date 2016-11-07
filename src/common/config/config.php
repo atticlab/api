@@ -20,7 +20,15 @@ $config = new \Phalcon\Config([
 
     "weights" => [
         'admin' => 1
-    ]
+    ],
+
+    "smtp"            => [
+        'host'     => 'smtp.gmail.com',
+        'port'     => '465',
+        'security' => 'ssl',
+        'username' => 'attic.it.lab@gmail.com',
+        'password' => 'atticlab/*-2020',
+    ],
 
 ]);
 

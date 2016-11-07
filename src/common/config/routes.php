@@ -69,7 +69,7 @@ $router->addPost('/agents', [
 ]);
 
 //registered users
-$router->addGet('/regusers/{id}', [
+$router->addGet('/reguser', [
     'controller' => 'regusers',
     'action' => 'get',
 ]);
@@ -79,7 +79,7 @@ $router->addGet('/regusers', [
     'action' => 'list',
 ]);
 
-$router->addPost('/regusers', [
+$router->addPost('/reguser', [
     'controller' => 'regusers',
     'action' => 'create',
 ]);

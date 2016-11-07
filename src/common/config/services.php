@@ -57,6 +57,24 @@ $di->setShared('memcached', function () use ($config) {
     return $m;
 });
 
+# Mailer (requires composer component)
+$di->setShared('mailer', function () use ($config) {
+    $mailer = new \App\Lib\Mailer([
+        'templates' => APP_PATH . 'common/emails/',
+        'host'      => $config->smtp->host,
+        'port'      => $config->smtp->port,
+        'username'  => $config->smtp->username,
+        'password'  => $config->smtp->password,
+        'security'  => $config->smtp->security
+    ]);
+
+    if (!empty($config->project->admin_email) && !empty($config->project->admin_name)) {
+        $mailer->setFrom($config->project->admin_email, $config->project->admin_name);
+    }
+
+    return $mailer;
+});
+
 
 # Config
 $di->setShared('config', $config);

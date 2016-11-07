@@ -111,10 +111,13 @@ class CardsController extends ControllerBase
         $limit  = $this->request->get('limit')   ?? null;
         $offset = $this->request->get('offset')  ?? null;
 
-        //get all invoices for agent
-        $cards = Cards::findAgentCards($requester, $limit, $offset);
-
-        return $this->response->items($cards);
+        //get all cards for agent
+        try {
+            $cards = Cards::findAgentCards($requester, $limit, $offset);
+            return $this->response->items($cards);
+        } catch (Exception $e) {
+            $this->handleException($e->getCode(), $e->getMessage());
+        }
 
     }
 
