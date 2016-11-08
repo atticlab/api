@@ -91,7 +91,7 @@ class RegusersController extends ControllerBase
             $this->logger->emergency('Riak error while creating reguser');
             return $this->response->error(Response::ERR_SERVICE);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
     }
 
@@ -113,10 +113,10 @@ class RegusersController extends ControllerBase
 
         try {
             $result = RegUsers::find($limit, $offset);
+            return $this->response->items($result);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
-        return $this->response->items($result);
     }
 
     public function getAction()
@@ -137,7 +137,7 @@ class RegusersController extends ControllerBase
         $phone    = $this->request->get('phone')     ?? null;
 
         if (empty($ipn_code) && empty($passport) && empty($phone) && empty($email)) {
-            return $this->response->error(Response::ERR_BAD_PARAM, 'criteria');
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'criteria');
         }
 
         if (!empty($ipn_code)) {

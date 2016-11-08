@@ -30,8 +30,22 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             $this->response->sendHeaders();
             exit;
         }
-        if ($dispatcher->getControllerName() != 'nonce' && !$this->request->checkSignature()) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
+
+
+
+        if ($dispatcher->getControllerName() != 'nonce') {
+
+            $allow_routes = [
+                'enrollments/accept',
+                'enrollments/decline'
+            ];
+
+            $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
+
+            if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
+                return $this->response->error(Response::ERR_BAD_SIGN);
+            }
+
         }
     }
 
@@ -57,6 +71,10 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
 
             case Exception::NOT_FOUND:
                 return $this->response->error(Response::ERR_NOT_FOUND, $msg);
+                break;
+
+            case Exception::ALREADY_EXIST:
+                return $this->response->error(Response::ERR_ALREADY_EXISTS, $msg);
                 break;
 
             case Exception::UNKNOWN:

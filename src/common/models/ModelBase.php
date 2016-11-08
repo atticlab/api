@@ -238,7 +238,7 @@ abstract class ModelBase
     public static function find($limit = null, $offset = null)
     {
         self::setPrimaryAttributes();
-        $models = [];
+        $items = [];
         $riak = DI::getDefault()->get('riak');
         $object = (new QueryIndex($riak))
             ->buildBucket(self::$BUCKET_NAME)
@@ -280,12 +280,72 @@ abstract class ModelBase
             $data = self::getDataByID($code);
 
             if (!empty($data)) {
-                $models[] = $data;
+                $items[] = $data;
             }
 
         }
 
-        return $models;
+        return $items;
+    }
+
+    /**
+     * A way to obtain list of model's objects from DB by index name and value
+     * Index name WITHOUT _bin postfix
+     * @param null $limit
+     * @param null $offset
+     * @return array of objects
+     */
+    public static function findWithIndex($index_name, $index_value, $limit = null, $offset = null)
+    {
+        self::setPrimaryAttributes();
+        $items = [];
+        $riak = DI::getDefault()->get('riak');
+        $object = (new QueryIndex($riak))
+            ->buildBucket(self::$BUCKET_NAME)
+            ->withIndexName($index_name . '_bin')
+            ->withScalarValue($index_value);
+
+        if (!empty($limit)) {
+            $object
+                ->withMaxResults($limit);
+        }
+
+        //paginator
+        if (!empty($offset) && $offset > 0) {
+
+            //get withContinuation for N page by getting previous {$offset} records
+            $continuation = (new QueryIndex($riak))
+                ->buildBucket(self::$BUCKET_NAME)
+                ->withIndexName($index_name . '_bin')
+                ->withScalarValue($index_value)
+                ->withMaxResults($offset)
+                ->build()
+                ->execute()
+                ->getContinuation();
+
+            if (empty($continuation)) {
+                return [];
+            }
+
+            $object->withContinuation($continuation);
+        }
+
+        $response = $object
+            ->build()
+            ->execute()
+            ->getResults();
+
+        foreach ($response as $code) {
+
+            $data = self::getDataByID($code);
+
+            if (!empty($data)) {
+                $items[] = $data;
+            }
+
+        }
+
+        return $items;
     }
 
     /**

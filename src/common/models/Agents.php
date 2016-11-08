@@ -5,6 +5,8 @@ namespace App\Models;
 use \Basho\Riak;
 use \Basho\Riak\Command;
 use Phalcon\DI;
+use App\Lib\Exception;
+use Smartmoney\Stellar\Account;
 
 class Agents extends ModelBase implements ModelInterface
 {
@@ -29,9 +31,10 @@ class Agents extends ModelBase implements ModelInterface
     public $cmp_code;             //company code
     public $type;                 //type of agent
     public $asset;                //user name
-    public $account_id;           //agent account id
     public $created;              //timestamp
-    public $login;                //wallet login
+
+    public $account_id;           //agent account id
+    public $login;                //login on wallet
 
     public function validate() {
 

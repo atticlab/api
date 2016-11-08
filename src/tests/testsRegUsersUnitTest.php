@@ -20,8 +20,8 @@ class RegUsersUnitTest extends \UnitTestCase
 
         $ipn_code = rand(1, 999999);
         $requester_type = 'admin';
-        $params = array($ipn_code, 'EUAH', 'John', 'Smith', 'Harconnen', 'for0wo3rk0@gmail.com', '511231',
-            'nowhere', 'tte4423434e4422123s33stt');
+        $params = array($ipn_code, 'EUAH', 'John', 'Smith', 'Harconnen', 'for0wo31rk0@gmail.com', '4511231',
+            'nowhere', 'asd123');
         $params_keys = array(
             "ipn_code",
             "asset",

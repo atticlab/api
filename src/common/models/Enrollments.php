@@ -20,7 +20,7 @@ class Enrollments extends ModelBase implements ModelInterface
     const TYPE_USER  = 'user';
     const TYPE_AGENT = 'agent';
 
-    private $accepted_types = [
+    public static $accepted_types = [
         self::TYPE_USER,
         self::TYPE_AGENT
     ];
@@ -86,7 +86,7 @@ class Enrollments extends ModelBase implements ModelInterface
             throw new Exception(Exception::EMPTY_PARAM, 'type');
         }
 
-        if (!in_array($this->type, $this->accepted_types)) {
+        if (!in_array($this->type, self::$accepted_types)) {
             throw new Exception(Exception::BAD_PARAM, 'type');
         }
 

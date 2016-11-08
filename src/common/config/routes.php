@@ -5,6 +5,7 @@ $router->add('/', [
     'action' => 'index'
 ]);
 
+//nonce
 $router->add('/nonce', [
     'controller' => 'nonce',
     'action' => 'index'
@@ -66,6 +67,29 @@ $router->addGet('/agents', [
 $router->addPost('/agents', [
     'controller' => 'agents',
     'action' => 'create',
+]);
+
+//enrollments
+$router->addGet('/enrollments', [
+    'controller' => 'enrollments',
+    'action' => 'list',
+]);
+
+//can call anyone with token, nonce not need, account type dont checked
+$router->addPost('/enrollments/decline/{id}', [
+    'controller' => 'enrollments',
+    'action' => 'decline',
+]);
+
+//can call anyone with token, nonce not need, account type dont checked
+$router->addPost('/enrollments/accept/{id}', [
+    'controller' => 'enrollments',
+    'action' => 'accept',
+]);
+
+$router->addPost('/enrollments/approve/{id}', [
+    'controller' => 'enrollments',
+    'action' => 'approve',
 ]);
 
 //registered users

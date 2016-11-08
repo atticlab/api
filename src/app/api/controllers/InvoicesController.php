@@ -58,9 +58,7 @@ class InvoicesController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-
-            $this->handleException($e->getCode(), $e->getMessage());
-
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
     }
 
@@ -137,7 +135,7 @@ class InvoicesController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
@@ -214,7 +212,7 @@ class InvoicesController extends ControllerBase
         try {
             $ban = new InvoicesBans($account_id);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $ban->blocked = $seconds > 0 ? time() + $seconds : 0;
@@ -230,7 +228,7 @@ class InvoicesController extends ControllerBase
 
 
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }

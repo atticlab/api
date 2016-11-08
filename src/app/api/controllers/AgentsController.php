@@ -117,6 +117,27 @@ class AgentsController extends ControllerBase
         $limit  = $this->request->get('limit')  ?? null;
         $offset = $this->request->get('offset') ?? null;
 
+        $company_code   = $this->request->get('company_code') ?? null;
+        $type           = $this->request->get('type') ?? null;
+
+        if (!empty($company_code)) {
+            try {
+                $result = Agents::findWithIndex('cmp_code', $company_code, $limit, $offset);
+                return $this->response->items($result);
+            } catch (Exception $e) {
+                return $this->handleException($e->getCode(), $e->getMessage());
+            }
+        }
+
+        if (!empty($type)) {
+            try {
+                $result = Agents::findWithIndex('type', $type, $limit, $offset);
+                return $this->response->items($result);
+            } catch (Exception $e) {
+                return $this->handleException($e->getCode(), $e->getMessage());
+            }
+        }
+
         try {
             $result = Agents::find($limit, $offset);
             return $this->response->items($result);

@@ -35,7 +35,7 @@ class CardsController extends ControllerBase
         try {
             $card = new Cards($account_id);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $card->created_date     = time();
@@ -58,9 +58,7 @@ class CardsController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-
-            $this->handleException($e->getCode(), $e->getMessage());
-
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
     }
 
@@ -116,7 +114,7 @@ class CardsController extends ControllerBase
             $cards = Cards::findAgentCards($requester, $limit, $offset);
             return $this->response->items($cards);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }

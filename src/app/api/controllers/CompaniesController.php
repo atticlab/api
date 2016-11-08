@@ -36,7 +36,7 @@ class CompaniesController extends ControllerBase
         try {
             $company = new Companies($code);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $company->title   = $this->payload->title   ?? null;
@@ -54,7 +54,7 @@ class CompaniesController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
@@ -79,7 +79,7 @@ class CompaniesController extends ControllerBase
         try {
             $result = Companies::find($limit, $offset);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         return $this->response->items($result);

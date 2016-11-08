@@ -70,7 +70,7 @@ class MerchantController extends ControllerBase
         try {
             $store = new MerchantStores($url);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $store->name        = $this->payload->name ?? null;
@@ -92,8 +92,7 @@ class MerchantController extends ControllerBase
 
 
         } catch (Exception $e) {
-
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
@@ -119,7 +118,7 @@ class MerchantController extends ControllerBase
             $orders = MerchantOrders::findStoreOrders($store_id, $limit, $offset);
             return $this->response->items($orders);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
@@ -141,7 +140,7 @@ class MerchantController extends ControllerBase
             $order_data = MerchantOrders::getOrder($order_id, $requester);
             return $this->response->single($order_data);
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }
@@ -205,7 +204,7 @@ class MerchantController extends ControllerBase
         try {
             $order = new MerchantOrders();
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $order->store_id            = $store_id;
@@ -259,7 +258,7 @@ class MerchantController extends ControllerBase
             throw new Exception(Exception::SERVICE_ERROR);
 
         } catch (Exception $e) {
-            $this->handleException($e->getCode(), $e->getMessage());
+            return $this->handleException($e->getCode(), $e->getMessage());
         }
 
     }

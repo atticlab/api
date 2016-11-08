@@ -9,6 +9,7 @@ class Exception extends \Exception
     const UNKNOWN       = 'UNKNOWN';
     const SERVICE_ERROR = 'SERVICE_ERROR';
     const NOT_FOUND     = 'NOT_FOUND';
+    const ALREADY_EXIST = 'ALREADY_EXIST';
 
     protected $code;
 

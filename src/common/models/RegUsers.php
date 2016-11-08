@@ -6,6 +6,8 @@ use \Basho\Riak;
 use \Basho\Riak\Command;
 use Phalcon\DI;
 
+use App\Lib\Exception;
+
 class RegUsers extends ModelBase implements ModelInterface
 {
 
@@ -22,27 +24,71 @@ class RegUsers extends ModelBase implements ModelInterface
     public $address;              //address
     public $passport;             //passport series and number
 
+    public $account_id;           //user account id
+    public $login;                //login on wallet
+
     public function validate() {
-        $this->validateIsAllPresent();
+
+        //$this->validateIsAllPresent();
+
+        if (empty($this->id)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'id');
+        }
+
+        if (empty($this->ipn_code)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'ipn_code');
+        }
+
+        if (empty($this->asset)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'asset');
+        }
+
+        if (empty($this->surname)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'surname');
+        }
+
+        if (empty($this->name)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'name');
+        }
+
+        if (empty($this->middle_name)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'middle_name');
+        }
+
+        if (empty($this->email)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'email');
+        }
+
+        if (empty($this->phone)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'phone');
+        }
+
+        if (empty($this->address)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'address');
+        }
+
+        if (empty($this->passport)) {
+            throw new Exception(Exception::EMPTY_PARAM, 'passport');
+        }
 
         if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            throw new Exception(Exception::ERR_BAD_PARAM, 'email');
+            throw new Exception(Exception::BAD_PARAM, 'email');
         }
 
         if (RegUsers::isExistByIndex('ipn_code', $this->ipn_code)) {
-            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'ipn_code');
+            throw new Exception(Exception::ALREADY_EXIST, 'ipn_code');
         }
 
         if (RegUsers::isExistByIndex('passport', $this->passport)) {
-            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'passport');
+            throw new Exception(Exception::ALREADY_EXIST, 'passport');
         }
 
         if (RegUsers::isExistByIndex('email', $this->email)) {
-            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'email');
+            throw new Exception(Exception::ALREADY_EXIST, 'email');
         }
 
         if (RegUsers::isExistByIndex('phone', $this->phone)) {
-            throw new Exception(Exception::ERR_ALREADY_EXISTS, 'phone');
+            throw new Exception(Exception::ALREADY_EXIST, 'phone');
         }
 
     }
