@@ -28,6 +28,10 @@ class MerchantStores extends ModelBase
     {
         $url = self::formatUrl($url);
 
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            throw new Exception(Exception::BAD_PARAM, 'url');
+        }
+
         //base64 is needed for riak!!!
         //"url" can not be used like primary key
         //because riak dont save that object (but will return success!!!)
