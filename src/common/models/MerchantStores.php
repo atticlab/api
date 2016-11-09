@@ -101,7 +101,7 @@ class MerchantStores extends ModelBase
 
         $riak = DI::getDefault()->get('riak');
 
-        $companies = [];
+        $stores = [];
 
         $object = (new Command\Builder\QueryIndex($riak))
             ->buildBucket(self::$BUCKET_NAME)
@@ -144,12 +144,12 @@ class MerchantStores extends ModelBase
             $data = self::getDataByID($code);
 
             if (!empty($data)) {
-                $companies[] = $data;
+                $stores[] = $data;
             }
 
         }
 
-        return $companies;
+        return $stores;
     }
 
 //    /**

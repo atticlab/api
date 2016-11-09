@@ -106,7 +106,7 @@ abstract class ModelBase
             ->withName($index_name)
             ->build()
             ->execute();
-        $command->getObject()->addValueToIndex($index_name, (string)$index_value);
+        $command->getObject()->addValueToIndex($index_name, $index_value);
     }
 
     /**
