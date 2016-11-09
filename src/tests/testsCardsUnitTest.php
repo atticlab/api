@@ -174,7 +174,44 @@ class CardsUnitTest extends \UnitTestCase
                 $encode_data->account_id
             );
 
-            //delete test company
+            // Create a GET request
+            $response = $client->request(
+                'GET',
+                'http://' . $this->api_host .'/cards',
+                [
+                    'headers' => [
+                        'Signed-Nonce' => $this->generateAuthSignature($user_data['secret_key'])
+                    ],
+                    'http_errors' => false
+                ]
+            );
+
+            $real_http_code = $response->getStatusCode();
+            $stream         = $response->getBody();
+            $body           = $stream->getContents();
+            $encode_data    = json_decode($body);
+
+            $this->assertEquals(
+                200,
+                $real_http_code
+            );
+
+            $this->assertTrue(
+                !empty($encode_data)
+            );
+
+            $this->assertTrue(
+                property_exists($encode_data, 'items')
+            );
+
+            $this->assertInternalType('object', $encode_data);
+            $this->assertInternalType('array',  $encode_data->items);
+
+            $this->assertTrue(
+                count($encode_data->items) > 0
+            );
+
+            //delete test card
             $cur_card = Cards::findFirst($encode_data->account_id);
 
             if ($cur_card) {

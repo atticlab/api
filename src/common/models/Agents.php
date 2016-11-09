@@ -70,16 +70,6 @@ class Agents extends ModelBase implements ModelInterface
             throw new Exception(Exception::BAD_PARAM, 'company_code');
         }
 
-        $company_agents = self::findWithIndex('cmp_code', $this->cmp_code);
-
-        foreach ($company_agents as $agent) {
-
-            if ($agent->type == $this->type) {
-                throw new Exception(Exception::ALREADY_EXIST, 'agent');
-            }
-
-        }
-
     }
 
     public static function generateID(){
@@ -111,6 +101,17 @@ class Agents extends ModelBase implements ModelInterface
 
     public function create()
     {
+
+        $company_agents = self::findWithIndex('cmp_code', $this->cmp_code);
+
+        foreach ($company_agents as $agent) {
+
+            if ($agent->type == $this->type) {
+                throw new Exception(Exception::ALREADY_EXIST, 'agent');
+            }
+
+        }
+
         $command = $this->prepareCreate($this->id);
 
         if (isset($this->cmp_code)) {
