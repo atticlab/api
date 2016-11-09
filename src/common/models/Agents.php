@@ -66,8 +66,18 @@ class Agents extends ModelBase implements ModelInterface
             throw new Exception(Exception::EMPTY_PARAM, 'company_code');
         }
 
-        if (Companies::isExist($this->cmp_code)) {
+        if (!Companies::isExist($this->cmp_code)) {
             throw new Exception(Exception::BAD_PARAM, 'company_code');
+        }
+
+        $company_agents = self::findWithIndex('cmp_code', $this->cmp_code);
+
+        foreach ($company_agents as $agent) {
+
+            if ($agent->type == $this->type) {
+                throw new Exception(Exception::ALREADY_EXIST, 'agent');
+            }
+
         }
 
     }

@@ -27,6 +27,10 @@ class Companies extends ModelBase implements ModelInterface
     public function validate() {
         $this->validateIsAllPresent();
 
+        if (Companies::isExist($this->code)) {
+            throw new Exception(Exception::ALREADY_EXIST, 'company_code');
+        }
+
         if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
             throw new Exception(Exception::BAD_PARAM, 'email');
         }
