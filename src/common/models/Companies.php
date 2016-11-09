@@ -28,7 +28,7 @@ class Companies extends ModelBase implements ModelInterface
         $this->validateIsAllPresent();
 
         if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            throw new Exception(Exception::ERR_BAD_PARAM, 'email');
+            throw new Exception(Exception::BAD_PARAM, 'email');
         }
     }
 
