@@ -32,6 +32,10 @@ class CardsController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'account_id');
         }
 
+        if (Cards::isExist($account_id)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'account_id');
+        }
+
         try {
             $card = new Cards($account_id);
         } catch (Exception $e) {
