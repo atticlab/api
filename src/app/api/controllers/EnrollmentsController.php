@@ -24,17 +24,35 @@ class EnrollmentsController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        //get list of companies
+        //get list of enrollments
         $limit  = $this->request->get('limit')  ?? null;
         $offset = $this->request->get('offset') ?? null;
 
+        $type = $this->request->get('type') ?? null;
+
+        //if need filter by type
+        if (!empty($type) ) {
+
+            if (!in_array($type, Enrollments::$accepted_types)) {
+                return $this->response->error(Response::ERR_BAD_PARAM, 'type');
+            }
+
+            try {
+                $result = Enrollments::findWithIndex('type', $type, $limit, $offset);
+                return $this->response->items($result);
+            } catch (Exception $e) {
+                return $this->handleException($e->getCode(), $e->getMessage());
+            }
+
+        }
+
+        //get all enrollments
         try {
             $result = Enrollments::find($limit, $offset);
+            return $this->response->items($result);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-
-        return $this->response->items($result);
 
     }
 
