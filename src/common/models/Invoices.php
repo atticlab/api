@@ -73,6 +73,8 @@ class Invoices extends ModelBase implements ModelInterface
     public static function findPerAccount($account, $limit = null, $offset = null)
     {
 
+        self::setPrimaryAttributes();
+
         $riak = DI::getDefault()->get('riak');
 
         $invoices = [];

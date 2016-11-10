@@ -92,6 +92,8 @@ class Cards extends ModelBase implements ModelInterface
             throw new Exception(Exception::BAD_PARAM, 'agent_id');
         }
 
+        self::setPrimaryAttributes();
+
         $riak = DI::getDefault()->get('riak');
 
         $cards = [];

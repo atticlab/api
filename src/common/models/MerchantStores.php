@@ -99,6 +99,8 @@ class MerchantStores extends ModelBase
     public static function getMerchantStores($merchant_id, $limit = null, $offset = null)
     {
 
+        self::setPrimaryAttributes();
+
         $riak = DI::getDefault()->get('riak');
 
         $stores = [];
@@ -172,6 +174,7 @@ class MerchantStores extends ModelBase
     {
 
         self::setPrimaryAttributes();
+
         $riak = DI::getDefault()->get('riak');
 
         $url = (new Command\Builder\QueryIndex($riak))
