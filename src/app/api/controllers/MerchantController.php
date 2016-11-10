@@ -183,11 +183,60 @@ class MerchantController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'store');
         }
 
+        $store_url_host = parse_url(base64_decode($store_data->url), PHP_URL_HOST);
+
+        $server_url     = MerchantStores::formatUrl($server_url);
+        $success_url    = MerchantStores::formatUrl($success_url);
+        $fail_url       = MerchantStores::formatUrl($fail_url);
+
+        $store_url_host = MerchantStores::formatUrl($store_url_host);
+
+        //verify urls (server, success, fail) for valid and merchant domain belong
+
+        //server url
+        if (filter_var($server_url, FILTER_VALIDATE_URL) === false) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'server_url');
+        }
+
+        if (parse_url($server_url, PHP_URL_SCHEME) != parse_url($store_url_host, PHP_URL_SCHEME)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'server_url');
+        }
+
+        if (parse_url($server_url, PHP_URL_HOST) != parse_url($store_url_host, PHP_URL_HOST)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'server_url');
+        }
+
+        //success url
+        if (filter_var($success_url, FILTER_VALIDATE_URL) === false) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'success_url');
+        }
+
+        if (parse_url($success_url, PHP_URL_SCHEME) != parse_url($store_url_host, PHP_URL_SCHEME)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'success_url');
+        }
+
+        if (parse_url($success_url, PHP_URL_HOST) != parse_url($store_url_host, PHP_URL_HOST)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'success_url');
+        }
+
+        //fail url
+        if (filter_var($fail_url, FILTER_VALIDATE_URL) === false) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'fail_url');
+        }
+
+        if (parse_url($fail_url, PHP_URL_SCHEME) != parse_url($store_url_host, PHP_URL_SCHEME)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'fail_url');
+        }
+
+        if (parse_url($fail_url, PHP_URL_HOST) != parse_url($store_url_host, PHP_URL_HOST)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'fail_url');
+        }
+
         //check signature
         //build data for verify data from order
         $signature_data = [
             'store_id' => $store_id,
-            'amount' => number_format($amount, 2, '.', ''),
+            'amount' => floatval(number_format($amount, 2, '.', '')),
             'currency' => $currency,
             'order_id' => (string)$order_id,
             'details' => $details,

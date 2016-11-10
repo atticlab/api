@@ -164,19 +164,6 @@ class MerchantOrders extends ModelBase
         return $orders;
     }
 
-    public function create()
-    {
-        $command = $this->prepareCreate($this->id);
-        //create secondary indexes here with addIndex method
-
-        if (isset($this->account)) {
-            $this->addIndex($command, 'store_id_bin', $this->account);
-        }
-
-        return $this->build($command);
-
-    }
-
     /**
      * @param $id - card account id
      * @return array
@@ -211,13 +198,26 @@ class MerchantOrders extends ModelBase
         return (array)$order_data;
     }
 
+    public function create()
+    {
+        $command = $this->prepareCreate($this->id);
+        //create secondary indexes here with addIndex method
+
+        if (isset($this->store_id)) {
+            $this->addIndex($command, 'store_id_bin', $this->store_id);
+        }
+
+        return $this->build($command);
+
+    }
+
     public function update()
     {
         $command = $this->prepareUpdate();
         //good place to update secondary indexes with addIndex method
 
-        if (isset($this->account)) {
-            $this->addIndex($command, 'store_id_bin', $this->account);
+        if (isset($this->store_id)) {
+            $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
 
         return $this->build($command);
