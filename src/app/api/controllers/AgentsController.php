@@ -122,8 +122,7 @@ class AgentsController extends ControllerBase
 
         if (!empty($company_code)) {
             try {
-                $result = Agents::findWithIndex('cmp_code', $company_code, $limit, $offset);
-                return $this->response->items($result);
+                return $this->response->items(Agents::findWithIndex('cmp_code', $company_code, $limit, $offset));
             } catch (Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
@@ -131,16 +130,14 @@ class AgentsController extends ControllerBase
 
         if (!empty($type)) {
             try {
-                $result = Agents::findWithIndex('type', $type, $limit, $offset);
-                return $this->response->items($result);
+                return $this->response->items(Agents::findWithIndex('type', $type, $limit, $offset));
             } catch (Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
         }
 
         try {
-            $result = Agents::find($limit, $offset);
-            return $this->response->items($result);
+            return $this->response->items(Agents::find($limit, $offset));
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }

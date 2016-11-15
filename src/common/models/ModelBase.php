@@ -125,9 +125,11 @@ abstract class ModelBase
      */
     public function prepareCreate($primary_index_value)
     {
-
         $this->validate();
+        //validator probably can change primary attributes, we need to set it back
+        self::setPrimaryAttributes();
         $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
+
         $command = (new StoreObject($this->_riak))
             ->buildObject($this)
             ->atLocation($this->_location);
@@ -148,6 +150,8 @@ abstract class ModelBase
         }
 
         $this->validate();
+        //validator probably can change primary attributes, we need to set it back
+        self::setPrimaryAttributes();
         $save = $this->_object->setData(json_encode($this));
         $command = (new StoreObject($this->_riak))
             ->withObject($save)
