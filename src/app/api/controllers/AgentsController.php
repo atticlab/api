@@ -122,7 +122,17 @@ class AgentsController extends ControllerBase
 
         if (!empty($company_code)) {
             try {
-                return $this->response->items(Agents::findWithIndex('cmp_code', $company_code, $limit, $offset));
+                $result = Agents::findWithIndex('cmp_code', $company_code, $limit, $offset);
+                foreach ($result as $key => &$item) {
+                    if (!Companies::isExist($item->cmp_code)) {
+                        unset($result[$key]);
+                    }
+                    $cmp_data = Companies::getDataByID($item->cmp_code);
+                    $item->cmp_title = $cmp_data->title;
+                }
+
+                return $this->response->items($result);
+
             } catch (Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
@@ -130,14 +140,34 @@ class AgentsController extends ControllerBase
 
         if (!empty($type)) {
             try {
-                return $this->response->items(Agents::findWithIndex('type', $type, $limit, $offset));
+                $result = Agents::findWithIndex('type', $type, $limit, $offset);
+                foreach ($result as $key => &$item) {
+                    if (!Companies::isExist($item->cmp_code)) {
+                        unset($result[$key]);
+                    }
+                    $cmp_data = Companies::getDataByID($item->cmp_code);
+                    $item->cmp_title = $cmp_data->title;
+                }
+
+                return $this->response->items($result);
+
             } catch (Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
         }
 
         try {
-            return $this->response->items(Agents::find($limit, $offset));
+            $result = Agents::find($limit, $offset);
+            foreach ($result as $key => &$item) {
+                if (!Companies::isExist($item->cmp_code)) {
+                    unset($result[$key]);
+                }
+                $cmp_data = Companies::getDataByID($item->cmp_code);
+                $item->cmp_title = $cmp_data->title;
+            }
+
+            return $this->response->items($result);
+
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
