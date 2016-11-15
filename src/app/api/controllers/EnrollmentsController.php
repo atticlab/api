@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Lib\Exception;
+use App\Models\Companies;
 use App\Models\Enrollments;
 use App\Models\Agents;
 use App\Models\RegUsers;
@@ -39,10 +40,27 @@ class EnrollmentsController extends ControllerBase
 
             try {
                 $result = Enrollments::findWithIndex('type', $type, $limit, $offset);
-                return $this->response->items($result);
             } catch (Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
+
+            if ($type == 'agent') {
+                //more data for agents records
+                foreach ($result as $key => &$item) {
+                    if (!Agents::isExist($item->target_id)) {
+                        unset($result[$key]);
+                    }
+                    $agent_data = Agents::getDataByID($item->target_id);
+                    if (!Companies::isExist($agent_data->cmp_code)) {
+                        unset($result[$key]);
+                    }
+                    $cmp_data = Companies::getDataByID($agent_data->cmp_code);
+                    $item->cmp_title   = $cmp_data->title;
+                    $item->target_type = $agent_data->type;
+                }
+            }
+
+            return $this->response->items($result);
 
         }
 
