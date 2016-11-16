@@ -65,7 +65,9 @@ class EnrollmentsController extends ControllerBase
                         unset($result[$key]);
                     }
                     $reguser_data = RegUsers::getDataByID($item->target_id);
-                    $item->user_data = (array)$reguser_data;
+                    $item->user_name = $reguser_data->name;
+                    $item->user_surname = $reguser_data->surname;
+                    $item->user_middle_name = $reguser_data->middle_name;
                 }
             }
 
