@@ -45,7 +45,7 @@ class EnrollmentsController extends ControllerBase
             }
 
             if ($type == 'agent') {
-                //more data for agents records
+                //more data for agents enrollments
                 foreach ($result as $key => &$item) {
                     if (!Agents::isExist($item->target_id)) {
                         unset($result[$key]);
@@ -57,6 +57,15 @@ class EnrollmentsController extends ControllerBase
                     $cmp_data = Companies::getDataByID($agent_data->cmp_code);
                     $item->cmp_title   = $cmp_data->title;
                     $item->target_type = $agent_data->type;
+                }
+            } else {
+                //more data for users enrollments
+                foreach ($result as $key => &$item) {
+                    if (!RegUsers::isExist($item->target_id)) {
+                        unset($result[$key]);
+                    }
+                    $reguser_data = RegUsers::getDataByID($item->target_id);
+                    $item->user_data = $reguser_data;
                 }
             }
 
