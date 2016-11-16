@@ -55,7 +55,7 @@ class CardsController extends ControllerBase
         try {
 
             if ($card->create()) {
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while creating card');

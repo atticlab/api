@@ -33,6 +33,14 @@ class Response extends \Phalcon\Http\Response
         exit;
     }
 
+    public function success()
+    {
+        $data['nonce']   = $this->getDi()->getRequest()->getNonce();
+        $data['message'] = 'success';
+        $this->setJsonContent($data)->send();
+        exit;
+    }
+
     public function error($err_code, $msg = '')
     {
         if (!defined('self::' . $err_code)) {

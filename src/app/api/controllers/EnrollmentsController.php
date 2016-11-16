@@ -69,7 +69,7 @@ class EnrollmentsController extends ControllerBase
                 }
             }
 
-            return $this->response->items($result);
+            return $this->response->items((array)$result);
 
         }
 
@@ -129,7 +129,7 @@ class EnrollmentsController extends ControllerBase
         try {
 
             if ($enrollment->update()) {
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while updating enrollment');
@@ -169,7 +169,7 @@ class EnrollmentsController extends ControllerBase
         try {
 
             if ($enrollment->update()) {
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while updating enrollment');
@@ -228,7 +228,7 @@ class EnrollmentsController extends ControllerBase
                 try {
 
                     if ($agent->update() && $enrollment->update()) {
-                        return $this->response->single(['message' => 'success']);
+                        return $this->response->success();
                     }
 
                     $this->logger->emergency('Riak error while enrollment approve');
@@ -254,7 +254,7 @@ class EnrollmentsController extends ControllerBase
                 try {
 
                     if ($user->update() && $enrollment->update()) {
-                        return $this->response->single(['message' => 'success']);
+                        return $this->response->success();
                     }
 
                     $this->logger->emergency('Riak error while enrollment approve');

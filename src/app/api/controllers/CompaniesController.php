@@ -47,7 +47,7 @@ class CompaniesController extends ControllerBase
         try {
 
             if ($company->create()) {
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while creating company');

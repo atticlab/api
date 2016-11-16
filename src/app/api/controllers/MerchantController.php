@@ -84,7 +84,7 @@ class MerchantController extends ControllerBase
 
             if ($store->create()) {
                 //TODO: return data, not message
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while creating store');

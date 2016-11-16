@@ -220,7 +220,7 @@ class InvoicesController extends ControllerBase
         try {
 
             if ($ban->create()) {
-                return $this->response->single(['message' => 'success']);
+                return $this->response->success();
             }
 
             $this->logger->emergency('Riak error while creating ban account');

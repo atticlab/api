@@ -82,7 +82,7 @@ class AgentsController extends ControllerBase
                             }
                         }
 
-                        return $this->response->single(['message' => 'success']);
+                        return $this->response->success();
 
                     }
 

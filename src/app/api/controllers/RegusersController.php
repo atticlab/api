@@ -76,7 +76,7 @@ class RegusersController extends ControllerBase
                             $this->logger->emergency('Cannot send email with welcome code to registered user (' . $reguser->email . ')');
                         }
 
-                        return $this->response->single(['message' => 'success']);
+                        return $this->response->success();
 
                     }
 
