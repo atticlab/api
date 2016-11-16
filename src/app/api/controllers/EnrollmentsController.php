@@ -54,9 +54,9 @@ class EnrollmentsController extends ControllerBase
                     if (!Companies::isExist($agent_data->cmp_code)) {
                         unset($result[$key]);
                     }
-                    $cmp_data = Companies::getDataByID($agent_data->cmp_code);
-                    $item->cmp_title   = $cmp_data->title;
-                    $item->target_type = $agent_data->type;
+                    $cmp_data           = Companies::getDataByID($agent_data->cmp_code);
+                    $item->cmp_title    = $cmp_data->title;
+                    $item->target_type  = $agent_data->type;
                 }
             } else {
                 //more data for users enrollments
@@ -64,14 +64,14 @@ class EnrollmentsController extends ControllerBase
                     if (!RegUsers::isExist($item->target_id)) {
                         unset($result[$key]);
                     }
-                    $reguser_data = RegUsers::getDataByID($item->target_id);
-                    $item->user_name = $reguser_data->name;
-                    $item->user_surname = $reguser_data->surname;
+                    $reguser_data           = RegUsers::getDataByID($item->target_id);
+                    $item->user_name        = $reguser_data->name;
+                    $item->user_surname     = $reguser_data->surname;
                     $item->user_middle_name = $reguser_data->middle_name;
                 }
             }
 
-            return $this->response->items($result);
+            return $this->response->items(array_values($result));
 
         }
 
