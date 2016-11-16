@@ -65,11 +65,11 @@ class EnrollmentsController extends ControllerBase
                         unset($result[$key]);
                     }
                     $reguser_data = RegUsers::getDataByID($item->target_id);
-                    $item->user_data = $reguser_data;
+                    $item->user_data = (array)$reguser_data;
                 }
             }
 
-            return $this->response->items((array)$result);
+            return $this->response->items($result);
 
         }
 
