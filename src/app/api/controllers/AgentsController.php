@@ -53,13 +53,11 @@ class AgentsController extends ControllerBase
                     return $this->handleException($e->getCode(), $e->getMessage());
                 }
 
-                $random = new \Phalcon\Security\Random;
-
                 $enrollment->type           = Enrollments::TYPE_AGENT;
                 $enrollment->target_id      = $agent->id;
                 $enrollment->stage          = Enrollments::STAGE_CREATED;
                 $enrollment->asset          = $asset;
-                $enrollment->otp            = $random->base64Safe(8);
+                $enrollment->otp            = Enrollments::generateOTP();
                 $enrollment->expiration     = time() + 60 * 60 * 24;
 
                 try {

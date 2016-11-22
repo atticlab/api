@@ -12,6 +12,7 @@ class Enrollments extends ModelBase implements ModelInterface
 {
 
     const ID_LENGTH = 8;
+    const OTP_LENGTH = 16;
 
     const STAGE_CREATED  = 2;
     const STAGE_APPROVED = 4;
@@ -105,6 +106,18 @@ class Enrollments extends ModelBase implements ModelInterface
         } while (self::isExist($id));
 
         return $id;
+
+    }
+
+    public static function generateOTP(){
+
+        $random = new \Phalcon\Security\Random;
+
+        do {
+            $otp = $random->base64Safe(self::OTP_LENGTH);
+        } while (self::isExistByIndex('otp', $otp));
+
+        return $otp;
 
     }
 

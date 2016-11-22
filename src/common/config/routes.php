@@ -75,6 +75,18 @@ $router->addGet('/enrollments', [
     'action' => 'list',
 ]);
 
+//get agent enrollment data (with agent data) by enrollment token and company_code (send as post parameter)
+$router->addGet('/enrollment/agent/get/{id}', [
+    'controller' => 'enrollments',
+    'action' => 'getAgentEnrollment',
+]);
+
+//get user enrollment data (with user data) by enrollment token
+$router->addGet('/enrollment/user/get/{id}', [
+    'controller' => 'enrollments',
+    'action' => 'getUserEnrollment',
+]);
+
 //can call anyone with token, nonce not need, account type dont checked
 $router->addPost('/enrollments/decline/{id}', [
     'controller' => 'enrollments',

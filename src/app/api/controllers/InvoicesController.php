@@ -14,6 +14,7 @@ class InvoicesController extends ControllerBase
     {
 
         $allowed_types = [
+            Account::TYPE_NOT_CREATED,
             Account::TYPE_ANONYMOUS,
             Account::TYPE_REGISTERED,
             Account::TYPE_MERCHANT,

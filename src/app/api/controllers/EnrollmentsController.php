@@ -85,6 +85,76 @@ class EnrollmentsController extends ControllerBase
 
     }
 
+    public function getUserEnrollmentAction($otp)
+    {
+        if (empty($otp)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'token');
+        }
+        $enrollment_id = Enrollments::isExistByIndex('otp', $otp);
+        if (!$enrollment_id){
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+
+        $enrollment_id = $enrollment_id[0];
+
+        $enrollment = Enrollments::getDataByID($enrollment_id);
+
+        if (empty($enrollment) || empty($enrollment->target_id) || empty($enrollment->type) || $enrollment->type != 'user') {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+        if ($enrollment->stage != Enrollments::STAGE_CREATED) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+        if (!RegUsers::isExist($enrollment->target_id)) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'registered_user');
+        }
+        $user_data = RegUsers::getDataByID($enrollment->target_id);
+        if (!$user_data) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'registered_user');
+        }
+        $enrollment->user_data = $user_data;
+
+        return $this->response->single((array)$enrollment);
+    }
+
+    public function getAgentEnrollmentAction($otp)
+    {
+        if (empty($otp)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'token');
+        }
+        if (empty($this->request->get('company_code'))) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'company_code');
+        }
+
+        $company_code = $this->request->get('company_code');
+
+        $enrollment_id = Enrollments::isExistByIndex('otp', $otp);
+        if (!$enrollment_id){
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+
+        $enrollment_id = $enrollment_id[0];
+
+        $enrollment = Enrollments::getDataByID($enrollment_id);
+
+        if (empty($enrollment) || empty($enrollment->target_id) || empty($enrollment->type) || $enrollment->type != 'agent') {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+        if ($enrollment->stage != Enrollments::STAGE_CREATED) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
+        }
+        if (!Agents::isExist($enrollment->target_id)) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'agent');
+        }
+        $agent_data = Agents::getDataByID($enrollment->target_id);
+        if (!$agent_data || empty($agent_data->cmp_code) || $agent_data->cmp_code != $company_code) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'agent');
+        }
+        $enrollment->agent_data = $agent_data;
+
+        return $this->response->single((array)$enrollment);
+    }
+
     public function acceptAction($id)
     {
 
