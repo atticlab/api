@@ -5,37 +5,34 @@ use Smartmoney\Stellar\Account;
 
 class Request extends \Phalcon\Http\Request
 {
+    const SIGN_HEADER = 'Signature';
+
     /**
      * @var Account Id of request initiator
      */
     protected $accountId;
+
     /**
-     * Checks if nonce signature is valid
+     * Checks if payload is correctly signed
      * @return bool
      */
     public function checkSignature()
     {
-        $signed_nonce_header = $this->getHeader('Signed-Nonce');
-
-        if (empty($signed_nonce_header)) {
+        $sign_header = $this->getHeader(self::SIGN_HEADER);
+        if (empty($sign_header)) {
             return false;
         }
 
-        $sign_data = explode(':', $signed_nonce_header);
-
+        $sign_data = explode(':', $sign_header);
         if (count($sign_data) != 3) {
             return false;
         }
 
+        list($nonce, $signature, $publicKey) = $sign_data;
+
         $memcached = $this->getDi()->getMemcached();
-
-        $old_nonce    = $sign_data[0];
-        $signed_nonce = $sign_data[1];
-        $publicKey    = $sign_data[2];
-
-        $accountId = $memcached->get($old_nonce);
-
-        $memcached->delete($old_nonce);
+        $accountId = $memcached->get($nonce);
+        $memcached->delete($nonce);
 
         if (empty($accountId) || $accountId != Account::encodeCheck('accountId', $publicKey)) {
             return false;
@@ -43,8 +40,9 @@ class Request extends \Phalcon\Http\Request
 
         $this->accountId = $accountId;
 
-        return ed25519_sign_open($old_nonce, base64_decode($publicKey), base64_decode($signed_nonce));
-
+        # Correct signature should consist of base64encoded concatenated uri, req body and nonce
+        $s = ($this->getURI() . $this->getRawBody() . $nonce);
+        return ed25519_sign_open($s, base64_decode($publicKey), base64_decode($signature));
     }
 
     /**

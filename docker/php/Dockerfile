@@ -3,7 +3,7 @@ FROM php:7.0-fpm
 ENV PHPREDIS_VERSION php7
 
 RUN apt-get update && apt-get install -y \
-    git cron libpq-dev postgresql-client libxml2-dev \
+    git cron libpq-dev postgresql-client libxml2-dev memcached libmemcached-dev \
     && docker-php-ext-install pgsql \
     && docker-php-ext-install pdo_pgsql \
     && docker-php-ext-install soap \
@@ -15,31 +15,11 @@ RUN apt-get update && apt-get install -y \
     # install ed25519
     && git clone git://github.com/wedancedalot/php-ed25519-ext.git \
     && cd php-ed25519-ext && phpize && ./configure && make && make install \
-    && echo "extension=ed25519.so" > /usr/local/etc/php/conf.d/30-ed25519.ini
-
+    && echo "extension=ed25519.so" > /usr/local/etc/php/conf.d/30-ed25519.ini \
     # Memcached
-    RUN apt-get update && apt-get install -y \
-            libmemcached11 \
-            libmemcachedutil2 \
-            libmemcached-dev \
-            libz-dev \
-        && cd /root \
-        && git clone -b $PHPREDIS_VERSION https://github.com/php-memcached-dev/php-memcached \
-        && cd php-memcached \
-        && phpize \
-        && ./configure \
-        && make \
-        && make install \
-        && cd .. \
-        && rm -rf  php-memcached \
-        && echo extension=memcached.so >> /usr/local/etc/php/conf.d/memcached.ini \
-        && apt-get remove -y build-essential libmemcached-dev libz-dev \
-        && apt-get remove -y \
-            libmemcached-dev \
-            libz-dev \
-        && apt-get autoremove -y \
-        && rm -rf /var/lib/apt/lists/* \
-        && apt-get clean
+    && git clone -b php7 https://github.com/php-memcached-dev/php-memcached /usr/src/php/ext/memcached \
+    && cd /usr/src/php/ext/memcached && phpize && ./configure && make && make install \
+    && echo "extension=memcached.so" > /usr/local/etc/php/conf.d/30-memcached.ini
 
     # Redis
 RUN curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/$PHPREDIS_VERSION.tar.gz \
