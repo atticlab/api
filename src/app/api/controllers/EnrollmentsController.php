@@ -55,8 +55,8 @@ class EnrollmentsController extends ControllerBase
                         unset($result[$key]);
                     }
                     $cmp_data           = Companies::getDataByID($agent_data->cmp_code);
-                    $item->cmp_title    = $cmp_data->title;
-                    $item->target_type  = $agent_data->type;
+                    $item->company_data = $cmp_data;
+                    $item->agent_data   = $agent_data;
                 }
             } else {
                 //more data for users enrollments
@@ -65,9 +65,7 @@ class EnrollmentsController extends ControllerBase
                         unset($result[$key]);
                     }
                     $reguser_data           = RegUsers::getDataByID($item->target_id);
-                    $item->user_name        = $reguser_data->name;
-                    $item->user_surname     = $reguser_data->surname;
-                    $item->user_middle_name = $reguser_data->middle_name;
+                    $item->user_data        = $reguser_data;
                 }
             }
 
@@ -151,6 +149,11 @@ class EnrollmentsController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'agent');
         }
         $enrollment->agent_data = $agent_data;
+        $cmp_data = Companies::getDataByID($agent_data->cmp_code);
+        if (!$cmp_data) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'company');
+        }
+        $enrollment->company_data = $cmp_data;
 
         return $this->response->single((array)$enrollment);
     }

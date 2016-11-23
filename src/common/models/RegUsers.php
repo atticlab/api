@@ -75,19 +75,23 @@ class RegUsers extends ModelBase implements ModelInterface
             throw new Exception(Exception::BAD_PARAM, 'email');
         }
 
-        if (RegUsers::isExistByIndex('ipn_code', $this->ipn_code)) {
+        $id_by_ipn = RegUsers::isExistByIndex('ipn_code', $this->ipn_code);
+        if (!empty($id_by_ipn) && $id_by_ipn[0] != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'ipn_code');
         }
 
-        if (RegUsers::isExistByIndex('passport', $this->passport)) {
+        $id_by_passport = RegUsers::isExistByIndex('passport', $this->passport);
+        if (!empty($id_by_passport) && $id_by_passport[0] != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'passport');
         }
 
-        if (RegUsers::isExistByIndex('email', $this->email)) {
+        $id_by_email = RegUsers::isExistByIndex('email', $this->email);
+        if (!empty($id_by_email) && $id_by_email[0] != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'email');
         }
 
-        if (RegUsers::isExistByIndex('phone', $this->phone)) {
+        $id_by_phone = RegUsers::isExistByIndex('phone', $this->phone);
+        if (!empty($id_by_phone) && $id_by_phone[0] != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'phone');
         }
 
