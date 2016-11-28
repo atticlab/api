@@ -147,15 +147,15 @@ class MerchantController extends ControllerBase
 
     public function ordersCreateAction()
     {
-        $store_id       = $this->payload->store_id ?? null;
-        $amount         = $this->payload->amount ?? null;
-        $currency       = $this->payload->currency ?? null;
-        $order_id       = $this->payload->order_id ?? null;
-        $server_url     = $this->payload->server_url ?? null;
-        $success_url    = $this->payload->success_url ?? null;
-        $fail_url       = $this->payload->fail_url ?? null;
-        $signature      = $this->payload->signature ?? null;
-        $details        = $this->payload->details ?? null;
+        $store_id       = $this->request->getPost('store_id');
+        $amount         = $this->request->getPost('amount');
+        $currency       = $this->request->getPost('currency');
+        $order_id       = $this->request->getPost('order_id');
+        $server_url     = $this->request->getPost('server_url');
+        $success_url    = $this->request->getPost('success_url');
+        $fail_url       = $this->request->getPost('fail_url');
+        $details        = $this->request->getPost('details');
+        $signature      = $this->request->getPost('signature');
 
         if (empty($store_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
@@ -272,25 +272,9 @@ class MerchantController extends ControllerBase
         $order->server_url_data = http_build_query($server_url_data);
 
         try {
-
             if ($order->create()) {
-
-                $order_data = [
-                    'store_id'          => $order->store_id,
-                    'merchant_acc_id'   => $store_data->merchant_id,
-                    'merchant_name'     => base64_decode($store_data->url),
-                    'id'                => $order->id,
-                    'amount'            => $order->amount,
-                    'currency'          => $order->currency,
-                    'details'           => $order->details,
-                    'success_url'       => $order->success_url,
-                    'fail_url'          => $order->fail_url,
-                ];
-
-
-                return $this->response->single($order_data);
+                return $this->response->redirect($this->config->merchant->transaction_url, TRUE);
             }
-
             $this->logger->emergency('Riak error while creating order');
             throw new Exception(Exception::SERVICE_ERROR);
 

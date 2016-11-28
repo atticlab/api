@@ -16,6 +16,10 @@ $config = new \Phalcon\Config([
         "port" => 80
     ],
 
+    "merchant" => [
+        "transaction_url" => 'http://merchant.smartmoney.com.ua/transaction'
+    ],
+
     "master_key" => 'GAWIB7ETYGSWULO4VB7D6S42YLPGIC7TY7Y2SSJKVOTMQXV5TILYWBUA',
 
     "weights" => [
