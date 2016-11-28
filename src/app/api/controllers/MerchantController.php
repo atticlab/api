@@ -147,18 +147,6 @@ class MerchantController extends ControllerBase
 
     public function ordersCreateAction()
     {
-
-        $allowed_types = [
-            Account::TYPE_ANONYMOUS,
-            Account::TYPE_REGISTERED
-        ];
-
-        $requester = $this->request->getAccountId();
-
-        if (!$this->isAllowedType($requester, $allowed_types)) {
-            return $this->response->error(Response::ERR_BAD_TYPE);
-        }
-
         $store_id       = $this->payload->store_id ?? null;
         $amount         = $this->payload->amount ?? null;
         $currency       = $this->payload->currency ?? null;

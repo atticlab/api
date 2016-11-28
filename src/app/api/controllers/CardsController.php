@@ -10,62 +10,6 @@ use Smartmoney\Stellar\Account;
 class CardsController extends ControllerBase
 {
 
-    public function createAction()
-    {
-        $allowed_types = [
-            Account::TYPE_DISTRIBUTION
-        ];
-
-        $requester = $this->request->getAccountId();
-
-        if (!$this->isAllowedType($requester, $allowed_types)) {
-            return $this->response->error(Response::ERR_BAD_TYPE);
-        }
-
-        $account_id = $this->payload->account_id ?? null;
-
-        if (empty($account_id)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_id');
-        }
-
-        if (!Account::isValidAccountId($account_id)) {
-            return $this->response->error(Response::ERR_BAD_PARAM, 'account_id');
-        }
-
-        if (Cards::isExist($account_id)) {
-            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'account_id');
-        }
-
-        try {
-            $card = new Cards($account_id);
-        } catch (Exception $e) {
-            return $this->handleException($e->getCode(), $e->getMessage());
-        }
-
-        $card->created_date     = time();
-        $card->used_date        = false;
-        $card->is_used          = false;
-
-        $card->type     = isset($this->payload->type)   ? $this->payload->type : null;
-        $card->seed     = $this->payload->seed          ?? null;
-        $card->amount   = $this->payload->amount        ?? null;
-        $card->asset    = $this->payload->asset         ?? null;
-        $card->agent_id = $requester;
-
-        try {
-
-            if ($card->create()) {
-                return $this->response->success();
-            }
-
-            $this->logger->emergency('Riak error while creating card');
-            throw new Exception(Exception::SERVICE_ERROR);
-
-        } catch (Exception $e) {
-            return $this->handleException($e->getCode(), $e->getMessage());
-        }
-    }
-
     public function getAction($account_id)
     {
         //get card by account_id

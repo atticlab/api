@@ -131,11 +131,6 @@ $router->addGet('/cards', [
     'action' => 'list',
 ]);
 
-$router->addPost('/cards', [
-    'controller' => 'cards',
-    'action' => 'create',
-]);
-
 $router->notFound([
     "controller" => "index",
     "action" => "notFound"
