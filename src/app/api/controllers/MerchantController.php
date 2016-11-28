@@ -11,6 +11,10 @@ use Smartmoney\Stellar\Account;
 class MerchantController extends ControllerBase
 {
 
+    private $currency_map = [
+        'UAH' => 'EUAH'
+    ];
+
     public function storesListAction()
     {
 
@@ -148,6 +152,16 @@ class MerchantController extends ControllerBase
         if (empty($store_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
         }
+
+        if (empty($currency)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'currency');
+        }
+
+        if (!array_key_exists(mb_strtoupper($currency), $this->currency_map)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'currency');
+        }
+
+        $currency = $this->currency_map[$currency];
 
         if (empty($signature)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'signature');
