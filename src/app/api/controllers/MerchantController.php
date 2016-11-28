@@ -161,8 +161,6 @@ class MerchantController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'currency');
         }
 
-        $currency = $this->currency_map[$currency];
-
         if (empty($signature)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'signature');
         }
@@ -245,6 +243,8 @@ class MerchantController extends ControllerBase
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
+
+        $currency = $this->currency_map[$currency];
 
         $order->store_id            = $store_id;
         $order->amount              = $amount;
