@@ -168,32 +168,26 @@ class MerchantOrders extends ModelBase
      * @param $id - card account id
      * @return array
      */
-    public static function getOrder($order_id, $merchant_id)
+    public static function getOrder($order_id)
     {
 
         if (empty($order_id)) {
             throw new Exception(Exception::EMPTY_PARAM, 'order_id');
         }
 
-        if (empty($merchant_id)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'merchant_id');
-        }
-
-        if (!Account::isValidAccountId($merchant_id)) {
-            throw new Exception(Exception::BAD_PARAM, 'merchant_id');
-        }
-
         $order_data = self::getDataByID($order_id);
 
         if (empty($order_data->store_id)) {
-            return [];
+            throw new Exception(Exception::NOT_FOUND, 'order');
         }
 
         $store_data = MerchantStores::getDataByStoreID($order_data->store_id);
 
-        if (empty($store_data->merchant_id) || $store_data->merchant_id != $merchant_id) {
-            return [];
+        if (empty($store_data) || empty($store_data->merchant_id)) {
+            throw new Exception(Exception::NOT_FOUND, 'store');
         }
+
+        $order_data->store_data = $store_data;
 
         return (array)$order_data;
     }

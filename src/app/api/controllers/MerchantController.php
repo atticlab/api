@@ -125,24 +125,12 @@ class MerchantController extends ControllerBase
 
     public function ordersGetAction($order_id)
     {
-
-        $allowed_types = [
-            Account::TYPE_MERCHANT
-        ];
-
-        $requester = $this->request->getAccountId();
-
-        if (!$this->isAllowedType($requester, $allowed_types)) {
-            return $this->response->error(Response::ERR_BAD_TYPE);
-        }
-
         try {
-            $order_data = MerchantOrders::getOrder($order_id, $requester);
+            $order_data = MerchantOrders::getOrder($order_id);
             return $this->response->single($order_data);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-
     }
 
     public function ordersCreateAction()
@@ -273,6 +261,7 @@ class MerchantController extends ControllerBase
 
         try {
             if ($order->create()) {
+                var_dump(rtrim($this->config->merchant->transaction_url, '/') . '/' . $order->id);
                 return $this->response->redirect(rtrim($this->config->merchant->transaction_url, '/') . '/' . $order->id, true);
             }
             $this->logger->emergency('Riak error while creating order');
