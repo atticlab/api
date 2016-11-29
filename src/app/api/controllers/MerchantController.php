@@ -275,7 +275,6 @@ class MerchantController extends ControllerBase
 
         try {
             if ($order->create()) {
-                var_dump(rtrim($this->config->merchant->transaction_url, '/') . '/' . $order->id);
                 return $this->response->redirect(rtrim($this->config->merchant->transaction_url, '/') . '/' . $order->id, true);
             }
             $this->logger->emergency('Riak error while creating order');
