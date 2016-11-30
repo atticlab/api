@@ -33,7 +33,7 @@ class MerchantStores extends ModelBase
         }
 
         //base64 is needed for riak!!!
-        //"url" can not be used like primary key
+        //special symbols like slashes can not be used like primary key
         //because riak dont save that object (but will return success!!!)
         $url = base64_encode($url);
 

@@ -53,12 +53,11 @@ abstract class ModelBase
     }
 
     /**
-     * Sets this Model object from JSON data
-     * @param $data -- JSON assoc array with model data
+     * Sets this Model object from data
+     * @param $data -- object with model data
      */
-    protected function setFromJSON($data)
+    protected function setFromData($data)
     {
-        $data = json_decode($data);
         foreach ($data AS $key => $value) {
             if (property_exists($this, $key)) {
                 $this->{$key} = $value;
@@ -90,7 +89,7 @@ abstract class ModelBase
             throw new Exception(Exception::NOT_FOUND, 'object');
         }
 
-        $this->setFromJSON($this->_object->getData());
+        $this->setFromData($this->_object->getData());
         return $this;
     }
 
@@ -131,7 +130,7 @@ abstract class ModelBase
         $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
 
         $command = (new StoreObject($this->_riak))
-            ->buildObject($this)
+            ->buildJsonObject($this)
             ->atLocation($this->_location);
         $this->addIndex($command, $found_all_idx, self::$BUCKET_NAME);
         $this->addIndex($command, self::$INDEX_NAME, $primary_index_value);
@@ -152,7 +151,7 @@ abstract class ModelBase
         $this->validate();
         //validator probably can change primary attributes, we need to set it back
         self::setPrimaryAttributes();
-        $save = $this->_object->setData(json_encode($this));
+        $save = $this->_object->setData($this);
         $command = (new StoreObject($this->_riak))
             ->withObject($save)
             ->atLocation($this->_location);
@@ -187,7 +186,7 @@ abstract class ModelBase
             ->build()
             ->execute();
         if ($response->isSuccess() && $response->getObject()) {
-            $data = json_decode($response->getObject()->getData());
+            $data = $response->getObject()->getData();
         }
 
         return $data;
@@ -400,12 +399,12 @@ abstract class ModelBase
     }
 
     /**
-     * Magic toString method, which makes string-representation of model
+     * Magic toString method, which makes object-representation of model
      * @return string
      */
     public function __toString()
     {
-        return json_encode($this->getModelProperties());
+        return (object)$this->getModelProperties();
     }
 
     /**
