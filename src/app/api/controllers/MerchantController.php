@@ -64,37 +64,30 @@ class MerchantController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'url');
         }
 
-        //base64 is needed for riak!!!
-        //"url" can not be used like primary key
-        //because riak dont save that object (but will return success!!!)
-        if (MerchantStores::isExist(base64_encode($url))) {
+        $store_id = MerchantStores::generateStoreID($url);
+
+        if (MerchantStores::isExist($store_id)) {
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'store');
         }
 
         try {
-            $store = new MerchantStores($url);
+            $store = new MerchantStores($store_id, $url);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
 
         $store->name        = $this->payload->name ?? null;
-
         $store->merchant_id = $requester;
-        $store->store_id    = MerchantStores::generateStoreID($url);
         $store->secret_key  = MerchantStores::generateSecretKey();
         $store->date        = time();
 
         try {
-
             if ($store->create()) {
                 //TODO: return data, not message
                 return $this->response->success();
             }
-
             $this->logger->emergency('Riak error while creating store');
             throw new Exception(Exception::SERVICE_ERROR);
-
-
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -140,7 +133,7 @@ class MerchantController extends ControllerBase
     public function ordersCreateAction()
     {
         $store_id       = $this->request->getPost('store_id');
-        $amount         = $this->request->getPost('amount');
+        $amount         = floatval(number_format($this->request->getPost('amount'), 2, '.', ''));
         $currency       = $this->request->getPost('currency');
         $order_id       = $this->request->getPost('order_id');
         $server_url     = $this->request->getPost('server_url');
@@ -165,13 +158,13 @@ class MerchantController extends ControllerBase
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'signature');
         }
 
-        $store_data = MerchantStores::getDataByStoreID($store_id);
+        $store_data = MerchantStores::getDataByID($store_id);
 
         if (empty($store_data) || empty($store_data->secret_key)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'store');
         }
 
-        $store_url_host = parse_url(base64_decode($store_data->url), PHP_URL_HOST);
+        $store_url_host = parse_url($store_data->url, PHP_URL_HOST);
 
         $server_url     = MerchantStores::formatUrl($server_url);
         $success_url    = MerchantStores::formatUrl($success_url);
@@ -223,11 +216,11 @@ class MerchantController extends ControllerBase
         //check signature
         //build data for verify data from order
         $signature_data = [
-            'store_id' => $store_id,
-            'amount' => floatval(number_format($amount, 2, '.', '')),
-            'currency' => $currency,
-            'order_id' => (string)$order_id,
-            'details' => $details,
+            'store_id'  => $store_id,
+            'amount'    => $amount,
+            'currency'  => $currency,
+            'order_id'  => (string)$order_id,
+            'details'   => $details,
         ];
 
         ksort($signature_data);
@@ -264,7 +257,8 @@ class MerchantController extends ControllerBase
         $answer_data = array_merge($signature_data, ['status' => 'ok']);
         ksort($answer_data);
 
-        $answer_signature = base64_encode(hash('sha256', ($store_data->secret_key . base64_encode(json_encode($answer_data)))));
+        $answer_data      = base64_encode(json_encode($answer_data));
+        $answer_signature = base64_encode(hash('sha256', ($store_data->secret_key . $answer_data)));
 
         $server_url_data = [
             'data'      => $answer_data,

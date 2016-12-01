@@ -77,7 +77,7 @@ class MerchantOrders extends ModelBase
             throw new Exception(Exception::EMPTY_PARAM, 'store_id');
         }
 
-        if (!MerchantStores::getDataByStoreID($this->store_id)) {
+        if (!MerchantStores::getDataByID($this->store_id)) {
             throw new Exception(Exception::BAD_PARAM, 'store_id');
         }
 
@@ -181,7 +181,7 @@ class MerchantOrders extends ModelBase
             throw new Exception(Exception::NOT_FOUND, 'order');
         }
 
-        $store_data = MerchantStores::getDataByStoreID($order_data->store_id);
+        $store_data = MerchantStores::getDataByID($order_data->store_id);
 
         if (empty($store_data) || empty($store_data->merchant_id)) {
             throw new Exception(Exception::NOT_FOUND, 'store');
@@ -201,6 +201,10 @@ class MerchantOrders extends ModelBase
             $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
 
+//        if (isset($this->status)) {
+//            $this->addIndex($command, 'status_bin', $this->status);
+//        }
+
         return $this->build($command);
 
     }
@@ -213,6 +217,10 @@ class MerchantOrders extends ModelBase
         if (isset($this->store_id)) {
             $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
+
+//        if (isset($this->status)) {
+//            $this->addIndex($command, 'status_bin', $this->status);
+//        }
 
         return $this->build($command);
     }

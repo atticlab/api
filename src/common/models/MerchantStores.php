@@ -24,21 +24,17 @@ class MerchantStores extends ModelBase
     public $store_id;           //store id (uuid v5)
     public $secret_key;         //secret key for verify data
 
-    public function __construct($url)
+    public function __construct($store_id, $url = null)
     {
-        $url = self::formatUrl($url);
-
-        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-            throw new Exception(Exception::BAD_PARAM, 'url');
+        if (!empty($url)) {
+            $url = self::formatUrl($url);
+            if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+                throw new Exception(Exception::BAD_PARAM, 'url');
+            }
+            $this->url = $url;
         }
-
-        //base64 is needed for riak!!!
-        //special symbols like slashes can not be used like primary key
-        //because riak dont save that object (but will return success!!!)
-        $url = base64_encode($url);
-
-        parent::__construct($url);
-        $this->url = $url;
+        parent::__construct($store_id);
+        $this->store_id = $store_id;
     }
 
     public static function generateStoreID($string)
@@ -154,58 +150,18 @@ class MerchantStores extends ModelBase
         return $stores;
     }
 
-//    /**
-//     * @param $id - card account id
-//     * @return array
-//     */
-//    public static function getSingle($account_id, $agent_id)
-//    {
-//
-//        $data = self::getDataByBucketAndID(self::BUCKET_NAME, $account_id);
-//
-//        if (!empty($data->agent_id) && $data->agent_id != $agent_id) {
-//            return false;
-//        }
-//
-//        return (array)$data;
-//    }
-
-    public static function getDataByStoreID($id)
-    {
-
-        self::setPrimaryAttributes();
-
-        $riak = DI::getDefault()->get('riak');
-
-        $url = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::$BUCKET_NAME)
-            ->withIndexName('store_id_bin')
-            ->withScalarValue($id)
-            ->withMaxResults(1)
-            ->build()
-            ->execute()
-            ->getResults();
-
-        if (empty($url[0])){
-            return false;
-        }
-
-        return self::getDataByID($url[0]);
-
-    }
-
     public function create()
     {
 
-        $command = $this->prepareCreate($this->url);
+        $command = $this->prepareCreate($this->store_id);
         //create secondary indexes here with addIndex method
 
         if (isset($this->merchant_id)) {
             $this->addIndex($command, 'merchant_id_bin', $this->merchant_id);
         }
 
-        if (isset($this->store_id)) {
-            $this->addIndex($command, 'store_id_bin', $this->store_id);
+        if (isset($this->url)) {
+            $this->addIndex($command, 'url_bin', $this->url);
         }
 
         return $this->build($command);
@@ -220,8 +176,8 @@ class MerchantStores extends ModelBase
             $this->addIndex($command, 'merchant_id_bin', $this->merchant_id);
         }
 
-        if (isset($this->store_id)) {
-            $this->addIndex($command, 'store_id_bin', $this->store_id);
+        if (isset($this->url)) {
+            $this->addIndex($command, 'url_bin', $this->url);
         }
 
         return $this->build($command);
