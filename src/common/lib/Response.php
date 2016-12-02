@@ -15,6 +15,7 @@ class Response extends \Phalcon\Http\Response
     const ERR_SERVICE               = 'ERR_SERVICE';
     const ERR_BAD_SIGN              = 'ERR_BAD_SIGN';
     const ERR_BAD_TYPE              = 'ERR_BAD_TYPE';
+    const ERR_TX                    = 'ERR_TX';
 
     public function single(array $data = [])
     {

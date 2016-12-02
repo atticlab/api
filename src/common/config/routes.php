@@ -131,9 +131,9 @@ $router->addGet('/cards', [
     'action' => 'list',
 ]);
 
-$router->notFound([
-    "controller" => "index",
-    "action" => "notFound"
+$router->addPost('/cards', [
+    'controller' => 'cards',
+    'action' => 'createCards',
 ]);
 
 //merchant

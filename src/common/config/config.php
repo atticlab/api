@@ -16,6 +16,10 @@ $config = new \Phalcon\Config([
         "port" => 80
     ],
 
+    "cards" => [
+        "operations_limit" => 10
+    ],
+
     "merchant" => [
         "transaction_url" => 'http://merchant.smartmoney.com.ua/transaction'
     ],
