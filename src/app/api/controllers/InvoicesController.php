@@ -14,6 +14,9 @@ class InvoicesController extends ControllerBase
     {
 
         $allowed_types = [
+            //TODO: REMOVE DESTRIBUTION AGENT AFTER CRYPTO_UAH realese
+            Account::TYPE_DISTRIBUTION,
+            //---------------------------------------------------------
             Account::TYPE_NOT_CREATED,
             Account::TYPE_ANONYMOUS,
             Account::TYPE_REGISTERED,
