@@ -148,6 +148,7 @@ class Invoices extends ModelBase implements ModelInterface
 
     public function create()
     {
+        var_dump('123');
         $command = $this->prepareCreate($this->id);
         //create secondary indexes here with addIndex method
 

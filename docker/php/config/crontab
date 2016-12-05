@@ -1,4 +1,5 @@
 #m  h   d   m   d   user      command
 #*   *   *   *   *   /usr/local/bin/php /src/php/app/cli/cli.php index index                >/dev/null 2>&1
 
+0   *   *   *   *  /src/app/cli/cli.php index statistics                                    >/dev/null 2>&1
 # An empty line is required at the end of this file for a valid cron file.
