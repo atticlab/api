@@ -27,21 +27,6 @@ $router->addPost('/invoices', [
     'action' => 'create',
 ]);
 
-$router->addGet('/invoices/bans', [
-    'controller' => 'invoices',
-    'action' => 'bansList',
-]);
-
-//    $router->addGet('/invoices/bans/{id}', [
-//        'controller' => 'invoices',
-//        'action' => 'bansGet',
-//    ]);
-
-$router->addPost('/invoices/bans', [
-    'controller' => 'invoices',
-    'action' => 'bansCreate',
-]);
-
 //companies
 $router->addGet('/companies/{id}', [
     'controller' => 'companies',
