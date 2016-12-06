@@ -11,7 +11,7 @@ class IndexTask extends TaskBase
         $count_used = 0; 
         $count_all = 0;
         
-        //получаем все инвойсы
+        //get all invoices
         try {            
             $invoices = Invoices::find();         
         } catch (Exeption $e) {
@@ -19,7 +19,7 @@ class IndexTask extends TaskBase
             return false;
         }
         
-        //если инвойсы есть стартуем бот
+        //start bot
         if (count($invoices) > 0) {
             $this->logger->info("Bot started");
             
@@ -30,17 +30,18 @@ class IndexTask extends TaskBase
                 
                 $created_time = $invoice_code->created - $invoice_code->created % 86400;               
                 $statistic[$created_time]['invoices'][] = $invoice_code;
-                $statistic[$created_time]['all']++;
                 
-                //просроченные инвойсы
+                //overdue invoices
                 if (is_numeric($invoice_code->requested) ) {
                     $statistic[$created_time]['used']++;
-                //использованные инвойсы 
+                    $invoice->is_in_statistic = true;
+                //used invoices
                 } elseif ( time() > $invoice_code->expires ) {                    
                     $statistic[$created_time]['expired']++;
+                    $invoice->is_in_statistic = true;
                 }
+                $statistic[$created_time]['all'] = $statistic[$created_time]['used'] + $statistic[$created_time]['expired'];
                 
-                $invoice->is_in_statistic = true;
                 $invoice->update();
                 
             }
@@ -55,25 +56,19 @@ class IndexTask extends TaskBase
                
             }
             
-            //удаляем все инвойсы с is_in_statistic = 1
+            //remove all invoices is_in_statistic = 1
             $this->removeInvoiceInStatistic($invoices);
     
             $this->logger->info("Statistics bot finished");
         }
-       
-//        try {
-//            $inv = InvoicesStatistic::find();
-//            echo '<pre>' . print_r($inv, 1) . '</pre>';
-//        } catch (Exeption $e) {
-//            echo 'false';
-//        }
+               
     }
     
     private function createStatistic($expired, $used, $all, $date) 
     {       
         
-        //находим статистку по дате
-        //если есть то обновляем
+        //find statistics by date
+        //if there is update
         if (InvoicesStatistic::isExist($date)){
          
             $inv_statistic = InvoicesStatistic::findFirst($date);
@@ -86,7 +81,7 @@ class IndexTask extends TaskBase
             } catch (Exception $e) {
                 $this->logger->error('Failed to update invoices statistic -> ' . $e->getMessage());
             }    
-        //если статистики нет то создаем    
+        //if not statistics create
         } else {
             
             $inv_statistic = new InvoicesStatistic($date);           

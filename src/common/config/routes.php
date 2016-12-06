@@ -162,26 +162,6 @@ $router->addPost('/merchant/orders', [
     'action' => 'ordersCreate'
 ]);
 
-$router->addGet('/test/test', [
-    'controller' => 'test',
-    'action' => 'test'
-]);
-
-$router->addGet('/test/create', [
-    'controller' => 'test',
-    'action' => 'create'
-]);
-
-$router->addGet('/test/delinvoice', [
-    'controller' => 'test',
-    'action' => 'delinvoice'
-]);
-
-$router->addGet('/test/delinvst', [
-    'controller' => 'test',
-    'action' => 'delinvst'
-]);
-
 //404 not found
 $router->notFound([
     "controller" => "index",
