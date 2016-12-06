@@ -26,12 +26,6 @@ class InvoicesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $asset = $this->payload->asset  ?? null;
-        if (!empty($asset)) {
-            if (Account::getAccountBalances($requester, $this->config->horizon->host, $this->config->horizon->port, $asset) === false) {
-                return $this->response->error(Response::ERR_BAD_PARAM, 'asset');
-            }
-        }
         $invoice                    = new Invoices();
         $invoice->expires           = time() + $this->config->invoice->expired;
         $invoice->created           = time();
@@ -39,7 +33,7 @@ class InvoicesController extends ControllerBase
         $invoice->is_in_statistic   = false;
         $invoice->payer             = false;
         $invoice->amount            = $this->payload->amount ?? null;
-        $invoice->asset             = $asset;
+        $invoice->asset             = $this->payload->asset  ?? null;
         $invoice->account           = $requester;
         $invoice->memo              = $this->payload->memo ?? null;
         try {
@@ -82,11 +76,6 @@ class InvoicesController extends ControllerBase
         }
         if (isset($invoice->requested) && $invoice->requested > 0 && $invoice->requested <= time()) {
             return $this->response->error(Response::ERR_INV_REQUESTED);
-        }
-        if (!empty($invoice->asset)) {
-            if (Account::getAccountBalances($requester, $this->config->horizon->host, $this->config->horizon->port, $invoice->asset) === false) {
-                return $this->response->error(Response::ERR_BAD_PARAM, 'asset');
-            }
         }
         $invoice->requested = time();
         $invoice->payer     = $requester;
