@@ -6,6 +6,7 @@ declare(ticks = 1);
 
 define('APP_PATH', realpath(__DIR__ . '/../..') . '/');
 define('CONFIG_PATH', APP_PATH . 'common/config/');
+define('SERVICE_PATH', APP_PATH . 'common/services/');
 
 class CliApplication
 {
@@ -25,6 +26,7 @@ class CliApplication
         $loader->registerNamespaces([
             'App\Models' => APP_PATH . 'common/models',
             'App\Lib'    => APP_PATH . 'common/lib',
+            'SWP\Services'    => SERVICE_PATH,
         ]);
 
         $loader->register();

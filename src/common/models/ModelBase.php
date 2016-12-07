@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Lib\Exception;
+use \App\Lib\Exception;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -114,7 +114,9 @@ abstract class ModelBase
      */
     public function build(&$command)
     {
-        return $command->build()->execute()->isSuccess();
+        $result = $command->build()->execute()->isSuccess();
+        $this->loadData();
+        return $result;
     }
 
     /**
