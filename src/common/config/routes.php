@@ -26,6 +26,10 @@ $router->addPost('/invoices', [
     'controller' => 'invoices',
     'action' => 'create',
 ]);
+$router->addGet('/invoices/statistics', [
+    'controller' => 'invoices',
+    'action' => 'statistics',
+]);
 
 //companies
 $router->addGet('/companies/{id}', [

@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Lib\Response;
 use App\Models\Invoices;
 use App\Lib\Exception;
+use App\Models\InvoicesStatistic;
 use Smartmoney\Stellar\Account;
 
 class InvoicesController extends ControllerBase
@@ -125,5 +126,21 @@ class InvoicesController extends ControllerBase
         }
         return $this->response->items($invoices);
 
+    }
+
+    public function statisticsAction() {
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+        $requester = $this->request->getAccountId();
+        if (!$this->isAllowedType($requester, $allowed_types)){
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+        $limit  = $this->request->get('limit')   ?? null;
+        $offset = $this->request->get('offset')  ?? null;
+        //get all statistic
+        $statistics = InvoicesStatistic::find($limit, $offset);
+
+        return $this->response->items($statistics);
     }
 }

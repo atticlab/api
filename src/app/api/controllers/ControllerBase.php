@@ -40,9 +40,9 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         }
         if ($dispatcher->getControllerName() != 'nonce') {
             $allow_routes = [
-                'enrollments/accept',                
+                'enrollments/accept',
                 'enrollments/decline',
-                'merchant/ordersCreate'               
+                'merchant/ordersCreate'
             ];
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
             if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
