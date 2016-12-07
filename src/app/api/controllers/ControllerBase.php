@@ -6,6 +6,7 @@ use App\Lib\Response;
 use App\Lib\Exception;
 use Smartmoney\Stellar\Account;
 use Smartmoney\Stellar\Helpers;
+use App\Models\IpBans;
 
 abstract class ControllerBase extends \Phalcon\Mvc\Controller
 {
@@ -31,19 +32,32 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             $this->response->sendHeaders();
             exit;
         }
-
-
+        
+        //user ip
+        $ip = $this->request->getClientAddress();
+        
+        //if banned        
+        $ban = IpBans::checkBanned($ip);
+        
+        if ($ban) {            
+            return $this->response->error(Response::ERR_ACC_BLOCKED, 'banned to ' . $ban);
+        }
+        
         if ($dispatcher->getControllerName() != 'nonce') {
             $allow_routes = [
                 'enrollments/accept',                
                 'enrollments/decline',
-                'merchant/ordersCreate'                
+                'merchant/ordersCreate'               
             ];
 
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
 
-            error_log($current_route);            
-            if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {           
+            error_log($current_route);
+            if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {                
+                //user ip
+                $ip = $this->request->getClientAddress();                
+                //consider how many irregular requests comes
+                IpBans::setMissed($ip);
                 return $this->response->error(Response::ERR_BAD_SIGN);
             }
         }

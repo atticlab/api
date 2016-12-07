@@ -33,7 +33,13 @@ $config = new \Phalcon\Config([
         'username' => 'attic.it.lab@gmail.com',
         'password' => 'atticlab/*-2020',
     ],
-
+    
+    "ban" => [
+        'short'             => 60 * 60,             //1 hour
+        'long'              => 60 * 60 * 24 * 365,  //1 year
+        'req_per_minutes'   => 10,                  //bad request per munute
+        'req_per_day'      =>  100,                 //bad request per day 
+    ],
 ]);
 
 
