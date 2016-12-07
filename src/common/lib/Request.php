@@ -18,7 +18,7 @@ class Request extends \Phalcon\Http\Request
      */
     public function checkSignature()
     {
-        $sign_header = $this->getHeader(self::SIGN_HEADER);        
+        $sign_header = $this->getHeader(self::SIGN_HEADER);
         if (empty($sign_header)) {
             return false;
         }
@@ -29,9 +29,9 @@ class Request extends \Phalcon\Http\Request
         }
 
         list($nonce, $signature, $publicKey) = $sign_data;
-                
+
         $memcached = $this->getDi()->getMemcached();
-        $accountId = $memcached->get($nonce);        
+        $accountId = $memcached->get($nonce);
         $memcached->delete($nonce);
 
         if (empty($accountId) || $accountId != Account::encodeCheck('accountId', $publicKey)) {

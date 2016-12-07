@@ -15,7 +15,7 @@ class IndexTask extends TaskBase
         try {            
             $invoices = Invoices::find();         
         } catch (Exeption $e) {
-            $this->logger->error("Invoices finding error: " . (string)$message);
+            $this->logger->error("Invoices finding error: " . $e->getMessage());
             return false;
         }
         
@@ -108,7 +108,7 @@ class IndexTask extends TaskBase
                     $obj->delete();
                     $this->logger->error("Invoices in statistic delete");
                 } catch (Exeption $e) {
-                    $this->logger->error("Invoices in statistic delete error: " . (string)$message);                    
+                    $this->logger->error("Invoices in statistic delete error: " . $e->getMessage());
                 }
             }
         }

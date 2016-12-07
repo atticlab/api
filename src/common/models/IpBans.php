@@ -49,8 +49,7 @@ class IpBans extends ModelBase implements ModelInterface
             try {
                 $ipBan->update();
             } catch (Exception $e) {
-                $logger = DI::getDefault()->get('logger');
-                $logger->info('There is an error of delete ban.' . $e->getMessage());
+                DI::getDefault()->get('logger')->error('There is an error of delete ban.' . $e->getMessage());
             }
             return false;
         }
@@ -83,33 +82,24 @@ class IpBans extends ModelBase implements ModelInterface
     public static function setMissed($ip)
     {
         $ip = self::convertIpToInt($ip);
-        //present time
         $now = time();
-        
         $config = DI::getDefault()->get('config');
-        //short ban 
         $short_ban = $config['ban']['short'];
-        //long ban
         $long_ban = $config['ban']['long'];
-        
         $req_per_minutes = $config['ban']['req_per_minutes']; //bad requests per minute
         $req_per_day     = $config['ban']['req_per_day'];     //bad requests per day
-        
         //if ip is not number return
         if (!is_numeric($ip)) {
             return false;
         }
-        
         //find data by this ip
-        $ipBan = self::getIpData($ip); 
-        
+        $ipBan = self::getIpData($ip);
         $lr_minute  = $ipBan->last_request ? 
             $ipBan->last_request - ($ipBan->last_request % 60) : 0;
         $lr_day     = $ipBan->last_request ? 
             $ipBan->last_request - ($ipBan->last_request % 86400) : 0;
         $nw_minute  = $now - ($now % 60);
         $nw_day     = $now - ($now % 86400);
-        
         //increment $missed_time
         //for minutes         
         if ($lr_minute == $nw_minute) {            
@@ -124,28 +114,21 @@ class IpBans extends ModelBase implements ModelInterface
             $ipBan->missed_for_minute = 1;
             $ipBan->missed_for_day = 1;
         }
-              
-        //if number of bad requests per day >= 100
         //reset missed_for_minute and add long ban
         if ($ipBan->missed_for_day >= $req_per_day) {
             $ipBan->missed_for_minute = 0;
             $ipBan->missed_for_day = 0;
             $ipBan->banned_to = $now + $long_ban;
-        //if number of bad requests per minute >= 10
         //reset missed_for_minute and add short ban    
         } else if ($ipBan->missed_for_minute >= $req_per_minutes) {
             $ipBan->missed_for_minute = 0;
             $ipBan->banned_to = $now + $short_ban;
         }
-        
-        //save data
-        $ipBan->last_request = $now; 
-        
+        $ipBan->last_request = $now;
         try {
             $ipBan->update();
         } catch (Exception $e) {
-            $logger = DI::getDefault()->get('logger');
-            $logger->info('There is an error of update ban.' . $e->getMessage());  
+            DI::getDefault()->get('logger')->info('There is an error of update ban. ' . $e->getMessage());
         }
         
         return $ipBan;
@@ -153,28 +136,23 @@ class IpBans extends ModelBase implements ModelInterface
     
     //expects the converted ip to integer
     public static function getIpData($ip)
-    {   
+    {
+        $ipBan = false;
+
         //if ban isset return it
         if (self::isExist($ip)) {
             try {
                 $ipBan = self::findFirst($ip);
             } catch (Exception $e) {
-                $ipBan = false;                
-                $logger = DI::getDefault()->get('logger');
-                $logger->error('There is an error of found ban.' . $e->getMessage());
-            }    
-        
+                DI::getDefault()->get('logger')->error('There is an error of found ban. ' . $e->getMessage());
+            }
         //if no ban create it   
         } else {
             $ipBan = new self($ip);
             try {
-                $ipBan->create();                               
-                $logger = DI::getDefault()->get('logger');
-                $logger->info("New ban created");
+                $ipBan->create();
             } catch (Exception $e) {
-                $ipBan = false;
-                $logger = DI::getDefault()->get('logger');
-                $logger->error('There is an error of create new ban. ' . $e->getMessage());                
+                DI::getDefault()->get('logger')->error('There is an error of create new ban. ' . $e->getMessage());
             }            
         }
         
@@ -187,15 +165,8 @@ class IpBans extends ModelBase implements ModelInterface
         try {        
             $obj = self::findFirst($ip);
             $obj->delete();
-            $logger = DI::getDefault()->get('logger');
-            $logger->info('Ban ' . $ip . ' removed');
         } catch (Exeption $e) {
-            $logger = DI::getDefault()->get('logger');
-            $logger->error("There is an error of remove ban " . (string)$message);                    
+            DI::getDefault()->get('logger')->error("There is an error of remove ban " . $e->getMessage());
         }
     }
-
-
-
-
 }
