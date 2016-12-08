@@ -66,7 +66,7 @@ class IpBans extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate($this->ip);
+        $command = $this->prepareCreate();
         //create secondary indexes here with addIndex method
         return $this->build($command); 
     }

@@ -194,16 +194,12 @@ class MerchantOrders extends ModelBase
 
     public function create()
     {
-        $command = $this->prepareCreate($this->id);
+        $command = $this->prepareCreate();
         //create secondary indexes here with addIndex method
 
         if (isset($this->store_id)) {
             $this->addIndex($command, 'store_id_bin', $this->store_id);
         }
-
-//        if (isset($this->status)) {
-//            $this->addIndex($command, 'status_bin', $this->status);
-//        }
 
         return $this->build($command);
 

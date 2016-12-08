@@ -153,7 +153,7 @@ class MerchantStores extends ModelBase
     public function create()
     {
 
-        $command = $this->prepareCreate($this->store_id);
+        $command = $this->prepareCreate();
         //create secondary indexes here with addIndex method
 
         if (isset($this->merchant_id)) {

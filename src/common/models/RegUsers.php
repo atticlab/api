@@ -126,7 +126,7 @@ class RegUsers extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate($this->id);
+        $command = $this->prepareCreate();
 
         if (isset($this->ipn_code)) {
             $this->addIndex($command, 'ipn_code_bin', $this->ipn_code);

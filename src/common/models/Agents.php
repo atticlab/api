@@ -112,7 +112,7 @@ class Agents extends ModelBase implements ModelInterface
 
         }
 
-        $command = $this->prepareCreate($this->id);
+        $command = $this->prepareCreate();
 
         if (isset($this->cmp_code)) {
             $this->addIndex($command, 'cmp_code_bin', $this->cmp_code);

@@ -123,7 +123,7 @@ class Enrollments extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate($this->id);
+        $command = $this->prepareCreate();
 
         if (isset($this->account_id)) {
             $this->addIndex($command, 'account_id_bin', $this->account_id);

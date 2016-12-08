@@ -33,7 +33,6 @@ abstract class ModelBase
     protected $_location;
 
     protected static $BUCKET_NAME;
-    protected static $INDEX_NAME;
 
     /**
      * ModelBase constructor.
@@ -121,10 +120,9 @@ abstract class ModelBase
 
     /**
      * Prepares model's create process
-     * @param $primary_index_value -- this is primary (search) index value
      * @return object -- Riak's command object for next operations
      */
-    public function prepareCreate($primary_index_value)
+    public function prepareCreate()
     {
         $this->validate();
         //validator probably can change primary attributes, we need to set it back
@@ -132,10 +130,9 @@ abstract class ModelBase
         $found_all_idx = self::$BUCKET_NAME . '_bin'; //Riak hack for found all from bucket
 
         $command = (new StoreObject($this->_riak))
-            ->buildJsonObject($this)
+            ->buildJsonObject($this->toObject())
             ->atLocation($this->_location);
         $this->addIndex($command, $found_all_idx, self::$BUCKET_NAME);
-        $this->addIndex($command, self::$INDEX_NAME, $primary_index_value);
         return $command;
     }
 
@@ -153,7 +150,7 @@ abstract class ModelBase
         $this->validate();
         //validator probably can change primary attributes, we need to set it back
         self::setPrimaryAttributes();
-        $save = $this->_object->setData($this);
+        $save = $this->_object->setData($this->toObject());
         $command = (new StoreObject($this->_riak))
             ->withObject($save)
             ->atLocation($this->_location);
@@ -204,14 +201,12 @@ abstract class ModelBase
     {
         self::setPrimaryAttributes();
         $riak = DI::getDefault()->get('riak');
-        return (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::$BUCKET_NAME)
-            ->withIndexName(self::$INDEX_NAME)
-            ->withScalarValue($id)
-            ->withMaxResults(1)
+        $response = (new FetchObject($riak))
+            ->buildLocation($id, self::$BUCKET_NAME)
             ->build()
-            ->execute()
-            ->getResults();
+            ->execute();
+
+        return $response->isSuccess() && $response->getObject();
     }
 
     /**
@@ -380,7 +375,6 @@ abstract class ModelBase
         $real_class_name = mb_strtolower($class_name[count($class_name) - 1]);
 
         self::$BUCKET_NAME = $real_class_name;
-        self::$INDEX_NAME = 'index_bin';
     }
 
     /** private and service functions */
@@ -401,10 +395,10 @@ abstract class ModelBase
     }
 
     /**
-     * Magic toString method, which makes object-representation of model
-     * @return string
+     * method, which makes object-representation of model
+     * @return object
      */
-    public function __toString()
+    public function toObject()
     {
         return (object)$this->getModelProperties();
     }

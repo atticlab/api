@@ -35,7 +35,7 @@ class InvoicesStatistic extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate($this->date);
+        $command = $this->prepareCreate();
         //create secondary indexes here with addIndex method
 
         return $this->build($command);

@@ -165,7 +165,7 @@ class Cards extends ModelBase implements ModelInterface
 
     public function create()
     {
-        $command = $this->prepareCreate($this->account_id);
+        $command = $this->prepareCreate();
         //create secondary indexes here with addIndex method
 
         if (isset($this->agent_id)) {
