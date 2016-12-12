@@ -167,6 +167,15 @@ $router->addGet('/bans', [
     'action' => 'bans'
 ]);
 
+$router->addGet('/bans/add', [
+    'controller' => 'bans',
+    'action' => 'add'
+]);
+
+$router->addGet('/bans/delete', [
+    'controller' => 'bans',
+    'action' => 'delete'
+]);
 
 //404 not found
 $router->notFound([

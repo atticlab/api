@@ -184,14 +184,16 @@ class IpBans extends ModelBase implements ModelInterface
     //expects the ip converted to integer
     public static function removeBan($ip) 
     {
-        try {        
-            $obj = self::findFirst($ip);
-            $obj->delete();
-            $logger = DI::getDefault()->get('logger');
-            $logger->info('Ban ' . $ip . ' removed');
-        } catch (Exeption $e) {
-            $logger = DI::getDefault()->get('logger');
-            $logger->error("There is an error of remove ban " . (string)$message);                    
+        if (self::isExist($ip)) {
+            try {        
+                $obj = self::findFirst($ip);
+                $obj->delete();
+                $logger = DI::getDefault()->get('logger');
+                $logger->info('Ban ' . $ip . ' removed');
+            } catch (Exeption $e) {
+                $logger = DI::getDefault()->get('logger');
+                $logger->error("There is an error of remove ban " . (string)$message);                    
+            }
         }
     }
 
