@@ -69,10 +69,6 @@ class IndexTask extends TaskBase
     
             $this->logger->info("Statistics bot finished");
         }
-        
-        $inv = InvoicesStatistic::find();
-        echo '<pre>' . print_r($inv, 1) . '</pre>';
-               
     }
     
     private function createStatistic($expired, $used, $all, $date) 
