@@ -24,8 +24,8 @@ class BansController extends ControllerBase
         $bans = IpBans::find($limit, $offset);
         return $this->response->items($bans);
     }
-    
-    public function addAction()
+
+    public function manageAction()
     {
         $allowed_types = [
             Account::TYPE_ADMIN
@@ -35,38 +35,24 @@ class BansController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        
-        $banned_to = $this->request->get('banned_to');
-        $ip = $this->request->get('ip');
-        
-        if (!empty($banned_to) and !empty($ip)) {            
-            $ip = ip2long($ip);
-            $ip_ban = IpBans::getIpData($ip);
-            $ip_ban->banned_to = $banned_to;
-            
-            try {
-                $ip_ban->update();
-            } catch (Exeption $e) {
-                $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());
-            }
-        }
-    }
-    
-    public function deleteAction()
-    {
-        $allowed_types = [
-            Account::TYPE_ADMIN
-        ];
-        $requester = $this->request->getAccountId();
-        
-        if (!$this->isAllowedType($requester, $allowed_types)) {
-            return $this->response->error(Response::ERR_BAD_TYPE);
-        }
-        
-        $ip = $this->request->get('ip');
+
+        $banned_to  = $this->request->post('banned_to') ?? null;
+        $ip = $this->request->post('ip')                ?? null;
+
         if (!empty($ip)) {
             $ip = ip2long($ip);
-            IpBans::removeBan($ip);
+
+            if (!empty($banned_to)) {
+                $ip_ban = IpBans::getIpData($ip);
+                $ip_ban->banned_to = $banned_to;
+                try {
+                    $ip_ban->update();
+                } catch (Exeption $e) {
+                    $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());
+                }
+            } else {
+                IpBans::removeBan($ip);
+            }
         }
     }
 }

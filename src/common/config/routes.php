@@ -167,14 +167,9 @@ $router->addGet('/bans', [
     'action' => 'bans'
 ]);
 
-$router->addGet('/bans/add', [
+$router->addPost('/bans/manage', [
     'controller' => 'bans',
-    'action' => 'add'
-]);
-
-$router->addGet('/bans/delete', [
-    'controller' => 'bans',
-    'action' => 'delete'
+    'action' => 'manage'
 ]);
 
 //404 not found
