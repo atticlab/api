@@ -8,7 +8,7 @@ $config = new \Phalcon\Config([
     ],
 
     "nonce" => [
-        'ttl' => 10 * 60
+        'ttl' => 30 * 60
     ],
 
     "horizon" => [
