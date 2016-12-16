@@ -162,9 +162,9 @@ $router->addPost('/merchant/orders', [
     'action' => 'ordersCreate'
 ]);
 
-$router->addGet('/bans', [
+$router->addGet('/bans/list', [
     'controller' => 'bans',
-    'action' => 'bans'
+    'action' => 'list'
 ]);
 
 $router->addPost('/bans/manage', [

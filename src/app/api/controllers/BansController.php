@@ -7,7 +7,7 @@ use Smartmoney\Stellar\Account;
 
 class BansController extends ControllerBase
 {
-    public function bansAction()
+    public function listAction()
     {
         $allowed_types = [
             Account::TYPE_ADMIN
@@ -36,23 +36,39 @@ class BansController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        $banned_to  = $this->request->post('banned_to') ?? null;
-        $ip = $this->request->post('ip')                ?? null;
+        $banned_for = $this->payload->banned_for ?? null;
+        $ip         = $this->payload->ip         ?? null;
 
-        if (!empty($ip)) {
-            $ip = ip2long($ip);
+        if (empty($ip)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'ip');
+        }
 
-            if (!empty($banned_to)) {
-                $ip_ban = IpBans::getIpData($ip);
-                $ip_ban->banned_to = $banned_to;
-                try {
-                    $ip_ban->update();
-                } catch (Exeption $e) {
-                    $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());
-                }
-            } else {
-                IpBans::removeBan($ip);
+        $int_ip = ip2long($ip);
+        $now = time();
+        $banned_to = $now + ($banned_for * 60);
+        
+        //remove ban
+        if (empty($banned_for)) {
+            if (!IpBans::removeBan($int_ip)) {
+                $this->logger->info('Failed to remove ip: ' . $ip);
+                return $this->response->error(Response::ERR_SERVICE, 'Failed to remove ip: ' . $ip);
+            }
+
+            $this->logger->info('Remove ban ip: '. $ip);
+        //create ban
+        } else {
+            $ip_ban = IpBans::getIpData($int_ip);
+            $ip_ban->banned_to = $banned_to;
+
+            try {
+                $ip_ban->update();
+                $this->logger->info('Add ban ip: ' . $ip . ' to ' . $banned_to);
+            } catch (Exeption $e) {
+                $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());
+                return $this->handleException($e->getCode(), $e->getMessage());
             }
         }
+
+        return $this->response->success();
     }
 }

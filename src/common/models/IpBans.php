@@ -190,9 +190,11 @@ class IpBans extends ModelBase implements ModelInterface
                 $obj->delete();
                 $logger = DI::getDefault()->get('logger');
                 $logger->info('Ban ' . $ip . ' removed');
+                return true;
             } catch (Exeption $e) {
                 $logger = DI::getDefault()->get('logger');
-                $logger->error("There is an error of remove ban " . (string)$message);                    
+                $logger->error("There is an error of remove ban " . (string)$message); 
+                return false;
             }
         }
     }
