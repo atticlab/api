@@ -151,6 +151,16 @@ $router->addPost('/merchant/orders', [
     'action' => 'ordersCreate'
 ]);
 
+$router->addGet('/bans/list', [
+    'controller' => 'bans',
+    'action' => 'list'
+]);
+
+$router->addPost('/bans/manage', [
+    'controller' => 'bans',
+    'action' => 'manage'
+]);
+
 //404 not found
 $router->notFound([
     "controller" => "index",

@@ -31,6 +31,14 @@ class IndexTask extends TaskBase
                 $created_time = $invoice_code->created - $invoice_code->created % 86400;               
                 $statistic[$created_time]['invoices'][] = $invoice_code;
                 
+                if (empty($statistic[$created_time]['used'])) {
+                    $statistic[$created_time]['used'] = 0;
+                }
+                
+                if (empty($statistic[$created_time]['expired'])) {
+                    $statistic[$created_time]['expired'] = 0;
+                }
+                
                 //overdue invoices
                 if (is_numeric($invoice_code->requested) ) {
                     $statistic[$created_time]['used']++;
@@ -61,7 +69,6 @@ class IndexTask extends TaskBase
     
             $this->logger->info("Statistics bot finished");
         }
-               
     }
     
     private function createStatistic($expired, $used, $all, $date) 
