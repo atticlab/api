@@ -37,7 +37,7 @@ class IpBans extends ModelBase implements ModelInterface
         try {
             $ipBan = self::findFirst($ip);
         } catch (Exception $e) {
-            $ipBan = false; 
+            return false;
         }
         
         if (empty($ipBan) || empty($ipBan->banned_to)) {
@@ -82,16 +82,17 @@ class IpBans extends ModelBase implements ModelInterface
     public static function setMissed($ip)
     {
         $ip = self::convertIpToInt($ip);
-        $now = time();
-        $config = DI::getDefault()->get('config');
-        $short_ban = $config['ban']['short'];
-        $long_ban = $config['ban']['long'];
-        $req_per_minutes = $config['ban']['req_per_minutes']; //bad requests per minute
-        $req_per_day     = $config['ban']['req_per_day'];     //bad requests per day
-        //if ip is not number return
         if (!is_numeric($ip)) {
             return false;
         }
+
+        $now                = time();
+        $config             = DI::getDefault()->get('config');
+        $short_ban          = $config['ban']['short'];
+        $long_ban           = $config['ban']['long'];
+        $req_per_minutes    = $config['ban']['req_per_minutes']; //bad requests per minute
+        $req_per_day        = $config['ban']['req_per_day'];     //bad requests per day
+
         //find data by this ip
         $ipBan = self::getIpData($ip);
         $lr_minute  = $ipBan->last_request ? 
@@ -114,7 +115,7 @@ class IpBans extends ModelBase implements ModelInterface
             $ipBan->missed_for_minute = 1;
             $ipBan->missed_for_day = 1;
         }
-        //reset missed_for_minute and add long ban
+        //reset missed fields and add long ban
         if ($ipBan->missed_for_day >= $req_per_day) {
             $ipBan->missed_for_minute = 0;
             $ipBan->missed_for_day = 0;
@@ -137,8 +138,10 @@ class IpBans extends ModelBase implements ModelInterface
     //expects the converted ip to integer
     public static function getIpData($ip)
     {
+        if (!is_numeric($ip)) {
+            throw new Exception('Expects ip converted to integer');
+        }
         $ipBan = false;
-
         //if ban isset return it
         if (self::isExist($ip)) {
             try {
@@ -162,16 +165,20 @@ class IpBans extends ModelBase implements ModelInterface
     //expects the ip converted to integer
     public static function removeBan($ip) 
     {
-        if (self::isExist($ip)) {
-            try {
-                $obj = self::findFirst($ip);
-                $obj->delete();
-                DI::getDefault()->get('logger')->info('Ban ' . $ip . ' removed');
-                return true;
-            } catch (Exeption $e) {
-                DI::getDefault()->get('logger')->error("There is an error of remove ban " . (string)$message);
-                return false;
-            }
+        if (!is_numeric($ip)) {
+            throw new Exception('Expects ip converted to integer');
+        }
+        if (!self::isExist($ip)) {
+            return false;
+        }
+        try {
+            $obj = self::findFirst($ip);
+            $obj->delete();
+            DI::getDefault()->get('logger')->info('Ban ' . $ip . ' removed');
+            return true;
+        } catch (Exeption $e) {
+            DI::getDefault()->get('logger')->error("There is an error of remove ban " . $e->getMessage());
+            return false;
         }
     }
 }
