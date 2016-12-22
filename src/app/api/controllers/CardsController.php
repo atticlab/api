@@ -4,7 +4,6 @@ namespace App\Controllers;
 use App\Lib\Response;
 use App\Models\Cards;
 use App\Lib\Exception;
-use App\Services\Helpers;
 use GuzzleHttp\Client;
 use Smartmoney\Stellar\Account;
 
@@ -30,7 +29,7 @@ class CardsController extends ControllerBase
         if (empty($card)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'card');
         }
-        return $this->response->single(Helpers::clearYzSuffixes($card));
+        return $this->response->single($card);
     }
 
     public function listAction()
@@ -42,8 +41,14 @@ class CardsController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         //get all cards for agent
         try {
             if (empty($requester)) {
@@ -53,7 +58,7 @@ class CardsController extends ControllerBase
                 throw new Exception(Exception::BAD_PARAM, 'agent_id');
             }
             $cards = Cards::findWithField('agent_id_s', $requester, $limit, $offset);
-            return $this->response->items(Helpers::clearYzSuffixes($cards));
+            return $this->response->items($cards);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }

@@ -7,7 +7,6 @@ use App\Models\Companies;
 use App\Models\Enrollments;
 use App\Models\Agents;
 use App\Models\RegUsers;
-use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class EnrollmentsController extends ControllerBase
@@ -22,9 +21,15 @@ class EnrollmentsController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
-        $type   = $this->request->get('type') ?? null;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
+        $type = $this->request->get('type') ?? null;
         //if need filter by type
         if (!empty($type) ) {
             if (!in_array($type, Enrollments::$accepted_types)) {
@@ -38,35 +43,33 @@ class EnrollmentsController extends ControllerBase
             if ($type == 'agent') {
                 //more data for agents enrollments
                 foreach ($result as $key => &$item) {
-                    if (!Agents::isExist($item->target_id_s)) {
+                    if (!Agents::isExist($item->target_id)) {
                         unset($result[$key]);
                     }
-                    $agent_data = Agents::getDataByID($item->target_id_s);
-                    if (!Companies::isExist($agent_data->cmp_code_s)) {
+                    $agent_data = Agents::getDataByID($item->target_id);
+                    if (!Companies::isExist($agent_data->cmp_code)) {
                         unset($result[$key]);
                     }
-                    $cmp_data           = Companies::getDataByID($agent_data->cmp_code_s);
-                    $item->company_data = Helpers::clearYzSuffixes($cmp_data);
-                    $item->agent_data   = Helpers::clearYzSuffixes($agent_data);
+                    $item->company_data = Companies::getDataByID($agent_data->cmp_code);
+                    $item->agent_data   = $agent_data;
                 }
             } else {
                 //more data for users enrollments
                 foreach ($result as $key => &$item) {
-                    if (!RegUsers::isExist($item->target_id_s)) {
+                    if (!RegUsers::isExist($item->target_id)) {
                         unset($result[$key]);
                     }
-                    $reguser_data    = RegUsers::getDataByID($item->target_id_s);
-                    $item->user_data = Helpers::clearYzSuffixes($reguser_data);
+                    $item->user_data = RegUsers::getDataByID($item->target_id);
                 }
             }
 
-            return $this->response->items(Helpers::clearYzSuffixes(array_values($result)));
+            return $this->response->items(array_values($result));
         }
 
         //get all enrollments
         try {
             $result = Enrollments::find($limit, $offset);
-            return $this->response->items(Helpers::clearYzSuffixes($result));
+            return $this->response->items($result);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -82,22 +85,22 @@ class EnrollmentsController extends ControllerBase
         if (!$enrollment){
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if (empty($enrollment) || empty($enrollment->target_id_s) || empty($enrollment->type_s) || $enrollment->type_s != 'user') {
+        if (empty($enrollment) || empty($enrollment->target_id) || empty($enrollment->type) || $enrollment->type != 'user') {
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if ($enrollment->stage_i != Enrollments::STAGE_CREATED) {
+        if ($enrollment->stage != Enrollments::STAGE_CREATED) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if (!RegUsers::isExist($enrollment->target_id_s)) {
+        if (!RegUsers::isExist($enrollment->target_id)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'registered_user');
         }
-        $user_data = RegUsers::getDataByID($enrollment->target_id_s);
+        $user_data = RegUsers::getDataByID($enrollment->target_id);
         if (!$user_data) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'registered_user');
         }
-        $enrollment->user_data = Helpers::clearYzSuffixes($user_data);
+        $enrollment->user_data = $user_data;
 
-        return $this->response->single((array)Helpers::clearYzSuffixes($enrollment));
+        return $this->response->single((array)$enrollment);
     }
 
     public function getAgentEnrollmentAction($otp)
@@ -113,28 +116,28 @@ class EnrollmentsController extends ControllerBase
         if (!$enrollment){
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if (empty($enrollment) || empty($enrollment->target_id_s) || empty($enrollment->type_s) || $enrollment->type_s != 'agent') {
+        if (empty($enrollment) || empty($enrollment->target_id) || empty($enrollment->type) || $enrollment->type != 'agent') {
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if ($enrollment->stage_i != Enrollments::STAGE_CREATED) {
+        if ($enrollment->stage != Enrollments::STAGE_CREATED) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'enrollment');
         }
-        if (!Agents::isExist($enrollment->target_id_s)) {
+        if (!Agents::isExist($enrollment->target_id)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'agent');
         }
-        $agent_data = Agents::getDataByID($enrollment->target_id_s);
-        if (!$agent_data || empty($agent_data->cmp_code_s) || $agent_data->cmp_code_s != $company_code) {
+        $agent_data = Agents::getDataByID($enrollment->target_id);
+        if (!$agent_data || empty($agent_data->cmp_code) || $agent_data->cmp_code != $company_code) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'agent');
         }
-        $company_code = $agent_data->cmp_code_s;
-        $enrollment->agent_data = Helpers::clearYzSuffixes($agent_data);
+        $company_code = $agent_data->cmp_code;
+        $enrollment->agent_data = $agent_data;
         $cmp_data = Companies::getDataByID($company_code);
         if (!$cmp_data) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'company');
         }
-        $enrollment->company_data = Helpers::clearYzSuffixes($cmp_data);
+        $enrollment->company_data = $cmp_data;
 
-        return $this->response->single((array)Helpers::clearYzSuffixes($enrollment));
+        return $this->response->single((array)$enrollment);
     }
 
     public function acceptAction($id)

@@ -4,7 +4,6 @@ namespace App\Controllers;
 use App\Lib\Response;
 use App\Lib\Exception;
 use App\Models\Companies;
-use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class CompaniesController extends ControllerBase
@@ -58,14 +57,20 @@ class CompaniesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         try {
             $result = Companies::find($limit, $offset);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-        return $this->response->items(Helpers::clearYzSuffixes($result));
+        return $this->response->items($result);
     }
 
     public function getAction($code)
@@ -85,6 +90,6 @@ class CompaniesController extends ControllerBase
         }
         $company = Companies::getDataByID($code);
 
-        return $this->response->single(Helpers::clearYzSuffixes((array)$company));
+        return $this->response->single((array)$company);
     }
 }

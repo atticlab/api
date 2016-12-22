@@ -3,12 +3,9 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Lib\Exception;
-
 use App\Models\Agents;
 use App\Models\Companies;
 use App\Models\Enrollments;
-
-use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class AgentsController extends ControllerBase
@@ -55,14 +52,14 @@ class AgentsController extends ControllerBase
                     if ($enrollment->create()) {
                         //get company email for send enrollment
                         $company = Companies::getDataByID($cmp_code);
-                        if (empty($company->email_s)) {
+                        if (empty($company->email)) {
                             $this->logger->emergency('Cannot get email of company (company code: ' . $cmp_code . ')');
                         } else {
                             // Send email to registered user
-                            $sent = $this->mailer->send($company->email_s, 'Welcome to smartmoney',
+                            $sent = $this->mailer->send($company->email, 'Welcome to smartmoney',
                                 ['enrollment_created', ['password' => $enrollment->otp_s]]);
                             if (!$sent) {
-                                $this->logger->emergency('Cannot send email with welcome code to company (' . $company->email_s . ')');
+                                $this->logger->emergency('Cannot send email with welcome code to company (' . $company->email . ')');
                             }
                         }
                         return $this->response->success();
@@ -92,9 +89,14 @@ class AgentsController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
-
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         $company_code   = $this->request->get('company_code') ?? null;
         $type           = $this->request->get('type') ?? null;
 
@@ -119,14 +121,14 @@ class AgentsController extends ControllerBase
         }
 
         foreach ($result as $key => &$item) {
-            if (!Companies::isExist($item->cmp_code_s)) {
+            if (!Companies::isExist($item->cmp_code)) {
                 unset($result[$key]);
             }
-            $cmp_data = Companies::getDataByID($item->cmp_code_s);
-            $item->cmp_title = $cmp_data->title_s;
+            $cmp_data = Companies::getDataByID($item->cmp_code);
+            $item->cmp_title = $cmp_data->title;
         }
 
-        return $this->response->items(Helpers::clearYzSuffixes($result));
+        return $this->response->items($result);
 
     }
 

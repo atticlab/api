@@ -5,7 +5,6 @@ use App\Lib\Response;
 use App\Models\Invoices;
 use App\Lib\Exception;
 use App\Models\InvoicesStatistic;
-use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class InvoicesController extends ControllerBase
@@ -115,8 +114,14 @@ class InvoicesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)){
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         if (!empty($this->request->get('account_id'))) {
             //get invoices per account
             if (!Account::isValidAccountId($this->request->get('account_id'))) {
@@ -128,7 +133,7 @@ class InvoicesController extends ControllerBase
             $invoices = Invoices::find($limit, $offset);
         }
 
-        return $this->response->items(Helpers::clearYzSuffixes($invoices));
+        return $this->response->items($invoices);
     }
 
     public function statisticsAction() {
@@ -139,11 +144,17 @@ class InvoicesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)){
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         //get all statistic
         $statistics = InvoicesStatistic::find($limit, $offset);
 
-        return $this->response->items(Helpers::clearYzSuffixes($statistics));
+        return $this->response->items($statistics);
     }
 }

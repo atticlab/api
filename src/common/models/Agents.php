@@ -99,7 +99,7 @@ class Agents extends ModelBase implements ModelInterface
     {
         $company_agents = self::findWithField('cmp_code_s', $this->cmp_code_s);
         foreach ($company_agents as $agent) {
-            if ($agent->type_i == $this->type_i) {
+            if ($agent->type == $this->type_i) {
                 throw new Exception(Exception::ALREADY_EXIST, 'agent');
             }
         }

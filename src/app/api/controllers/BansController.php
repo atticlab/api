@@ -3,7 +3,6 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Models\IpBans;
-use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class BansController extends ControllerBase
@@ -17,11 +16,17 @@ class BansController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
-        $offset = $this->request->get('offset') ?? 0;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         //get all bans
         $bans = IpBans::find($limit, $offset);
-        return $this->response->items(Helpers::clearYzSuffixes($bans));
+        return $this->response->items($bans);
     }
 
     public function manageAction()

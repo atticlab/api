@@ -163,7 +163,7 @@ abstract class ModelBase
             $data = $response->getObject()->getData();
         }
 
-        return $data;
+        return self::clearYzSuffixes($data);
     }
 
 
@@ -239,7 +239,7 @@ abstract class ModelBase
                 $data = $response->getObject()->getData();
             }
 
-            return $data;
+            return self::clearYzSuffixes($data);
         }
 
         return false;
@@ -253,16 +253,17 @@ abstract class ModelBase
      * @return array of objects
      * @throws Exception::BAD_PARAM
      */
-    public static function find($limit = 25, $offset = null)
+    public static function find($limit = 25, $offset = 0)
     {
-        $limit  = (int)$limit;
-        $offset = (int)$offset;
-//        if (empty($limit)) {
-//            throw new Exception(Exception::BAD_PARAM, 'limit');
-//        }
-//        if (empty($offset)) {
-//            throw new Exception(Exception::BAD_PARAM, 'offset');
-//        }
+        if (!$limit) {
+            $limit = 25;
+        }
+        if (!is_integer($limit)) {
+            throw new Exception(Exception::BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            throw new Exception(Exception::BAD_PARAM, 'offset');
+        }
         self::setPrimaryAttributes();
         $items  = [];
         $riak   = DI::getDefault()->get('riak');
@@ -292,7 +293,7 @@ abstract class ModelBase
                 $items[] = $data;
             }
         }
-        return $items;
+        return self::clearYzSuffixes($items);
     }
 
     /**
@@ -304,6 +305,9 @@ abstract class ModelBase
      */
     public static function findWithField($field, $value, $limit = 25, $offset = 0, $flag = null)
     {
+        if (!$limit) {
+            $limit = 25;
+        }
         if (!is_integer($limit)) {
             throw new Exception(Exception::BAD_PARAM, 'limit');
         }
@@ -350,10 +354,11 @@ abstract class ModelBase
                 $items[] = $data;
             }
         }
-        return $items;
+        return self::clearYzSuffixes($items);
     }
 
     /**
+     * Function will return object with yokozuna suffixes
      * A way to obtain only the first result (one model)
      * @param $id
      * @return mixed
@@ -416,6 +421,35 @@ abstract class ModelBase
         foreach ($this->getModelProperties() as $key => $value) {
             if (empty($value)) {
                 throw new Exception(Exception::EMPTY_PARAM, $key);
+            }
+        }
+    }
+
+    public static function clearYzSuffixes($data) {
+        if (is_object($data)) {
+            //single item
+            self::clearRiakObject($data);
+        } elseif (is_array($data)) {
+            //array of items
+            foreach ($data as &$item) {
+                self::clearRiakObject($item);
+            }
+        }
+
+        return $data;
+    }
+
+    private static function clearRiakObject(&$object) {
+        $config = DI::getDefault()->get('config');
+        $logger = DI::getDefault()->get('logger');
+        if (!is_object($object)) {
+            $logger->error('Can not clear yokozuna sufficses. Object expected, get ' . gettype($object));
+            throw new Exception('Can not clear yokozuna sufficses. Object expected, get ' . gettype($object));
+        }
+        foreach (get_object_vars($object) as $key => $value) {
+            if (mb_substr($key, -2) && mb_substr($key, 0, -2) && in_array(mb_substr($key, -2), (array)$config->riak->yokozuna_sufficses)) {
+                unset($object->{$key});
+                $object->{mb_substr($key, 0, -2)} = $value;
             }
         }
     }

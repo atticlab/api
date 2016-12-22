@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\Helpers;
 use \Basho\Riak;
 use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
@@ -97,25 +96,18 @@ class MerchantOrders extends ModelBase
      */
     public static function getOrder($order_id)
     {
-
         if (empty($order_id)) {
             throw new Exception(Exception::EMPTY_PARAM, 'order_id');
         }
-
         $order_data = self::getDataByID($order_id);
-
-        if (empty($order_data->store_id_s)) {
+        if (empty($order_data->store_id)) {
             throw new Exception(Exception::NOT_FOUND, 'order');
         }
-
-        $store_data = MerchantStores::getDataByID($order_data->store_id_s);
-
-        if (empty($store_data) || empty($store_data->merchant_id_s)) {
+        $store_data = MerchantStores::getDataByID($order_data->store_id);
+        if (empty($store_data) || empty($store_data->merchant_id)) {
             throw new Exception(Exception::NOT_FOUND, 'store');
         }
-
-        $order_data->store_data = Helpers::clearYzSuffixes($store_data);
-        $order_data = Helpers::clearYzSuffixes($order_data);
+        $order_data->store_data = $store_data;
 
         return (array)$order_data;
     }

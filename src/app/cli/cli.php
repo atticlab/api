@@ -6,7 +6,6 @@ declare(ticks = 1);
 
 define('APP_PATH', realpath(__DIR__ . '/../..') . '/');
 define('CONFIG_PATH', APP_PATH . 'common/config/');
-define('SERVICE_PATH', APP_PATH . 'common/services/');
 define('MODEL_PATH', APP_PATH . 'common/models/');
 
 class CliApplication
@@ -26,8 +25,7 @@ class CliApplication
         # Register common namespaces
         $loader->registerNamespaces([
             'App\Models'    => MODEL_PATH,
-            'App\Lib'       => APP_PATH . 'common/lib',
-            'App\Services'  => SERVICE_PATH,
+            'App\Lib'       => APP_PATH . 'common/lib'
         ]);
 
         $loader->register();

@@ -77,7 +77,7 @@ class Cards extends ModelBase implements ModelInterface
     public static function getAgentCard($account_id, $agent_id)
     {
         $data = self::getDataByID($account_id);
-        if (empty($data->agent_id_s) || $data->agent_id_s != $agent_id) {
+        if (empty($data->agent_id) || $data->agent_id != $agent_id) {
             return [];
         }
 
