@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Lib\Exception;
+use App\Models\Companies;
 use Smartmoney\Stellar\Account;
 use Smartmoney\Stellar\Helpers;
 use App\Models\IpBans;
@@ -32,12 +33,12 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             exit;
         }
         //user ip
-        $ip = $this->request->getClientAddress();
+        #$ip = $this->request->getClientAddress();
         //if banned        
-        $ban = IpBans::checkBanned($ip);
-        if ($ban) {            
-            return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
-        }
+        #$ban = IpBans::checkBanned($ip);
+        #if ($ban) {
+        #    return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
+        #}
         if ($dispatcher->getControllerName() != 'nonce') {
             $allow_routes = [
                 'enrollments/accept',
@@ -47,7 +48,7 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
             if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
                 //consider how many irregular requests comes
-                IpBans::setMissed($ip);
+                #IpBans::setMissed($ip);
                 return $this->response->error(Response::ERR_BAD_SIGN);
             }
         }
@@ -100,21 +101,14 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
     protected function isAllowedType($accountId, array $allowed_types) {
         if (in_array(Account::TYPE_ADMIN, $allowed_types)){
             //admin is allowed, need to check is account admin
-            if ($this->isAdmin($accountId)) {
+            $master_info = Helpers::masterAccountInfo($this->config->master_key, $this->config->horizon->host, $this->config->horizon->port);
+            $is_admin    = in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
+
+            if ($is_admin) {
                 return true;
             }
         }
         return in_array(Account::getAccountType($accountId, $this->config->horizon->host, $this->config->horizon->port), $allowed_types);
     }
 
-    /**
-     * Check's if accountId has admin type
-     * @param $accountId
-     * @return bool
-     * @throws \Exception
-     */
-    private function isAdmin($accountId) {
-        $master_info = Helpers::masterAccountInfo($this->config->master_key, $this->config->horizon->host, $this->config->horizon->port);
-        return in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
-    }
 }

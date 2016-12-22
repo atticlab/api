@@ -2,16 +2,21 @@
     "require": {
         "stellar/isvalidaccount": "dev-master",
         "phalcon/incubator": "^2.0",
-        "basho/riak": "3.0.*",
+        "basho/riak": "3.3.0",
         "guzzlehttp/guzzle": "~6.0",
         "ramsey/uuid": "^3.5",
         "phpmailer/phpmailer": "^5.2",
         "monolog/monolog": "^1.21"
     },
+    "scripts": {
+        "post-install-cmd": [
+            "/usr/local/bin/php /src/app/cli/cli.php index init"
+        ]
+    },
     "repositories":[
         {
-            "type":"git",
-            "url":"https://bitbucket.org/atticlab/stellar-php"
+            "type": "git",
+            "url":  "https://bitbucket.org/atticlab/stellar-php"
         }
     ]
 }

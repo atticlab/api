@@ -17,7 +17,7 @@ class Bootstrap extends \Phalcon\Mvc\Application
             'App\Models'      => APP_PATH . 'common/models/',
             'App\Lib'         => APP_PATH . 'common/lib/',
             'App\Controllers' => MODULE_PATH . '/controllers',
-            'SWP\Services'    => SERVICE_PATH,
+            'App\Services'    => SERVICE_PATH,
         ]);
 
         $loader->register();

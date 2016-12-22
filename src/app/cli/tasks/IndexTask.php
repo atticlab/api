@@ -2,9 +2,51 @@
 
 use \App\Models\Invoices;
 use App\Models\InvoicesStatistic;
+use Phalcon\DI;
 
 class IndexTask extends TaskBase
 {
+    public function initAction(){
+
+        //create indexes for all models
+        $ignore_files = [
+            'ModelBase.php',
+            'ModelInterface.php'
+        ];
+        $files = array_diff(scandir(MODEL_PATH), array_merge(array('.', '..'), $ignore_files));
+
+        $config = DI::getDefault()->get('config');
+        $riak   = DI::getDefault()->get('riak');
+
+        //create indexes
+        foreach ($files as $file) {
+
+            $bucket_name = mb_strtolower(str_replace('.php', '', $file));
+            $index_name  = $bucket_name . $config->riak->search_index_suffics;
+
+            //create search index and associate it with bucket
+            (new \Basho\Riak\Command\Builder\Search\StoreIndex($riak))
+                ->withName($index_name)
+                ->build()
+                ->execute();
+            sleep(5);
+        }
+
+        //associate buckets with indexes
+        foreach ($files as $file) {
+
+            $bucket_name = mb_strtolower(str_replace('.php', '', $file));
+            $index_name  = $bucket_name . $config->riak->search_index_suffics;
+
+            (new \Basho\Riak\Command\Builder\Search\AssociateIndex($riak))
+                ->withName($index_name)
+                ->buildBucket($bucket_name)
+                ->build()
+                ->execute();
+            sleep(5);
+        }
+    }
+
     public function statisticsAction()
     {
         $count_expired = 0; 
@@ -22,9 +64,9 @@ class IndexTask extends TaskBase
         //start bot
         if (count($invoices) > 0) {
             $this->logger->info("Bot started");
-            
+
             $statistic = array();
-            
+
             foreach ($invoices as $invoice_code) {
                 $invoice = Invoices::findFirst($invoice_code->id);
                 
@@ -40,11 +82,11 @@ class IndexTask extends TaskBase
                 }
                 
                 //overdue invoices
-                if (is_numeric($invoice_code->requested) ) {
+                if (is_numeric($invoice_code->requested)) {
                     $statistic[$created_time]['used']++;
                     $invoice->is_in_statistic = true;
                 //used invoices
-                } elseif ( time() > $invoice_code->expires ) {                    
+                } elseif (time() > $invoice_code->expires) {
                     $statistic[$created_time]['expired']++;
                     $invoice->is_in_statistic = true;
                 }
@@ -59,14 +101,11 @@ class IndexTask extends TaskBase
                 $count_expired = ($item['expired']) ? $item['expired'] : 0;
                 $count_used = ($item['used']) ? $item['used'] : 0;
                 $count_all = ($item['all']) ? $item['all'] : 0;
-                
                 $this->createStatistic($count_expired, $count_used, $count_all, $time);
-               
             }
             
             //remove all invoices is_in_statistic = 1
             $this->removeInvoiceInStatistic($invoices);
-    
             $this->logger->info("Statistics bot finished");
         }
     }
@@ -98,7 +137,6 @@ class IndexTask extends TaskBase
 
             try {
                 $inv_statistic->create();
-                $this->logger->info("Statistic on date created");
             } catch (Exception $e) {
                 $this->logger->error('There is an error of saving Statistic.' . $e->getMessage());
             }           
@@ -113,7 +151,6 @@ class IndexTask extends TaskBase
                 try {        
                     $obj = Invoices::findFirst($item->id);
                     $obj->delete();
-                    $this->logger->error("Invoices in statistic delete");
                 } catch (Exeption $e) {
                     $this->logger->error("Invoices in statistic delete error: " . $e->getMessage());
                 }

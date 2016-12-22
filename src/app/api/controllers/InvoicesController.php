@@ -5,6 +5,7 @@ use App\Lib\Response;
 use App\Models\Invoices;
 use App\Lib\Exception;
 use App\Models\InvoicesStatistic;
+use App\Services\Helpers;
 use Smartmoney\Stellar\Account;
 
 class InvoicesController extends ControllerBase
@@ -20,8 +21,7 @@ class InvoicesController extends ControllerBase
             Account::TYPE_REGISTERED,
             Account::TYPE_MERCHANT,
             Account::TYPE_EXCHANGE,
-            Account::TYPE_SETTLEMENT,
-            Account::TYPE_BANK
+            Account::TYPE_SETTLEMENT
         ];
         $requester = $this->request->getAccountId();
         if (!$this->isAllowedType($requester, $allowed_types)) {
@@ -32,11 +32,11 @@ class InvoicesController extends ControllerBase
         $invoice->created           = time();
         $invoice->requested         = false;
         $invoice->is_in_statistic   = false;
-        $invoice->payer             = false;
-        $invoice->amount            = $this->payload->amount ?? null;
-        $invoice->asset             = $this->payload->asset  ?? null;
-        $invoice->account           = $requester;
-        $invoice->memo              = $this->payload->memo ?? null;
+        $invoice->payer_s           = false;
+        $invoice->amount_f          = $this->payload->amount ?? null;
+        $invoice->asset_s           = $this->payload->asset  ?? null;
+        $invoice->account_s         = $requester;
+        $invoice->memo_s            = $this->payload->memo ?? null;
         try {
             if ($invoice->create()) {
                 return $this->response->single(['id' => $invoice->id]);
@@ -79,17 +79,17 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_INV_REQUESTED);
         }
         $invoice->requested = time();
-        $invoice->payer     = $requester;
+        $invoice->payer_s   = $requester;
         try {
             if ($invoice->update()) {
                 $data = [
                     'id'        => $invoice->id,
-                    'account'   => $invoice->account,
+                    'account'   => $invoice->account_s,
                     'expires'   => $invoice->expires,
-                    'amount'    => $invoice->amount,
-                    'payer'     => $invoice->payer,
-                    'asset'     => $invoice->asset,
-                    'memo'      => $invoice->memo,
+                    'amount'    => $invoice->amount_f,
+                    'payer'     => $invoice->payer_s,
+                    'asset'     => $invoice->asset_s,
+                    'memo'      => $invoice->memo_s,
                     'requested' => $invoice->requested,
                 ];
                 return $this->response->single($data);
@@ -115,17 +115,20 @@ class InvoicesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)){
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')   ?? null;
-        $offset = $this->request->get('offset')  ?? null;
+        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
+        $offset = $this->request->get('offset') ?? 0;
         if (!empty($this->request->get('account_id'))) {
             //get invoices per account
-            $invoices = Invoices::findPerAccount($this->request->get('account_id'), $limit, $offset);
+            if (!Account::isValidAccountId($this->request->get('account_id'))) {
+                return $this->response->error(Response::ERR_BAD_PARAM, 'account_id');
+            }
+            $invoices = Invoices::findWithField('account_s', $this->request->get('account_id'), $limit, $offset);
         } else {
             //get all invoices
             $invoices = Invoices::find($limit, $offset);
         }
-        return $this->response->items($invoices);
 
+        return $this->response->items(Helpers::clearYzSuffixes($invoices));
     }
 
     public function statisticsAction() {
@@ -136,11 +139,11 @@ class InvoicesController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)){
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')   ?? null;
-        $offset = $this->request->get('offset')  ?? null;
+        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
+        $offset = $this->request->get('offset') ?? 0;
         //get all statistic
         $statistics = InvoicesStatistic::find($limit, $offset);
 
-        return $this->response->items($statistics);
+        return $this->response->items(Helpers::clearYzSuffixes($statistics));
     }
 }

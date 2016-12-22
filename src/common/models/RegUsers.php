@@ -14,94 +14,74 @@ class RegUsers extends ModelBase implements ModelInterface
     const ID_LENGTH = 8;
 
     public $id;
-    public $ipn_code;             //IPN code
-    public $asset;                //asset
-    public $surname;              //family name
-    public $name;                 //user name
-    public $middle_name;          //father's name
-    public $email;                //email
-    public $phone;                //phone
-    public $address;              //address
-    public $passport;             //passport series and number
+    public $ipn_code_s;             //IPN code
+    public $asset_s;                //asset
+    public $surname_s;              //family name
+    public $name_s;                 //user name
+    public $middle_name_s;          //father's name
+    public $email_s;                //email
+    public $phone_s;                //phone
+    public $address_s;              //address
+    public $passport_s;             //passport series and number
 
-    public $account_id;           //user account id
-    public $login;                //login on wallet
+    public $account_id_s;           //user account id
+    public $login_s;                //login on wallet
 
     public function validate() {
-
-        //$this->validateIsAllPresent();
-
         if (empty($this->id)) {
             throw new Exception(Exception::EMPTY_PARAM, 'id');
         }
-
-        if (empty($this->ipn_code)) {
+        if (empty($this->ipn_code_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'ipn_code');
         }
-
-        if (empty($this->asset)) {
+        if (empty($this->asset_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'asset');
         }
-
-        if (empty($this->surname)) {
+        if (empty($this->surname_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'surname');
         }
-
-        if (empty($this->name)) {
+        if (empty($this->name_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'name');
         }
-
-        if (empty($this->middle_name)) {
+        if (empty($this->middle_name_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'middle_name');
         }
-
-        if (empty($this->email)) {
+        if (empty($this->email_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'email');
         }
-
-        if (empty($this->phone)) {
+        if (empty($this->phone_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'phone');
         }
-
-        if (empty($this->address)) {
+        if (empty($this->address_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'address');
         }
-
-        if (empty($this->passport)) {
+        if (empty($this->passport_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'passport');
         }
-
-        if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($this->email_s, FILTER_VALIDATE_EMAIL)) {
             throw new Exception(Exception::BAD_PARAM, 'email');
         }
-
-        $id_by_ipn = RegUsers::isExistByIndex('ipn_code', $this->ipn_code);
-        if (!empty($id_by_ipn) && $id_by_ipn[0] != $this->id) {
+        $id_by_ipn = RegUsers::findFirstByField('ipn_code_s', $this->ipn_code_s);
+        if (!empty($id_by_ipn) && $id_by_ipn->id != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'ipn_code');
         }
-
-        $id_by_passport = RegUsers::isExistByIndex('passport', $this->passport);
-        if (!empty($id_by_passport) && $id_by_passport[0] != $this->id) {
+        $id_by_passport = RegUsers::findFirstByField('passport_s', $this->passport_s);
+        if (!empty($id_by_passport) && $id_by_passport->id != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'passport');
         }
-
-        $id_by_email = RegUsers::isExistByIndex('email', $this->email);
-        if (!empty($id_by_email) && $id_by_email[0] != $this->id) {
+        $id_by_email = RegUsers::findFirstByField('email_s', $this->email_s);
+        if (!empty($id_by_email) && $id_by_email->id != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'email');
         }
-
-        $id_by_phone = RegUsers::isExistByIndex('phone', $this->phone);
-        if (!empty($id_by_phone) && $id_by_phone[0] != $this->id) {
+        $id_by_phone = RegUsers::findFirstByField('phone_s', $this->phone_s);
+        if (!empty($id_by_phone) && $id_by_phone->id != $this->id) {
             throw new Exception(Exception::ALREADY_EXIST, 'phone');
         }
-
     }
 
     public static function generateID(){
-
         do {
             $id = '';
-
             $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $charactersLength = strlen($characters);
             for ($i = 0; $i < self::ID_LENGTH; $i++) {
@@ -110,7 +90,6 @@ class RegUsers extends ModelBase implements ModelInterface
         } while (self::isExist($id));
 
         return $id;
-
     }
 
     public function __construct($id = null)
@@ -119,54 +98,7 @@ class RegUsers extends ModelBase implements ModelInterface
         if (empty($id)) {
             $id = self::generateID();
         }
-
         parent::__construct($id);
         $this->id = $id;
-    }
-
-    public function create()
-    {
-        $command = $this->prepareCreate();
-
-        if (isset($this->ipn_code)) {
-            $this->addIndex($command, 'ipn_code_bin', $this->ipn_code);
-        }
-
-        if (isset($this->phone)) {
-            $this->addIndex($command, 'phone_bin', $this->phone);
-        }
-
-        if (isset($this->email)) {
-            $this->addIndex($command, 'email_bin', $this->email);
-        }
-
-        if (isset($this->passport)) {
-            $this->addIndex($command, 'passport_bin', $this->passport);
-        }
-
-        return $this->build($command);
-    }
-
-    public function update() {
-        $command = $this->prepareUpdate();
-        //good place to update secondary indexes
-
-        if (isset($this->ipn_code)) {
-            $this->addIndex($command, 'ipn_code_bin', $this->ipn_code);
-        }
-
-        if (isset($this->phone)) {
-            $this->addIndex($command, 'phone_bin', $this->phone);
-        }
-
-        if (isset($this->email)) {
-            $this->addIndex($command, 'email_bin', $this->email);
-        }
-
-        if (isset($this->passport)) {
-            $this->addIndex($command, 'passport_bin', $this->passport);
-        }
-
-        return $this->build($command);
     }
 }

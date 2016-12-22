@@ -5,6 +5,7 @@ use App\Lib\Response;
 use App\Models\MerchantStores;
 use App\Models\MerchantOrders;
 use App\Lib\Exception;
+use App\Services\Helpers;
 use GuzzleHttp\Tests\Psr7\Str;
 use Smartmoney\Stellar\Account;
 
@@ -17,70 +18,51 @@ class MerchantController extends ControllerBase
 
     public function storesListAction()
     {
-
         $allowed_types = [
             Account::TYPE_MERCHANT
         ];
-
         $requester = $this->request->getAccountId();
-
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-
         //get list of companies
-        $limit  = $this->request->get('limit')  ?? null;
-        $offset = $this->request->get('offset') ?? null;
-
-        $result = MerchantStores::getMerchantStores($requester, $limit, $offset);
-
-        return $this->response->items($result);
-
+        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
+        $offset = $this->request->get('offset') ?? 0;
+        $result = MerchantStores::findWithField('merchant_id_s', $requester, $limit, $offset);
+        return $this->response->items(Helpers::clearYzSuffixes($result));
     }
 
     public function storesCreateAction()
     {
-
         $allowed_types = [
             Account::TYPE_MERCHANT
         ];
-
         $requester = $this->request->getAccountId();
-
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-
         // Create new store
         $url = $this->payload->url ?? null;
-
         if (empty($url)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'url');
         }
-
         $url = MerchantStores::formatUrl($url);
-
         if (filter_var($url, FILTER_VALIDATE_URL) === false) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'url');
         }
-
         $store_id = MerchantStores::generateStoreID($url);
-
         if (MerchantStores::isExist($store_id)) {
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'store');
         }
-
         try {
             $store = new MerchantStores($store_id, $url);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-
-        $store->name        = $this->payload->name ?? null;
-        $store->merchant_id = $requester;
-        $store->secret_key  = MerchantStores::generateSecretKey();
-        $store->date        = time();
-
+        $store->name_s          = $this->payload->name ?? null;
+        $store->merchant_id_s   = $requester;
+        $store->secret_key      = MerchantStores::generateSecretKey();
+        $store->date            = time();
         try {
             if ($store->create()) {
                 //TODO: return data, not message
@@ -91,29 +73,23 @@ class MerchantController extends ControllerBase
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-
     }
 
     public function ordersListAction($store_id)
     {
-
         $allowed_types = [
             Account::TYPE_MERCHANT
         ];
-
         $requester = $this->request->getAccountId();
-
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-
-        $limit  = $this->request->get('limit')   ?? null;
-        $offset = $this->request->get('offset')  ?? null;
-
+        $limit  = $this->request->get('limit')  ?? $this->config->riak->default_limit;
+        $offset = $this->request->get('offset') ?? 0;
         //get all orders for store
         try {
-            $orders = MerchantOrders::findStoreOrders($store_id, $limit, $offset);
-            return $this->response->items($orders);
+            $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset);
+            return $this->response->items(Helpers::clearYzSuffixes($orders));
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -159,12 +135,11 @@ class MerchantController extends ControllerBase
         }
 
         $store_data = MerchantStores::getDataByID($store_id);
-
         if (empty($store_data) || empty($store_data->secret_key)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'store');
         }
 
-        $store_url_host = parse_url($store_data->url, PHP_URL_HOST);
+        $store_url_host = parse_url($store_data->url_s, PHP_URL_HOST);
 
         $server_url     = MerchantStores::formatUrl($server_url);
         $success_url    = MerchantStores::formatUrl($success_url);
@@ -239,9 +214,9 @@ class MerchantController extends ControllerBase
 
         $currency = $this->currency_map[$currency];
 
-        $order->store_id            = $store_id;
-        $order->amount              = $amount;
-        $order->currency            = $currency;
+        $order->store_id_s          = $store_id;
+        $order->amount_f            = $amount;
+        $order->currency_s          = $currency;
         $order->external_order_id   = $order_id;
         $order->server_url          = $server_url;
         $order->success_url         = $success_url;
@@ -250,8 +225,7 @@ class MerchantController extends ControllerBase
 
         $order->date                = time();
         $order->bot_request_count   = 0;
-        $order->status              = MerchantOrders::STATUS_WAIT_PAYMENT;
-
+        $order->status_i            = MerchantOrders::STATUS_WAIT_PAYMENT;
 
         //build new data and signature for answer to merchant
         $answer_data = array_merge($signature_data, ['status' => 'ok']);

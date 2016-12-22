@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "9ba2b858af3f59fcf0080ada16450a6d",
-    "content-hash": "53dd38c55cd821d555abdf9f6c5472f1",
+    "hash": "fc8e19eb8efeb0da5c06bc980434120f",
+    "content-hash": "91fe92236ffbd3f0e63a62b3c58c3025",
     "packages": [
         {
             "name": "basho/riak",
-            "version": "v3.0.2",
+            "version": "3.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/basho/riak-php-client.git",
-                "reference": "13654bda8a84c85e030d520295f05e58f2d2cc13"
+                "reference": "42216635509cd71f4475b1d956ba1b4fae3f7d8a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/basho/riak-php-client/zipball/13654bda8a84c85e030d520295f05e58f2d2cc13",
-                "reference": "13654bda8a84c85e030d520295f05e58f2d2cc13",
+                "url": "https://api.github.com/repos/basho/riak-php-client/zipball/42216635509cd71f4475b1d956ba1b4fae3f7d8a",
+                "reference": "42216635509cd71f4475b1d956ba1b4fae3f7d8a",
                 "shasum": ""
             },
             "require": {
@@ -28,7 +28,6 @@
             },
             "require-dev": {
                 "apigen/apigen": "4.1.*",
-                "basho/tools": "1.0.0",
                 "phpunit/phpunit": "4.8.*"
             },
             "type": "library",
@@ -69,7 +68,7 @@
                 "nosql",
                 "riak"
             ],
-            "time": "2016-02-09 14:40:00"
+            "time": "2016-12-15 21:13:33"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -135,28 +134,28 @@
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "1.3.0",
+            "version": "v1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "2693c101803ca78b27972d84081d027fca790a1e"
+                "reference": "a59da6cf61d80060647ff4d3eb2c03a2bc694646"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/2693c101803ca78b27972d84081d027fca790a1e",
-                "reference": "2693c101803ca78b27972d84081d027fca790a1e",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/a59da6cf61d80060647ff4d3eb2c03a2bc694646",
+                "reference": "a59da6cf61d80060647ff4d3eb2c03a2bc694646",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4.0"
+                "phpunit/phpunit": "^4.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0-dev"
+                    "dev-master": "1.4-dev"
                 }
             },
             "autoload": {
@@ -182,7 +181,7 @@
             "keywords": [
                 "promise"
             ],
-            "time": "2016-11-18 17:47:58"
+            "time": "2016-12-20 10:07:11"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -244,16 +243,16 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "1.21.0",
+            "version": "1.22.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "f42fbdfd53e306bda545845e4dbfd3e72edb4952"
+                "reference": "bad29cb8d18ab0315e6c477751418a82c850d558"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/f42fbdfd53e306bda545845e4dbfd3e72edb4952",
-                "reference": "f42fbdfd53e306bda545845e4dbfd3e72edb4952",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/bad29cb8d18ab0315e6c477751418a82c850d558",
+                "reference": "bad29cb8d18ab0315e6c477751418a82c850d558",
                 "shasum": ""
             },
             "require": {
@@ -264,7 +263,7 @@
                 "psr/log-implementation": "1.0.0"
             },
             "require-dev": {
-                "aws/aws-sdk-php": "^2.4.9",
+                "aws/aws-sdk-php": "^2.4.9 || ^3.0",
                 "doctrine/couchdb": "~1.0@dev",
                 "graylog2/gelf-php": "~1.0",
                 "jakub-onderka/php-parallel-lint": "0.9",
@@ -318,7 +317,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2016-07-29 03:23:52"
+            "time": "2016-11-26 00:15:39"
         },
         {
             "name": "paragonie/random_compat",
@@ -424,16 +423,16 @@
         },
         {
             "name": "phpmailer/phpmailer",
-            "version": "v5.2.16",
+            "version": "v5.2.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPMailer/PHPMailer.git",
-                "reference": "1d85f9ef3ecfc42bbc4f3c70d5e37ca9a65f629a"
+                "reference": "208913c6042967ba404f4bfa0819bf5bef79dbec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/1d85f9ef3ecfc42bbc4f3c70d5e37ca9a65f629a",
-                "reference": "1d85f9ef3ecfc42bbc4f3c70d5e37ca9a65f629a",
+                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/208913c6042967ba404f4bfa0819bf5bef79dbec",
+                "reference": "208913c6042967ba404f4bfa0819bf5bef79dbec",
                 "shasum": ""
             },
             "require": {
@@ -480,7 +479,7 @@
                 }
             ],
             "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
-            "time": "2016-06-06 09:09:37"
+            "time": "2016-12-09 10:03:48"
         },
         {
             "name": "psr/http-message",
@@ -581,16 +580,16 @@
         },
         {
             "name": "ramsey/uuid",
-            "version": "3.5.1",
+            "version": "3.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ramsey/uuid.git",
-                "reference": "a07797b986671b0dc823885a81d5e3516b931599"
+                "reference": "5677cfe02397dd6b58c861870dfaa5d9007d3954"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/a07797b986671b0dc823885a81d5e3516b931599",
-                "reference": "a07797b986671b0dc823885a81d5e3516b931599",
+                "url": "https://api.github.com/repos/ramsey/uuid/zipball/5677cfe02397dd6b58c861870dfaa5d9007d3954",
+                "reference": "5677cfe02397dd6b58c861870dfaa5d9007d3954",
                 "shasum": ""
             },
             "require": {
@@ -603,11 +602,13 @@
             "require-dev": {
                 "apigen/apigen": "^4.1",
                 "codeception/aspect-mock": "1.0.0",
+                "doctrine/annotations": "~1.2.0",
                 "goaop/framework": "1.0.0-alpha.2",
                 "ircmaxell/random-lib": "^1.1",
                 "jakub-onderka/php-parallel-lint": "^0.9.0",
                 "mockery/mockery": "^0.9.4",
                 "moontoast/math": "^1.1",
+                "php-mock/php-mock-phpunit": "^0.3|^1.1",
                 "phpunit/phpunit": "^4.7|>=5.0 <5.4",
                 "satooshi/php-coveralls": "^0.6.1",
                 "squizlabs/php_codesniffer": "^2.3"
@@ -657,7 +658,7 @@
                 "identifier",
                 "uuid"
             ],
-            "time": "2016-10-02 15:51:17"
+            "time": "2016-11-22 19:21:44"
         },
         {
             "name": "stellar/isvalidaccount",
@@ -681,16 +682,16 @@
         },
         {
             "name": "swiftmailer/swiftmailer",
-            "version": "v5.4.3",
+            "version": "v5.4.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swiftmailer/swiftmailer.git",
-                "reference": "4cc92842069c2bbc1f28daaaf1d2576ec4dfe153"
+                "reference": "545ce9136690cea74f98f86fbb9c92dd9ab1a756"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swiftmailer/swiftmailer/zipball/4cc92842069c2bbc1f28daaaf1d2576ec4dfe153",
-                "reference": "4cc92842069c2bbc1f28daaaf1d2576ec4dfe153",
+                "url": "https://api.github.com/repos/swiftmailer/swiftmailer/zipball/545ce9136690cea74f98f86fbb9c92dd9ab1a756",
+                "reference": "545ce9136690cea74f98f86fbb9c92dd9ab1a756",
                 "shasum": ""
             },
             "require": {
@@ -730,7 +731,7 @@
                 "mail",
                 "mailer"
             ],
-            "time": "2016-07-08 11:51:25"
+            "time": "2016-11-24 01:01:23"
         }
     ],
     "packages-dev": [],
