@@ -47,7 +47,7 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             $allow_routes = [                
                 'enrollments/accept',
                 'enrollments/decline',
-                'merchant/ordersCreate',                
+                'merchant/ordersCreate',
             ];
 
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();

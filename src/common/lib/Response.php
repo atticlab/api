@@ -18,16 +18,20 @@ class Response extends \Phalcon\Http\Response
 
     public function single(array $data = [])
     {
+        $config = $this->getDi()->getConfig();
         $data['nonce'] = $this->getDi()->getRequest()->getNonce();
+        $data['ttl'] = $config->nonce->ttl;
         $this->setJsonContent($data)->send();
         exit;
     }
 
     public function items($items)
     {
+        $config = $this->getDi()->getConfig();
         $data = [];
         $data['items'] = $items;
         $data['nonce'] = $this->getDi()->getRequest()->getNonce();
+        $data['ttl'] = $config->nonce->ttl;
 
         $this->setJsonContent($data)->send();
         exit;
@@ -35,7 +39,9 @@ class Response extends \Phalcon\Http\Response
 
     public function success()
     {
+        $config = $this->getDi()->getConfig();
         $data['nonce']   = $this->getDi()->getRequest()->getNonce();
+        $data['ttl'] = $config->nonce->ttl;
         $data['message'] = 'success';
         $this->setJsonContent($data)->send();
         exit;
