@@ -17,7 +17,8 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
      * @param $dispatcher
      * @return Response error
      */
-    public function beforeExecuteRoute($dispatcher) {
+    public function beforeExecuteRoute($dispatcher)
+    {
         $this->payload = json_decode($this->request->getRawBody());
         if (empty($this->payload)) {
             $this->payload = (object)$this->request->getPost();
@@ -31,21 +32,30 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             $this->response->sendHeaders();
             exit;
         }
+        
         //user ip
         $ip = $this->request->getClientAddress();
+        
         //if banned        
         $ban = IpBans::checkBanned($ip);
+        
         if ($ban) {            
-            return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
+            return $this->response->error(Response::ERR_ACC_BLOCKED, 'banned to ' . $ban);
         }
+        
         if ($dispatcher->getControllerName() != 'nonce') {
-            $allow_routes = [
+            $allow_routes = [                
                 'enrollments/accept',
                 'enrollments/decline',
-                'merchant/ordersCreate'
+                'merchant/ordersCreate',
             ];
+
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
-            if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
+            
+            error_log($current_route);
+            if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {                
+                //user ip
+                $ip = $this->request->getClientAddress();                
                 //consider how many irregular requests comes
                 IpBans::setMissed($ip);
                 return $this->response->error(Response::ERR_BAD_SIGN);
