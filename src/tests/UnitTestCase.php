@@ -57,7 +57,7 @@ abstract class UnitTestCase extends PhalconTestCase
         }
 
         $this->test_config = $test_data;
-        $this->api_host    = 'api.smartmoney.com.ua';
+        $this->api_host    = 'api.euah.cf';
 
     }
 
