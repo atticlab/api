@@ -100,21 +100,14 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
     protected function isAllowedType($accountId, array $allowed_types) {
         if (in_array(Account::TYPE_ADMIN, $allowed_types)){
             //admin is allowed, need to check is account admin
-            if ($this->isAdmin($accountId)) {
+            $master_info = Helpers::masterAccountInfo($this->config->master_key, $this->config->horizon->host, $this->config->horizon->port);
+            $is_admin    = in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
+
+            if ($is_admin) {
                 return true;
             }
         }
         return in_array(Account::getAccountType($accountId, $this->config->horizon->host, $this->config->horizon->port), $allowed_types);
     }
 
-    /**
-     * Check's if accountId has admin type
-     * @param $accountId
-     * @return bool
-     * @throws \Exception
-     */
-    private function isAdmin($accountId) {
-        $master_info = Helpers::masterAccountInfo($this->config->master_key, $this->config->horizon->host, $this->config->horizon->port);
-        return in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
-    }
 }

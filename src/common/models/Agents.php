@@ -28,13 +28,13 @@ class Agents extends ModelBase implements ModelInterface
     ];
 
     public $id;
-    public $cmp_code;             //company code
-    public $type;                 //type of agent
-    public $asset;                //user name
-    public $created;              //timestamp
+    public $cmp_code_s;           //company code
+    public $type_i;               //type of agent
+    public $asset_s;              //user name
+    public $created_i;            //timestamp
 
-    public $account_id;           //agent account id
-    public $login;                //login on wallet
+    public $account_id_s;         //agent account id
+    public $login_s;              //login on wallet
 
     public function validate() {
 
@@ -46,37 +46,35 @@ class Agents extends ModelBase implements ModelInterface
             throw new Exception(Exception::BAD_PARAM, 'id');
         }
 
-        if (!empty($this->account_id) && !Account::isValidAccountId($this->account_id)) {
+        if (!empty($this->account_id_s) && !Account::isValidAccountId($this->account_id_s)) {
             throw new Exception(Exception::BAD_PARAM, 'account_id');
         }
 
-        if (empty($this->asset)) {
+        if (empty($this->asset_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'asset');
         }
 
-        if (empty($this->type)) {
+        if (empty($this->type_i)) {
             throw new Exception(Exception::EMPTY_PARAM, 'type');
         }
 
-        if (!array_key_exists($this->type, self::$types)) {
+        if (!array_key_exists($this->type_i, self::$types)) {
             throw new Exception(Exception::BAD_PARAM, 'type');
         }
 
-        if (empty($this->cmp_code)) {
+        if (empty($this->cmp_code_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'company_code');
         }
 
-        if (!Companies::isExist($this->cmp_code)) {
+        if (!Companies::isExist($this->cmp_code_s)) {
             throw new Exception(Exception::BAD_PARAM, 'company_code');
         }
 
     }
 
     public static function generateID(){
-
         do {
             $id = '';
-
             $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $charactersLength = strlen($characters);
             for ($i = 0; $i < self::ID_LENGTH; $i++) {
@@ -85,7 +83,6 @@ class Agents extends ModelBase implements ModelInterface
         } while (self::isExist($id));
 
         return $id;
-
     }
 
     public function __construct($id = null)
@@ -94,58 +91,18 @@ class Agents extends ModelBase implements ModelInterface
         if (empty($id)) {
             $id = self::generateID();
         }
-
         parent::__construct($id);
         $this->id = $id;
     }
 
     public function create()
     {
-
-        $company_agents = self::findWithIndex('cmp_code', $this->cmp_code);
-
+        $company_agents = self::findWithField('cmp_code_s', $this->cmp_code_s);
         foreach ($company_agents as $agent) {
-
-            if ($agent->type == $this->type) {
+            if ($agent->type == $this->type_i) {
                 throw new Exception(Exception::ALREADY_EXIST, 'agent');
             }
-
         }
-
-        $command = $this->prepareCreate();
-
-        if (isset($this->cmp_code)) {
-            $this->addIndex($command, 'cmp_code_bin', $this->cmp_code);
-        }
-
-        if (isset($this->type)) {
-            $this->addIndex($command, 'type_bin', $this->type);
-        }
-
-        if (isset($this->account_id)) {
-            $this->addIndex($command, 'account_id_bin', $this->account_id);
-        }
-
-        return $this->build($command);
-    }
-
-    public function update()
-    {
-        $command = $this->prepareUpdate();
-        //good place to update secondary indexes
-
-        if (isset($this->cmp_code)) {
-            $this->addIndex($command, 'cmp_code_bin', $this->cmp_code);
-        }
-
-        if (isset($this->type)) {
-            $this->addIndex($command, 'type_bin', $this->type);
-        }
-
-        if (isset($this->account_id)) {
-            $this->addIndex($command, 'account_id_bin', $this->account_id);
-        }
-
-        return $this->build($command);
+        return parent::create();
     }
 }

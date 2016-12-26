@@ -3,7 +3,6 @@
 define('APP_PATH', realpath(__DIR__ . '/..') . '/');
 define('MODULE', 'api');
 define('MODULE_PATH', APP_PATH . 'app/' . MODULE);
-define('SERVICE_PATH', APP_PATH . 'common/services/');
 define('CONFIG_PATH', APP_PATH . 'common/config/');
 
 class Bootstrap extends \Phalcon\Mvc\Application
@@ -16,8 +15,7 @@ class Bootstrap extends \Phalcon\Mvc\Application
         $loader->registerNamespaces([
             'App\Models'      => APP_PATH . 'common/models/',
             'App\Lib'         => APP_PATH . 'common/lib/',
-            'App\Controllers' => MODULE_PATH . '/controllers',
-            'SWP\Services'    => SERVICE_PATH,
+            'App\Controllers' => MODULE_PATH . '/controllers'
         ]);
 
         $loader->register();

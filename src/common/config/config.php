@@ -16,6 +16,17 @@ $config = new \Phalcon\Config([
         "port" => 80
     ],
 
+    "riak" => [
+        "default_limit" => 25,
+        "search_index_suffics" => '_si',
+        "yokozuna_sufficses" => [
+            "_b",
+            "_i",
+            "_f",
+            "_s"
+        ],
+    ],
+
     "cards" => [
         "operations_limit" => 10
     ],

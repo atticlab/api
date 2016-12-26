@@ -63,20 +63,6 @@ class IpBans extends ModelBase implements ModelInterface
             throw new Exception(Exception::EMPTY_PARAM, 'ip');
         }
     }
-
-    public function create()
-    {
-        $command = $this->prepareCreate();
-        //create secondary indexes here with addIndex method
-        return $this->build($command); 
-    }
-
-    public function update()
-    {
-        $command = $this->prepareUpdate();
-        //good place to update secondary indexes with addIndex method
-        return $this->build($command);
-    }
     
     //Save or update statistics Invalid request
     public static function setMissed($ip)

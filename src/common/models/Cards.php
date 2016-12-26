@@ -23,13 +23,13 @@ class Cards extends ModelBase implements ModelInterface
 
     public $account_id;          //card account id
     public $seed;                //card crypt seed (sjcl lib) by agent password
-    public $amount;
-    public $asset;
-    public $created_date;
+    public $amount_f;
+    public $asset_s;
+    public $created_date_i;
     public $used_date;
-    public $type;
-    public $is_used;
-    public $agent_id;
+    public $type_i;
+    public $is_used_b;
+    public $agent_id_s;
 
     public function __construct($account_id)
     {
@@ -38,113 +38,36 @@ class Cards extends ModelBase implements ModelInterface
     }
 
     public function validate(){
-
         if (empty($this->account_id)) {
             throw new Exception(Exception::EMPTY_PARAM, 'account_id');
         }
-
         if (!Account::isValidAccountId($this->account_id)) {
             throw new Exception(Exception::BAD_PARAM, 'account_id');
         }
-
-        if (empty($this->amount)) {
+        if (empty($this->amount_f)) {
             throw new Exception(Exception::EMPTY_PARAM, 'amount');
         }
-
-        if (!is_numeric($this->amount) || $this->amount <= 0) {
+        if (!is_numeric($this->amount_f) || $this->amount_f <= 0) {
             throw new Exception(Exception::BAD_PARAM, 'amount');
         }
-
-        if (empty($this->asset)) {
+        if (empty($this->asset_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'asset');
         }
-
-        if (!isset($this->type)) {
+        if (!isset($this->type_i)) {
             throw new Exception(Exception::EMPTY_PARAM, 'type');
         }
-
-        if (!array_key_exists($this->type, self::$types)) {
+        if (!array_key_exists($this->type_i, self::$types)) {
             throw new Exception(Exception::BAD_PARAM, 'type');
         }
-
-        if (empty($this->agent_id)) {
+        if (empty($this->agent_id_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'agent_id');
         }
-
-        if (!Account::isValidAccountId($this->agent_id)) {
+        if (!Account::isValidAccountId($this->agent_id_s)) {
             throw new Exception(Exception::BAD_PARAM, 'agent_id');
         }
-
         if (empty($this->seed)) {
             throw new Exception(Exception::EMPTY_PARAM, 'seed');
         }
-
-    }
-
-    public static function findAgentCards($agent_id, $limit = null, $offset = null)
-    {
-
-        if (empty($agent_id)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'agent_id');
-        }
-
-        if (!Account::isValidAccountId($agent_id)) {
-            throw new Exception(Exception::BAD_PARAM, 'agent_id');
-        }
-
-        self::setPrimaryAttributes();
-
-        $riak = DI::getDefault()->get('riak');
-
-        $cards = [];
-
-        $object = (new Command\Builder\QueryIndex($riak))
-            ->buildBucket(self::$BUCKET_NAME)
-            ->withIndexName('agent_id_bin')
-            ->withScalarValue($agent_id);
-
-        if (!empty($limit)) {
-            $object
-                ->withMaxResults($limit);
-        }
-
-        //paginator
-        if (!empty($offset) && $offset > 0) {
-
-            //get withContinuation for N page by getting previous {$offset} records
-            $continuation = (new Command\Builder\QueryIndex($riak))
-                ->buildBucket(self::$BUCKET_NAME)
-                ->withIndexName('agent_id_bin')
-                ->withScalarValue($agent_id)
-                ->withMaxResults($offset)
-                ->build()
-                ->execute()
-                ->getContinuation();
-
-            if (empty($continuation)) {
-                return [];
-            }
-
-            $object
-                ->withContinuation($continuation);
-        }
-
-        $response = $object
-            ->build()
-            ->execute()
-            ->getResults();
-
-        foreach ($response as $code) {
-
-            $data = self::getDataByID($code);
-
-            if (!empty($data)) {
-                $cards[] = $data;
-            }
-
-        }
-
-        return $cards;
     }
 
     /**
@@ -153,39 +76,11 @@ class Cards extends ModelBase implements ModelInterface
      */
     public static function getAgentCard($account_id, $agent_id)
     {
-
         $data = self::getDataByID($account_id);
-
         if (empty($data->agent_id) || $data->agent_id != $agent_id) {
             return [];
         }
 
         return (array)$data;
     }
-
-    public function create()
-    {
-        $command = $this->prepareCreate();
-        //create secondary indexes here with addIndex method
-
-        if (isset($this->agent_id)) {
-            $this->addIndex($command, 'agent_id_bin', $this->agent_id);
-        }
-
-        return $this->build($command);
-
-    }
-
-    public function update()
-    {
-        $command = $this->prepareUpdate();
-        //good place to update secondary indexes with addIndex method
-
-        if (isset($this->agent_id)) {
-            $this->addIndex($command, 'agent_id_bin', $this->agent_id);
-        }
-
-        return $this->build($command);
-    }
-
 }

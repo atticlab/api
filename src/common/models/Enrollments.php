@@ -27,16 +27,16 @@ class Enrollments extends ModelBase implements ModelInterface
     ];
 
     public $id;                   //enrollment id
-    public $asset;                //asset
-    public $stage;                //status of enr
-    public $otp;                  //token
+    public $asset_s;              //asset
+    public $stage_i;              //status of enr
+    public $otp_s;                //token
     public $expiration;           //timestamp in future
-    public $account_id;           //user/agent account_id
+    public $account_id_s;         //user/agent account_id
     public $tx_trust;             //trust for asset, need for final approve by admin
-    public $login;                //login of created user/agent
+    public $login_s;              //login of created user/agent
 
-    public $type;                 //'user' or 'agent'
-    public $target_id;            //id of user or agent
+    public $type_s;               //'user' or 'agent'
+    public $target_id_s;          //id of user or agent
 
     public function __construct($id = null)
     {
@@ -50,54 +50,41 @@ class Enrollments extends ModelBase implements ModelInterface
     }
 
     public function validate() {
-
         if (empty($this->id)) {
             throw new Exception(Exception::EMPTY_PARAM, 'id');
         }
-
         if (mb_strlen($this->id) != self::ID_LENGTH) {
             throw new Exception(Exception::BAD_PARAM, 'id');
         }
-
-        if (!empty($this->account_id) && !Account::isValidAccountId($this->account_id)) {
+        if (!empty($this->account_id_s) && !Account::isValidAccountId($this->account_id_s)) {
             throw new Exception(Exception::BAD_PARAM, 'account_id');
         }
-
-        if (empty($this->asset)) {
+        if (empty($this->asset_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'asset');
         }
-
-        if (empty($this->otp)) {
+        if (empty($this->otp_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'otp');
         }
-
-        if (empty($this->stage)) {
+        if (empty($this->stage_i)) {
             throw new Exception(Exception::EMPTY_PARAM, 'stage');
         }
-
         if (empty($this->expiration)) {
             throw new Exception(Exception::EMPTY_PARAM, 'expiration');
         }
-
-        if (empty($this->target_id)) {
+        if (empty($this->target_id_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'target_id');
         }
-
-        if (empty($this->type)) {
+        if (empty($this->type_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'type');
         }
-
-        if (!in_array($this->type, self::$accepted_types)) {
+        if (!in_array($this->type_s, self::$accepted_types)) {
             throw new Exception(Exception::BAD_PARAM, 'type');
         }
-
     }
 
     public static function generateID(){
-
         do {
             $id = '';
-
             $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $charactersLength = strlen($characters);
             for ($i = 0; $i < self::ID_LENGTH; $i++) {
@@ -106,56 +93,14 @@ class Enrollments extends ModelBase implements ModelInterface
         } while (self::isExist($id));
 
         return $id;
-
     }
 
     public static function generateOTP(){
-
         $random = new \Phalcon\Security\Random;
-
         do {
             $otp = $random->base64Safe(self::OTP_LENGTH);
-        } while (self::isExistByIndex('otp', $otp));
+        } while (self::isExistByField('otp_s', $otp));
 
         return $otp;
-
-    }
-
-    public function create()
-    {
-        $command = $this->prepareCreate();
-
-        if (isset($this->account_id)) {
-            $this->addIndex($command, 'account_id_bin', $this->account_id);
-        }
-
-        if (isset($this->otp)) {
-            $this->addIndex($command, 'otp_bin', $this->otp);
-        }
-
-        if (isset($this->type)) {
-            $this->addIndex($command, 'type_bin', $this->type);
-        }
-
-        return $this->build($command);
-    }
-
-    public function update() {
-        $command = $this->prepareUpdate();
-        //good place to update secondary indexes
-
-        if (isset($this->account_id)) {
-            $this->addIndex($command, 'account_id_bin', $this->account_id);
-        }
-
-        if (isset($this->otp)) {
-            $this->addIndex($command, 'otp_bin', $this->otp);
-        }
-
-        if (isset($this->type)) {
-            $this->addIndex($command, 'type_bin', $this->type);
-        }
-
-        return $this->build($command);
     }
 }

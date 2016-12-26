@@ -16,8 +16,14 @@ class BansController extends ControllerBase
         if (!$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = $this->request->get('limit')   ?? null;
-        $offset = $this->request->get('offset')  ?? null;
+        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
         //get all bans
         $bans = IpBans::find($limit, $offset);
         return $this->response->items($bans);
@@ -45,7 +51,7 @@ class BansController extends ControllerBase
         //create ban
         } else {
             $banned_to = time() + ($banned_for * 60);
-            $ip_ban = IpBans::getIpData($int_ip);
+            $ip_ban    = IpBans::getIpData($int_ip);
             $ip_ban->banned_to = $banned_to;
             try {
                 $ip_ban->update();
