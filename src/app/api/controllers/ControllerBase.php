@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Lib\Exception;
-use App\Models\Companies;
 use Smartmoney\Stellar\Account;
 use Smartmoney\Stellar\Helpers;
 use App\Models\IpBans;
@@ -37,7 +36,7 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         //if banned        
         #$ban = IpBans::checkBanned($ip);
         #if ($ban) {
-        #    return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
+            #return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
         #}
         if ($dispatcher->getControllerName() != 'nonce') {
             $allow_routes = [
