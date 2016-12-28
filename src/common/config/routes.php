@@ -161,6 +161,22 @@ $router->addPost('/bans/manage', [
     'action' => 'manage'
 ]);
 
+//admins
+$router->addPost('/admins/list', [
+    'controller' => 'admins',
+    'action' => 'list',
+]);
+
+$router->addPost('/admins', [
+    'controller' => 'admins',
+    'action' => 'create',
+]);
+
+$router->addPost('/admins/delete/{account_id}', [
+    'controller' => 'admins',
+    'action' => 'delete',
+]);
+
 //404 not found
 $router->notFound([
     "controller" => "index",
