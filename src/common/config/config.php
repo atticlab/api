@@ -16,6 +16,8 @@ $config = new \Phalcon\Config([
         "port" => 80
     ],
 
+    "asset" => 'EUAH',
+
     "riak" => [
         "default_limit" => 25,
         "search_index_suffics" => '_si',

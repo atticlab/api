@@ -123,38 +123,55 @@ class CardsController extends ControllerBase
             $body = json_decode($response->getBody()->getContents());
             $next_operations = $body->_embedded->records;
             foreach ($next_operations as $operation) {
-                if (empty($operation) || empty($operation->from) || empty($operation->to) || empty($operation->amount) || empty($operation->asset_code)) {
+                if (empty($operation) || empty($operation->account) || $operation->funder != $requester) {
                     return $this->response->error(Response::ERR_SERVICE, 'Unexpected answer from horizon');
                 }
-                if ($operation->from != $requester) {
-                    return $this->response->error(Response::ERR_BAD_PARAM, 'Operation source account');
+
+                //get scratch card account info for take balance
+                $scard_response = $client->request(
+                    'GET',
+                    'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port . '/accounts/' . $operation->account,
+                    [
+                        'http_errors' => false
+                    ]
+                );
+                if ($scard_response->getStatusCode() != 200) {
+                    return $this->response->error(Response::ERR_TX, 'Can not get scratch card account from horizon');
                 }
-                if (property_exists($data, $operation->to)) {
 
-                    try {
-                        $card = new Cards($operation->to);
-                    } catch (Exception $e) {
-                        return $this->handleException($e->getCode(), $e->getMessage());
-                    }
+                $scard_body = json_decode($scard_response->getBody()->getContents());
 
-                    $card->created_date_i = time();
-                    $card->used_date      = false;
-                    $card->is_used_b      = false;
+                if ($scard_body->type != 'scratch_card') {
+                    return $this->response->error(Response::ERR_TX, 'Unexpected account type');
+                }
 
-                    //TODO: get type of cards from frontend
-                    $card->type_i     = 0; //0 - prepaid card, 1 - credit
-                    $card->seed       = $data->{$operation->to};
-                    $card->amount_f   = $operation->amount;
-                    $card->asset_s    = $operation->asset_code;
-                    $card->agent_id_s = $requester;
-
-                    try {
-                        if (!$card->create()) {
-                            $this->logger->emergency('Riak error while creating card');
-                            throw new Exception(Exception::SERVICE_ERROR);
+                foreach ($scard_body->balances as $balance) {
+                    if ($balance->asset_code == $this->config->asset) {
+                        try {
+                            $card = new Cards($operation->to);
+                        } catch (Exception $e) {
+                            return $this->handleException($e->getCode(), $e->getMessage());
                         }
-                    } catch (Exception $e) {
-                        return $this->handleException($e->getCode(), $e->getMessage());
+
+                        $card->created_date_i = time();
+                        $card->used_date      = false;
+                        $card->is_used_b      = false;
+
+                        //TODO: get type of cards from frontend
+                        $card->type_i     = 0; //0 - prepaid card, 1 - credit
+                        $card->seed       = $data->{$operation->to};
+                        $card->amount_f   = $operation->amount;
+                        $card->asset_s    = $operation->asset_code;
+                        $card->agent_id_s = $requester;
+
+                        try {
+                            if (!$card->create()) {
+                                $this->logger->emergency('Riak error while creating card');
+                                throw new Exception(Exception::SERVICE_ERROR);
+                            }
+                        } catch (Exception $e) {
+                            return $this->handleException($e->getCode(), $e->getMessage());
+                        }
                     }
                 }
             }
