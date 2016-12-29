@@ -148,7 +148,7 @@ class CardsController extends ControllerBase
                 foreach ($scard_body->balances as $balance) {
                     if ($balance->asset_code == $this->config->asset) {
                         try {
-                            $card = new Cards($operation->to);
+                            $card = new Cards($operation->account);
                         } catch (Exception $e) {
                             return $this->handleException($e->getCode(), $e->getMessage());
                         }
@@ -159,9 +159,9 @@ class CardsController extends ControllerBase
 
                         //TODO: get type of cards from frontend
                         $card->type_i     = 0; //0 - prepaid card, 1 - credit
-                        $card->seed       = $data->{$operation->to};
-                        $card->amount_f   = $operation->amount;
-                        $card->asset_s    = $operation->asset_code;
+                        $card->seed       = $data->{$operation->account};
+                        $card->amount_f   = floatval(number_format($balance->balance, 2));
+                        $card->asset_s    = $balance->asset_code;
                         $card->agent_id_s = $requester;
 
                         try {
