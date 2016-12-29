@@ -172,9 +172,14 @@ $router->addPost('/admins', [
     'action' => 'create',
 ]);
 
-$router->addPost('/admins/delete/{account_id}', [
+$router->addGet('/admins/delete/{account_id}', [
     'controller' => 'admins',
     'action' => 'delete',
+]);
+
+$router->addGet('/admins/{account_id}', [
+    'controller' => 'admins',
+    'action' => 'get',
 ]);
 
 //404 not found

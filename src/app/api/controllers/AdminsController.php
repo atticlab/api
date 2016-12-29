@@ -46,6 +46,33 @@ class AdminsController extends ControllerBase
         }
     }
 
+    public function getAction($account_id)
+    {
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+        $requester = $this->request->getAccountId();
+        if (!$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        if (empty($account_id)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_id');
+        }
+
+        if (!Admins::isExist($account_id)) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'admin');
+        }
+
+        $admin = Admins::getDataByID($account_id);
+
+        if (empty($admin)) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'admin');
+        }
+
+        return $this->response->single((array)$admin);
+    }
+
     public function listAction()
     {
         $allowed_types = [
@@ -69,7 +96,10 @@ class AdminsController extends ControllerBase
         $result = [];
         foreach ($account_ids as $key => $account_id) {
             try {
-                $result[] = Admins::findFirstByField('account_id_s', $account_id);
+                $data = Admins::getDataByID($account_id);
+                if (!empty($data)) {
+                    $result[] = $data;
+                }
             } catch (\Exception $e) {
                 return $this->handleException($e->getCode(), $e->getMessage());
             }
