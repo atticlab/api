@@ -9,7 +9,7 @@ class Response extends \Phalcon\Http\Response
     const ERR_ALREADY_EXISTS        = 'ERR_ALREADY_EXISTS';
     const ERR_INV_EXPIRED           = 'ERR_INV_EXPIRED';
     const ERR_INV_REQUESTED         = 'ERR_INV_REQUESTED';
-    const ERR_ACC_BLOCKED           = 'ERR_ACC_BLOCKED';
+    const ERR_IP_BLOCKED            = 'ERR_IP_BLOCKED';
     const ERR_BAD_PARAM             = 'ERR_BAD_PARAM';
     const ERR_EMPTY_PARAM           = 'ERR_EMPTY_PARAM';
     const ERR_SERVICE               = 'ERR_SERVICE';
