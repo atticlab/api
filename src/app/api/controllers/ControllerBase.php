@@ -36,7 +36,7 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         //if banned        
         #$ban = IpBans::checkBanned($ip);
         #if ($ban) {
-            #return $this->response->error(Response::ERR_ACC_BLOCKED, $ban);
+            #return $this->response->error(Response::ERR_IP_BLOCKED, $ban);
         #}
         if ($dispatcher->getControllerName() != 'nonce') {
             $allow_routes = [
