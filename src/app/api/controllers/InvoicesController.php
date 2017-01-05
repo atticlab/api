@@ -12,7 +12,7 @@ class InvoicesController extends ControllerBase
 
     public function createAction() {
         $allowed_types = [
-            //TODO: REMOVE DESTRIBUTION AGENT AFTER CRYPTO_UAH realese
+            //TODO: REMOVE DESTRIBUTION AGENT AFTER CRYPTO_UAH release
             Account::TYPE_DISTRIBUTION,
             //---------------------------------------------------------
             Account::TYPE_NOT_CREATED,
@@ -27,11 +27,11 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         $invoice                    = new Invoices();
-        $invoice->expires           = time() + $this->config->invoice->expired;
+        $invoice->expires_i         = time() + $this->config->invoice->expired;
         $invoice->created           = time();
-        $invoice->requested         = false;
-        $invoice->is_in_statistic   = false;
-        $invoice->payer_s           = false;
+        $invoice->requested_i       = 0;
+        $invoice->is_in_statistic_b = false;
+        $invoice->payer_s           = '';
         $invoice->amount_f          = $this->payload->amount ?? null;
         $invoice->asset_s           = $this->payload->asset  ?? null;
         $invoice->account_s         = $requester;
@@ -71,25 +71,25 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'invoice');
         }
         $invoice = Invoices::findFirst($id);
-        if (isset($invoice->expires) && $invoice->expires < time()) {
+        if (isset($invoice->expires_i) && $invoice->expires_i < time()) {
             return $this->response->error(Response::ERR_INV_EXPIRED);
         }
-        if (isset($invoice->requested) && $invoice->requested > 0 && $invoice->requested <= time()) {
+        if (isset($invoice->requested_i) && $invoice->requested_i > 0 && $invoice->requested_i <= time()) {
             return $this->response->error(Response::ERR_INV_REQUESTED);
         }
-        $invoice->requested = time();
+        $invoice->requested_i = time();
         $invoice->payer_s   = $requester;
         try {
             if ($invoice->update()) {
                 $data = [
                     'id'        => $invoice->id,
                     'account'   => $invoice->account_s,
-                    'expires'   => $invoice->expires,
+                    'expires'   => $invoice->expires_i,
                     'amount'    => $invoice->amount_f,
                     'payer'     => $invoice->payer_s,
                     'asset'     => $invoice->asset_s,
                     'memo'      => $invoice->memo_s,
-                    'requested' => $invoice->requested,
+                    'requested' => $invoice->requested_i,
                 ];
                 return $this->response->single($data);
             }

@@ -49,65 +49,71 @@ class IndexTask extends TaskBase
 
     public function statisticsAction()
     {
-        $count_expired = 0; 
-        $count_used = 0; 
-        $count_all = 0;
-        
-        //get all invoices
+        $statistic = array();
+
+        //get expired invoices
         try {            
-            $invoices = Invoices::find();         
+            $invoices = Invoices::findExpiredInvoices();
         } catch (Exeption $e) {
             $this->logger->error("Invoices finding error: " . $e->getMessage());
             return false;
         }
-        
-        //start bot
+
         if (count($invoices) > 0) {
-            $this->logger->info("Bot started");
+            foreach ($invoices as $expired) {
+                $invoice = Invoices::findFirst($expired->id);
+                
+                $created_time = $expired->created - $expired->created % 86400;
+                $statistic[$created_time]['invoices'][] = $expired;
 
-            $statistic = array();
-
-            foreach ($invoices as $invoice_code) {
-                $invoice = Invoices::findFirst($invoice_code->id);
-                
-                $created_time = $invoice_code->created - $invoice_code->created % 86400;               
-                $statistic[$created_time]['invoices'][] = $invoice_code;
-                
-                if (empty($statistic[$created_time]['used'])) {
-                    $statistic[$created_time]['used'] = 0;
-                }
-                
                 if (empty($statistic[$created_time]['expired'])) {
                     $statistic[$created_time]['expired'] = 0;
                 }
-                
-                //overdue invoices
-                if (is_numeric($invoice_code->requested)) {
-                    $statistic[$created_time]['used']++;
-                    $invoice->is_in_statistic = true;
-                //used invoices
-                } elseif (time() > $invoice_code->expires) {
-                    $statistic[$created_time]['expired']++;
-                    $invoice->is_in_statistic = true;
-                }
-                $statistic[$created_time]['all'] = $statistic[$created_time]['used'] + $statistic[$created_time]['expired'];
+
+                $statistic[$created_time]['expired']++;
+                $invoice->is_in_statistic_b = true;
                 
                 $invoice->update();
-                
             }
-            
-            foreach ($statistic as $time => $item) {
-                //create statistic                
-                $count_expired = ($item['expired']) ? $item['expired'] : 0;
-                $count_used = ($item['used']) ? $item['used'] : 0;
-                $count_all = ($item['all']) ? $item['all'] : 0;
-                $this->createStatistic($count_expired, $count_used, $count_all, $time);
-            }
-            
-            //remove all invoices is_in_statistic = 1
-            $this->removeInvoiceInStatistic($invoices);
-            $this->logger->info("Statistics bot finished");
         }
+
+        //get used invoices
+        try {
+            $invoices = Invoices::findUsedInvoices();
+        } catch (Exeption $e) {
+            $this->logger->error("Invoices finding error: " . $e->getMessage());
+            return false;
+        }
+
+        if (count($invoices) > 0) {
+            foreach ($invoices as $used) {
+                $invoice = Invoices::findFirst($used->id);
+
+                $created_time = $used->created - $used->created % 86400;
+                $statistic[$created_time]['invoices'][] = $used;
+
+                if (empty($statistic[$created_time]['used'])) {
+                    $statistic[$created_time]['used'] = 0;
+                }
+
+                $statistic[$created_time]['used']++;
+                $invoice->is_in_statistic_b = true;
+
+                $invoice->update();
+            }
+        }
+
+        foreach ($statistic as $time => $item) {
+            //create statistic
+            $count_expired = !empty($item['expired']) ? $item['expired'] : 0;
+            $count_used    = !empty($item['used'])    ? $item['used']    : 0;
+            $count_all     = $count_expired + $count_used;
+            $this->createStatistic($count_expired, $count_used, $count_all, $time);
+        }
+
+        //wait for solr indexing delay
+        sleep(5);
+        $this->removeInvoiceInStatistic();
     }
     
     private function createStatistic($expired, $used, $all, $date) 
@@ -144,16 +150,15 @@ class IndexTask extends TaskBase
     }
     
     
-    private function removeInvoiceInStatistic($invoices)
+    private function removeInvoiceInStatistic()
     {
+        $invoices = Invoices::findInvoicesInStatistic();
         foreach ($invoices as $item) {
-            if ($item->is_in_statistic) {                
-                try {        
-                    $obj = Invoices::findFirst($item->id);
-                    $obj->delete();
-                } catch (Exeption $e) {
-                    $this->logger->error("Invoices in statistic delete error: " . $e->getMessage());
-                }
+            try {
+                $obj = Invoices::findFirst($item->id);
+                $obj->delete();
+            } catch (Exeption $e) {
+                $this->logger->error("Invoices in statistic delete error: " . $e->getMessage());
             }
         }
     } 

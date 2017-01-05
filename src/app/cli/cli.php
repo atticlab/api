@@ -67,9 +67,9 @@ class CliApplication
         define('CURRENT_TASK', $arguments['task'] ?? null);
         define('CURRENT_ACTION', $arguments['action'] ?? null);
 
-        if (!in_array('-c', $arguments['params'])) {
-            $this->_checkPid($di->getConfig()->project->app_id);
-        }
+//        if (!in_array('-c', $arguments['params'])) {
+//            $this->_checkPid($di->getConfig()->project->app_id);
+//        }
 
         try {
             $console->handle($arguments);
@@ -79,33 +79,33 @@ class CliApplication
         }
     }
 
-    protected function _checkPid($project_title)
-    {
-        $lock_path = sys_get_temp_dir();
-
-        # Check file lock
-        if (!is_writable($lock_path)) {
-            die($lock_path . ' IS NOT READABLE! Cannot PROCEED' . PHP_EOL);
-        }
-
-        $lockfile = $lock_path . '/' . md5(strtolower($project_title . CURRENT_TASK . CURRENT_ACTION)) . '.lock';
-
-        # Check if the script is still running
-        if (file_exists($lockfile)) {
-            $pid = trim(file_get_contents($lockfile));
-        }
-
-        if (!empty($pid) && posix_getpgid($pid)) {
-            die(CURRENT_TASK . '/' . CURRENT_ACTION . ' script is already running. PID: ' . $pid);
-        }
-
-        file_put_contents($lockfile, getmypid());
-
-        # Remove pid on shutdown
-        register_shutdown_function(function () use ($lockfile) {
-            unlink($lockfile);
-        });
-    }
+//    protected function _checkPid($project_title)
+//    {
+//        $lock_path = sys_get_temp_dir();
+//
+//        # Check file lock
+//        if (!is_writable($lock_path)) {
+//            die($lock_path . ' IS NOT READABLE! Cannot PROCEED' . PHP_EOL);
+//        }
+//
+//        $lockfile = $lock_path . '/' . md5(strtolower($project_title . CURRENT_TASK . CURRENT_ACTION)) . '.lock';
+//
+//        # Check if the script is still running
+//        if (file_exists($lockfile)) {
+//            $pid = trim(file_get_contents($lockfile));
+//        }
+//
+//        if (!empty($pid) && posix_getpgid($pid)) {
+//            die(CURRENT_TASK . '/' . CURRENT_ACTION . ' script is already running. PID: ' . $pid);
+//        }
+//
+//        file_put_contents($lockfile, getmypid());
+//
+//        # Remove pid on shutdown
+//        register_shutdown_function(function () use ($lockfile) {
+//            unlink($lockfile);
+//        });
+//    }
 }
 
 $application = new CliApplication();

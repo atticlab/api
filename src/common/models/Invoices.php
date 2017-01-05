@@ -7,6 +7,8 @@ use \Basho\Riak\Bucket;
 use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
+use Basho\Riak\Command\Builder\Search\FetchObjects;
+use Basho\Riak\Command\Builder\FetchObject;
 
 class Invoices extends ModelBase implements ModelInterface
 {
@@ -16,15 +18,15 @@ class Invoices extends ModelBase implements ModelInterface
 
     public $id;
     public $account_s;
-    public $expires;
+    public $expires_i;
     public $amount_f;
     public $asset_s;
     public $memo_s;
-    public $requested; // timestamp when invoice was requested
+    public $requested_i; // timestamp when invoice was requested
 
     public $payer_s;
     public $created; // timestamp when invoice was created
-    public $is_in_statistic;
+    public $is_in_statistic_b;
 
     public function __construct($id = null)
     {
@@ -59,6 +61,110 @@ class Invoices extends ModelBase implements ModelInterface
         if (!empty($this->memo_s) && mb_strlen($this->memo_s) > self::MEMO_MAX_LENGTH) {
             throw new Exception(Exception::BAD_PARAM, 'memo');
         }
+    }
+
+    public static function findExpiredInvoices()
+    {
+        self::setPrimaryAttributes();
+        $items    = [];
+        $riak     = DI::getDefault()->get('riak');
+        $config   = DI::getDefault()->get('config');
+        $response = new FetchObjects($riak);
+        $response = $response
+            //not in statistic
+            //not requested
+            //expired timestamp less than now
+            ->withQuery('is_in_statistic_b:false AND requested_i:0 AND expires_i:[* TO ' . time() . ']');
+        $response = $response
+            ->withIndexName(self::$BUCKET_NAME . $config->riak->search_index_suffics);
+        $response = $response
+            ->build()
+            ->execute();
+
+        $docs = $response->getDocs();
+        foreach ($docs as $item) {
+            $data = false;
+            $response = (new FetchObject($riak))
+                ->atLocation($item->getLocation())
+                ->build()
+                ->execute();
+            if ($response->isSuccess() && $response->getObject()) {
+                $data = $response->getObject()->getData();
+            }
+            if (!empty($data)) {
+                $items[] = $data;
+            }
+        }
+        return self::clearYzSuffixes($items);
+    }
+
+    public static function findInvoicesInStatistic()
+    {
+        self::setPrimaryAttributes();
+        $items    = [];
+        $riak     = DI::getDefault()->get('riak');
+        $config   = DI::getDefault()->get('config');
+        $response = new FetchObjects($riak);
+        $response = $response
+            //not in statistic
+            //not requested
+            //expired timestamp less than now
+            ->withQuery('is_in_statistic_b:true');
+        $response = $response
+            ->withIndexName(self::$BUCKET_NAME . $config->riak->search_index_suffics);
+        $response = $response
+            ->build()
+            ->execute();
+
+        $docs = $response->getDocs();
+        foreach ($docs as $item) {
+            $data = false;
+            $response = (new FetchObject($riak))
+                ->atLocation($item->getLocation())
+                ->build()
+                ->execute();
+            if ($response->isSuccess() && $response->getObject()) {
+                $data = $response->getObject()->getData();
+            }
+            if (!empty($data)) {
+                $items[] = $data;
+            }
+        }
+        return self::clearYzSuffixes($items);
+    }
+
+    public static function findUsedInvoices()
+    {
+        self::setPrimaryAttributes();
+        $items    = [];
+        $riak     = DI::getDefault()->get('riak');
+        $config   = DI::getDefault()->get('config');
+        $response = new FetchObjects($riak);
+        $response = $response
+            //not in statistic
+            //requested timestamp not 0
+            ->withQuery('is_in_statistic_b:false AND -requested_i:0');
+        $response = $response
+            ->withIndexName(self::$BUCKET_NAME . $config->riak->search_index_suffics);
+        $response = $response
+            ->build()
+            ->execute();
+
+        $docs = $response->getDocs();
+        foreach ($docs as $item) {
+            $data = false;
+            $response = (new FetchObject($riak))
+                ->atLocation($item->getLocation())
+                ->build()
+                ->execute();
+            if ($response->isSuccess() && $response->getObject()) {
+                $data = $response->getObject()->getData();
+            }
+            if (!empty($data)) {
+                $items[] = $data;
+            }
+        }
+        return self::clearYzSuffixes($items);
     }
 
     //TODO: what about all invoices numbers will be used?
