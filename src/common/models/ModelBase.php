@@ -277,6 +277,7 @@ abstract class ModelBase
         }
         $response = $response
             ->withMaxRows($limit)
+            ->withSortField('_yz_rk asc')
             ->build()
             ->execute();
         $docs = $response->getDocs();
@@ -337,6 +338,7 @@ abstract class ModelBase
         }
         $response = $response
             ->withMaxRows($limit)
+            ->withSortField('_yz_rk asc')
             ->build()
             ->execute();
 
