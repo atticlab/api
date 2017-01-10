@@ -12,8 +12,8 @@ $config = new \Phalcon\Config([
     ],
 
     "horizon" => [
-        "host" => 'blockchain.smartmoney.com.ua',
-        "port" => 80
+        "host" => getenv("HORIZON_HOST"),
+        "port" => getenv("HORIZON_PORT")
     ],
 
     "riak" => [
@@ -32,10 +32,10 @@ $config = new \Phalcon\Config([
     ],
 
     "merchant" => [
-        "transaction_url" => 'http://merchant.smartmoney.com.ua/transaction'
+        "transaction_url" => rtrim(getenv("MERCHANT_HOST"), '/') . '/transaction'
     ],
 
-    "master_key" => 'GAWIB7ETYGSWULO4VB7D6S42YLPGIC7TY7Y2SSJKVOTMQXV5TILYWBUA',
+    "master_key" => getenv("MASTER_KEY"),
 
     "weights" => [
         'admin' => 1

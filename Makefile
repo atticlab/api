@@ -22,7 +22,12 @@ state:
 
 build:
 	@if [ ! -f ./.env ]; then\
-  	read -p "Enter riak host:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
+  	read -p "Enter master public key:" master_key; echo "MASTER_KEY=$$master_key" >> ./.env; \
+  	read -p "Enter horizon host [only domain]:" horizon_host; echo "HORIZON_HOST=$$horizon_host" >> ./.env; \
+  	read -p "Enter horizon port:" horizon_port; echo "HORIZON_PORT=$$horizon_port" >> ./.env; \
+  	read -p "Enter welcome host [with protocol and port (optional)]:" welcome_host; echo "WELCOME_HOST=$$welcome_host" >> ./.env; \
+  	read -p "Enter merchant host [with protocol and port (optional)]:" merchant_host; echo "MERCHANT_HOST=$$merchant_host" >> ./.env; \
+  	read -p "Enter riak host [only domain]:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
 	fi
 	docker-compose build
 	docker-compose up -d
