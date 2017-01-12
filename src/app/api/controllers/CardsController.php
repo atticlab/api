@@ -86,7 +86,7 @@ class CardsController extends ControllerBase
         //send tx to horizon
         $response = $client->request(
             'POST',
-            'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port . '/transactions',
+            $this->config->horizon->host . '/transactions',
             [
                 'http_errors' => false,
                 'form_params' => [
@@ -105,7 +105,7 @@ class CardsController extends ControllerBase
         }
 
         $next_operations = [];
-        $next_link = 'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port .'/transactions/'
+        $next_link = $this->config->horizon->host . '/transactions/'
             . $body->hash . '/operations';
 
         //get operations by transaction hash

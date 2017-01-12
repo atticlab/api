@@ -12,8 +12,7 @@ $config = new \Phalcon\Config([
     ],
 
     "horizon" => [
-        "host" => getenv("HORIZON_HOST"),
-        "port" => getenv("HORIZON_PORT")
+        "host" => rtrim(getenv("HORIZON_HOST"), '/'),
     ],
 
     "riak" => [
