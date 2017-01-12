@@ -1,6 +1,6 @@
 {
     "require": {
-        "stellar/isvalidaccount": "dev-master",
+        "atticlab/stellar-php-sdk": "dev-master",
         "phalcon/incubator": "^2.0",
         "basho/riak": "3.3.0",
         "guzzlehttp/guzzle": "~6.0",

@@ -86,7 +86,7 @@ class CardsController extends ControllerBase
         //send tx to horizon
         $response = $client->request(
             'POST',
-            'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port . '/transactions',
+            $this->config->horizon->host . '/transactions',
             [
                 'http_errors' => false,
                 'form_params' => [
@@ -105,7 +105,7 @@ class CardsController extends ControllerBase
         }
 
         $next_operations = [];
-        $next_link = 'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port .'/transactions/'
+        $next_link = $this->config->horizon->host . '/transactions/'
             . $body->hash . '/operations';
 
         //get operations by transaction hash
@@ -130,7 +130,7 @@ class CardsController extends ControllerBase
                 //get scratch card account info for take balance
                 $scard_response = $client->request(
                     'GET',
-                    'http://' . $this->config->horizon->host . ':' . $this->config->horizon->port . '/accounts/' . $operation->account,
+                    $this->config->horizon->host . '/accounts/' . $operation->account,
                     [
                         'http_errors' => false
                     ]
