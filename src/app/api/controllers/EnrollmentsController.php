@@ -155,9 +155,6 @@ class EnrollmentsController extends ControllerBase
         if (empty($tx_trust)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'tx_trust');
         }
-        if (empty($login)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'login');
-        }
         if (empty($token)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'token');
         }
