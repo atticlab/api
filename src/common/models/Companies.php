@@ -26,5 +26,8 @@ class Companies extends ModelBase implements ModelInterface
         if (!filter_var($this->email_s, FILTER_VALIDATE_EMAIL)) {
             throw new Exception(Exception::BAD_PARAM, 'email');
         }
+        if (Companies::isExistByField('email_s', $this->email_s)) {
+            throw new Exception(Exception::ALREADY_EXIST, 'company_email');
+        }
     }
 }
