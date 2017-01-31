@@ -19,31 +19,23 @@ class Response extends \Phalcon\Http\Response
 
     public function single(array $data = [])
     {
-        $config = $this->getDi()->getConfig();
-        $data['nonce'] = $this->getDi()->getRequest()->getNonce();
-        $data['ttl'] = $config->nonce->ttl;
+        $data = $this->prepareDataSuccessResponse($data);
         $this->setJsonContent($data)->send();
         exit;
     }
 
     public function items($items)
     {
-        $config = $this->getDi()->getConfig();
         $data = [];
         $data['items'] = $items;
-        $data['nonce'] = $this->getDi()->getRequest()->getNonce();
-        $data['ttl'] = $config->nonce->ttl;
-
+        $data = $this->prepareDataSuccessResponse($data);
         $this->setJsonContent($data)->send();
         exit;
     }
 
     public function success()
     {
-        $config = $this->getDi()->getConfig();
-        $data['nonce']   = $this->getDi()->getRequest()->getNonce();
-        $data['ttl'] = $config->nonce->ttl;
-        $data['message'] = 'success';
+        $data = $this->prepareDataSuccessResponse();
         $this->setJsonContent($data)->send();
         exit;
     }
@@ -61,5 +53,16 @@ class Response extends \Phalcon\Http\Response
             'message' => $msg,
         ])->send();
         exit;
+    }
+
+    private function prepareDataSuccessResponse(array $data = []) {
+
+        $config = $this->getDi()->getConfig();
+
+        $data['nonce']   = $this->getDi()->getRequest()->getNonce();
+        $data['ttl']     = $config->nonce->ttl;
+        $data['message'] = 'success';
+
+        return $data;
     }
 }
