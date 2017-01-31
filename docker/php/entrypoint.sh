@@ -14,4 +14,7 @@ cron
 composer --working-dir=/src install
 composer global require "phpunit/phpunit=4.5.*"
 
+export http_proxy=''
+export https_proxy=''
+
 php-fpm

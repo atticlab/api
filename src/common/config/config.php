@@ -8,7 +8,7 @@ $config = new \Phalcon\Config([
     ],
 
     "nonce" => [
-        'ttl' => 30 * 60
+        'ttl' => 10 * 60
     ],
 
     "horizon" => [
@@ -43,11 +43,11 @@ $config = new \Phalcon\Config([
     ],
 
     "smtp"            => [
-        'host'     => 'smtp.gmail.com',
-        'port'     => '465',
-        'security' => 'ssl',
-        'username' => 'attic.it.lab@gmail.com',
-        'password' => 'atticlab/*-2020',
+        'host'     => trim(getenv("SMTP_HOST")),
+        'port'     => trim(getenv("SMTP_PORT")),
+        'security' => trim(getenv("SMTP_SECURITY")),
+        'username' => trim(getenv("SMTP_USER")),
+        'password' => trim(getenv("SMTP_PASS")),
     ],
     
     "ban" => [

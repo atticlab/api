@@ -27,6 +27,11 @@ build:
   	read -p "Enter welcome host [with protocol and port (optional)]:" welcome_host; echo "WELCOME_HOST=$$welcome_host" >> ./.env; \
   	read -p "Enter merchant host [with protocol and port (optional)]:" merchant_host; echo "MERCHANT_HOST=$$merchant_host" >> ./.env; \
   	read -p "Enter riak host [only domain]:" riak_host; echo "RIAK_HOST=$$riak_host" >> ./.env; \
+  	read -p "Enter SMTP host:" smtp_host; echo "SMTP_HOST=$$smtp_host" >> ./.env; \
+  	read -p "Enter SMTP port:" smtp_port; echo "SMTP_PORT=$$smtp_port" >> ./.env; \
+  	read -p "Enter SMTP security:" smtp_security; echo "SMTP_SECURITY=$$smtp_security" >> ./.env; \
+  	read -p "Enter SMTP username:" smtp_user; echo "SMTP_USER=$$smtp_user" >> ./.env; \
+  	read -p "Enter SMTP password:" smtp_pass; echo "SMTP_PASS=$$smtp_pass" >> ./.env; \
 	fi
 	docker-compose build
 	docker-compose up -d
