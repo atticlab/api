@@ -62,7 +62,8 @@ class AgentsController extends ControllerBase
                                 $this->logger->emergency('Cannot send email with welcome code to company (' . $company->email . ')');
                             }
                         }
-                        return $this->response->success();
+
+                        return $this->response->single((array)Enrollments::clearYzSuffixes($enrollment));
                     }
 
                     $this->logger->emergency('Riak error while creating enrollment for agent');
