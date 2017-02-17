@@ -63,14 +63,14 @@ class EnrollmentsController extends ControllerBase
                 }
             }
 
-            return $this->response->items(array_values($result));
+            return $this->response->json(array_values($result));
         }
 
         //get all enrollments
         try {
             $result = Enrollments::find($limit, $offset, 'created_i', 'desc');
 
-            return $this->response->items($result);
+            return $this->response->json($result);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -101,7 +101,7 @@ class EnrollmentsController extends ControllerBase
         }
         $enrollment->user_data = $user_data;
 
-        return $this->response->single((array)$enrollment);
+        return $this->response->json((array)$enrollment);
     }
 
     public function getAgentEnrollmentAction($otp)
@@ -138,7 +138,7 @@ class EnrollmentsController extends ControllerBase
         }
         $enrollment->company_data = $cmp_data;
 
-        return $this->response->single((array)$enrollment);
+        return $this->response->json((array)$enrollment);
     }
 
     public function acceptAction($id)
@@ -173,7 +173,7 @@ class EnrollmentsController extends ControllerBase
         $enrollment->login_s = $login;
         try {
             if ($enrollment->update()) {
-                return $this->response->single();
+                return $this->response->json();
             }
             $this->logger->emergency('Riak error while updating enrollment');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -202,7 +202,7 @@ class EnrollmentsController extends ControllerBase
         $enrollment->stage_i = Enrollments::STAGE_DECLINED;
         try {
             if ($enrollment->update()) {
-                return $this->response->single();
+                return $this->response->json();
             }
             $this->logger->emergency('Riak error while updating enrollment');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -249,7 +249,7 @@ class EnrollmentsController extends ControllerBase
                 $agent->login_s = $enrollment->login_s;
                 try {
                     if ($agent->update() && $enrollment->update()) {
-                        return $this->response->single();
+                        return $this->response->json();
                     }
                     $this->logger->emergency('Riak error while enrollment approve');
                     throw new Exception(Exception::SERVICE_ERROR);
@@ -270,7 +270,7 @@ class EnrollmentsController extends ControllerBase
                 $user->login_s = $enrollment->login_s;
                 try {
                     if ($user->update() && $enrollment->update()) {
-                        return $this->response->single();
+                        return $this->response->json();
                     }
                     $this->logger->emergency('Riak error while enrollment approve');
                     throw new Exception(Exception::SERVICE_ERROR);

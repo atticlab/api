@@ -19,19 +19,21 @@ class Response extends \Phalcon\Http\Response
     const ERR_BAD_TYPE = 'ERR_BAD_TYPE';
     const ERR_TX = 'ERR_TX';
 
-    public function single(array $data = [], $add_nonce = true)
-    {
-        $data = $this->prepareDataSuccessResponse($data, $add_nonce);
-        $this->setJsonContent($data)->send();
-        exit;
-    }
 
-    public function items($items, $add_nonce = true)
+    public function json($data = null, $add_nonce = true)
     {
-        $data = [];
-        $data['items'] = $items;
-        $data = $this->prepareDataSuccessResponse($data, $add_nonce);
-        $this->setJsonContent($data)->send();
+        $resp = [];
+        $resp['data'] = $data;
+
+        if ($add_nonce) {
+            $config         = $this->getDi()->getConfig();
+            $resp['nonce']  = $this->getDi()->getRequest()->getNonce();
+            $resp['ttl']    = $config->nonce->ttl;
+        }
+
+        $resp['status'] = 'success';
+
+        $this->setJsonContent($resp)->send();
         exit;
     }
 
@@ -48,18 +50,5 @@ class Response extends \Phalcon\Http\Response
             'message' => $msg,
         ])->send();
         exit;
-    }
-
-    private function prepareDataSuccessResponse(array $data = [], $add_nonce)
-    {
-        if ($add_nonce) {
-            $config         = $this->getDi()->getConfig();
-            $data['nonce']  = $this->getDi()->getRequest()->getNonce();
-            $data['ttl']    = $config->nonce->ttl;
-        }
-
-        $data['status'] = 'success';
-
-        return $data;
     }
 }

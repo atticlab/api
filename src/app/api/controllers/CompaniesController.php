@@ -40,7 +40,7 @@ class CompaniesController extends ControllerBase
 
         try {
             if ($company->create()) {
-                return $this->response->single();
+                return $this->response->json();
             }
             $this->logger->emergency('Riak error while creating company');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -72,7 +72,7 @@ class CompaniesController extends ControllerBase
             return $this->handleException($e->getCode(), $e->getMessage());
         }
 
-        return $this->response->items($result);
+        return $this->response->json($result);
     }
 
     public function getAction($code)
@@ -92,6 +92,6 @@ class CompaniesController extends ControllerBase
         }
         $company = Companies::getDataByID($code);
 
-        return $this->response->single((array)$company);
+        return $this->response->json((array)$company);
     }
 }

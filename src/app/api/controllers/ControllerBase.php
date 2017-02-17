@@ -53,7 +53,6 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
                 // Count invalid requests
                 #IpBans::setMissed($ip);
-                var_dump($current_route, $allow_routes, $this->request->checkSignature()); die;
                 return $this->response->error(Response::ERR_BAD_SIGN);
             }
         }

@@ -30,7 +30,7 @@ class CardsController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'card');
         }
 
-        return $this->response->single($card);
+        return $this->response->json($card);
     }
 
     public function listAction()
@@ -58,9 +58,9 @@ class CardsController extends ControllerBase
             if (!Account::isValidAccountId($requester)) {
                 throw new Exception(Exception::BAD_PARAM, 'agent_id');
             }
-            $cards = Cards::findWithField('agent_id_s', $requester, $limit, $offset, null, 'created_date_i', 'desc');
+            $cards = Cards::findWithField('agent_id_s', $requester, $limit, $offset, 'created_date_i', 'desc');
 
-            return $this->response->items($cards);
+            return $this->response->json($cards);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -85,7 +85,7 @@ class CardsController extends ControllerBase
         }
 
         if (DEBUG_MODE) {
-            return $this->response->single();
+            return $this->response->json();
         }
 
         $data = json_decode($data);
@@ -172,7 +172,7 @@ class CardsController extends ControllerBase
 
         } while (!empty($next_operations));
 
-        return $this->response->single();
+        return $this->response->json();
     }
 
 }

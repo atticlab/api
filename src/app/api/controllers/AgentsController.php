@@ -64,7 +64,7 @@ class AgentsController extends ControllerBase
                             }
                         }
 
-                        return $this->response->single((array)Enrollments::clearYzSuffixes($enrollment));
+                        return $this->response->json((array)Enrollments::clearYzSuffixes($enrollment));
                     }
 
                     $this->logger->emergency('Riak error while creating enrollment for agent');
@@ -132,7 +132,7 @@ class AgentsController extends ControllerBase
             $item->cmp_title = $cmp_data->title;
         }
 
-        return $this->response->items($result);
+        return $this->response->json($result);
 
     }
 

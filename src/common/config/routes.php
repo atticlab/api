@@ -11,6 +11,8 @@ $router->add('/nonce', [
     'action'     => 'index'
 ]);
 
+//TODO: remove old routes
+
 /* old */
 
 //invoices
@@ -141,7 +143,7 @@ $router->addPost('/merchant/stores', [
 
 $router->addGet('/merchant/stores/{id}/orders', [
     'controller' => 'merchant',
-    'action'     => 'ordersList'
+    'action'     => 'tempOrdersList'
 ]);
 
 $router->addGet('/merchant/orders/{id}', [

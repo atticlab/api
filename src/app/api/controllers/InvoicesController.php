@@ -40,7 +40,7 @@ class InvoicesController extends ControllerBase
         $invoice->memo_s = $this->payload->memo ?? null;
         try {
             if ($invoice->create()) {
-                return $this->response->single(['id' => $invoice->id]);
+                return $this->response->json(['id' => $invoice->id]);
             }
             $this->logger->emergency('Riak error while creating invoice');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -95,7 +95,7 @@ class InvoicesController extends ControllerBase
                     'requested' => $invoice->requested_i,
                 ];
 
-                return $this->response->single($data);
+                return $this->response->json($data);
             }
             $this->logger->emergency('Riak error while updating invoice');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -138,7 +138,7 @@ class InvoicesController extends ControllerBase
             $invoices = Invoices::find($limit, $offset);
         }
 
-        return $this->response->items($invoices);
+        return $this->response->json($invoices);
     }
 
     public function statisticsAction()
@@ -161,6 +161,6 @@ class InvoicesController extends ControllerBase
         //get all statistic
         $statistics = InvoicesStatistic::find($limit, $offset);
 
-        return $this->response->items($statistics);
+        return $this->response->json($statistics);
     }
 }

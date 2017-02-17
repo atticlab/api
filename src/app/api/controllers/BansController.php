@@ -28,7 +28,7 @@ class BansController extends ControllerBase
         //get all bans
         $bans = IpBans::find($limit, $offset);
 
-        return $this->response->items($bans);
+        return $this->response->json($bans);
     }
 
     public function createAction()
@@ -64,7 +64,7 @@ class BansController extends ControllerBase
         $ip_ban->banned_to = $banned_to;
         try {
             $ip_ban->update();
-            return $this->response->single();
+            return $this->response->json();
         } catch (Exeption $e) {
             $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());
 
@@ -95,6 +95,6 @@ class BansController extends ControllerBase
             $this->logger->notice('Trying to unban ip, that was not banned');
         }
 
-        return $this->response->single();
+        return $this->response->json();
     }
 }

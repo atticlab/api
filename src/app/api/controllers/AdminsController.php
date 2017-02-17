@@ -38,7 +38,7 @@ class AdminsController extends ControllerBase
 
         try {
             if ($admin->create()) {
-                return $this->response->single();
+                return $this->response->json();
             }
             $this->logger->emergency('Riak error while creating admin');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -71,7 +71,7 @@ class AdminsController extends ControllerBase
             return $this->response->error(Response::ERR_NOT_FOUND, 'admin');
         }
 
-        return $this->response->single((array)$admin);
+        return $this->response->json((array)$admin);
     }
 
     public function listAction()
@@ -106,7 +106,7 @@ class AdminsController extends ControllerBase
             }
         }
 
-        return $this->response->items($result);
+        return $this->response->json($result);
     }
 
     public function deleteAction()
@@ -134,7 +134,7 @@ class AdminsController extends ControllerBase
             $admin->delete();
             $this->logger->info('Admin ' . $account_id . ' removed');
 
-            return $this->response->single();
+            return $this->response->json();
         } catch (\Exception $e) {
             $this->logger->error("Error removing admin: " . $account_id);
 

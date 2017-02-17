@@ -32,6 +32,7 @@ $config = new \Phalcon\Config([
 
     "merchant" => [
         "transaction_url" => rtrim(getenv("MERCHANT_HOST"), '/') . '/transaction'
+        //"transaction_url" => 'http://merchant.euah.pw:8010' . '/transaction'
     ],
 
     "master_key" => getenv("MASTER_KEY"),

@@ -35,7 +35,7 @@ class MerchantController extends ControllerBase
         }
         $result = MerchantStores::findWithField('merchant_id_s', $requester, $limit, $offset, 'created_i', 'desc');
 
-        return $this->response->items($result);
+        return $this->response->json($result);
     }
 
     public function storesCreateAction()
@@ -71,8 +71,7 @@ class MerchantController extends ControllerBase
         $store->created_i = time();
         try {
             if ($store->create()) {
-                //TODO: return data, not message
-                return $this->response->single();
+                return $this->response->json();
             }
             $this->logger->emergency('Riak error while creating store');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -90,7 +89,7 @@ class MerchantController extends ControllerBase
         if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit')) ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -100,12 +99,44 @@ class MerchantController extends ControllerBase
         }
 
         $store_id = $this->payload->store_id;
-
+        if (empty($store_id)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
+        }
         //get all orders for store
         try {
             $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset, 'created_i', 'desc');
 
-            return $this->response->items($orders);
+            return $this->response->json($orders);
+        } catch (Exception $e) {
+            return $this->handleException($e->getCode(), $e->getMessage());
+        }
+    }
+
+    public function tempOrdersListAction($store_id)
+    {
+        $allowed_types = [
+            Account::TYPE_MERCHANT
+        ];
+        $requester = $this->request->getAccountId();
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $offset = intval($this->request->get('offset')) ?? 0;
+        if (!is_integer($limit)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
+        }
+        if (!is_integer($offset)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
+        }
+        if (empty($store_id)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
+        }
+        //get all orders for store
+        try {
+            $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset, 'created_i', 'desc');
+
+            return $this->response->json($orders);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -117,7 +148,7 @@ class MerchantController extends ControllerBase
         try {
             $order_data = MerchantOrders::getOrder($order_id);
 
-            return $this->response->single($order_data);
+            return $this->response->json($order_data);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -270,7 +301,6 @@ class MerchantController extends ControllerBase
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-
     }
 
 }

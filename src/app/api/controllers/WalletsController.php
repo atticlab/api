@@ -153,7 +153,7 @@ class WalletsController extends ControllerBase
             ]
         ];
 
-        return $this->response->single($explorer, false);
+        return $this->response->json($explorer, false);
     }
 
     public function getkdfAction()
@@ -167,7 +167,7 @@ class WalletsController extends ControllerBase
             'p'         => 1
         ];
 
-        return $this->response->single($data, false);
+        return $this->response->json($data, false);
     }
 
     /**
@@ -191,7 +191,7 @@ class WalletsController extends ControllerBase
         $this->logger->debug('Login params received',
             ['Path' => '/v2/wallets/show_login_params', 'Data:' => $preparedData]);
 
-        return $this->response->single($preparedData, false);
+        return $this->response->json($preparedData, false);
     }
 
     /**
@@ -223,7 +223,7 @@ class WalletsController extends ControllerBase
                 throw new Exception(Exception::SERVICE_ERROR);
             }
 
-            return $this->response->single([], false);
+            return $this->response->json([], false);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -238,7 +238,7 @@ class WalletsController extends ControllerBase
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'username');
         }
 
-        return $this->response->single([], false);
+        return $this->response->json([], false);
     }
 
     /**
@@ -271,7 +271,7 @@ class WalletsController extends ControllerBase
 
         $this->logger->debug('Wallet received successfully', ['Path' => '/v2/wallets/show', 'Data:' => $preparedData]);
 
-        return $this->response->single($preparedData, false);
+        return $this->response->json($preparedData, false);
     }
 
     public function updateAction()
@@ -327,7 +327,7 @@ class WalletsController extends ControllerBase
         }
 
         if (!$update) {
-            return $this->response->single([], false);
+            return $this->response->json([], false);
         }
 
         try {
@@ -338,7 +338,7 @@ class WalletsController extends ControllerBase
                     'HDW'   => $wallet->HDW
                 ];
 
-                return $this->response->single($preparedData, false);
+                return $this->response->json($preparedData, false);
             }
             $this->logger->emergency('Riak error while updating wallet');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -367,7 +367,7 @@ class WalletsController extends ControllerBase
 
         try {
             if ($wallet->update()) {
-                return $this->response->single([], false);
+                return $this->response->json([], false);
             }
             $this->logger->emergency('Riak error while updating wallet');
             throw new Exception(Exception::SERVICE_ERROR);
