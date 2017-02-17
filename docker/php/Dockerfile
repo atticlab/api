@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_pgsql \
     && docker-php-ext-install soap \
     && docker-php-ext-install pcntl \
+    && docker-php-ext-install zip \
     # Phalcon
     && git clone --depth=1 -b 3.0.x git://github.com/phalcon/cphalcon.git /usr/local/src/cphalcon \
     && cd /usr/local/src/cphalcon/build && ./install \
