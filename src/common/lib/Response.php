@@ -18,7 +18,11 @@ class Response extends \Phalcon\Http\Response
     const ERR_BAD_SIGN = 'ERR_BAD_SIGN';
     const ERR_BAD_TYPE = 'ERR_BAD_TYPE';
     const ERR_TX = 'ERR_TX';
-
+    const ERR_TOO_MANY_ACCS         = 'ERR_TOO_MANY_ACCS';
+    const ERR_SMS_NO_FUNDS          = 'ERR_SMS_NO_FUNDS';
+    const ERR_SMS_SEND              = 'ERR_SMS_SEND';
+    const ERR_OTP_TTL               = 'ERR_OTP_TTL';
+    const ERR_ALREADY_TAKEN         = 'ERR_ALREADY_TAKEN';
 
     public function json($data = null, $add_nonce = true)
     {

@@ -55,6 +55,20 @@ $config = new \Phalcon\Config([
         'req_per_minutes' => 10,                  //bad request per munute
         'req_per_day'     => 100,                 //bad request per day
     ],
+
+    "sms" => [
+        'max_phone_accounts' => 4,
+        'otp_length' => 6,
+        'url'   => 'http://turbosms.in.ua/api/wsdl.html',
+        'sender' => 'Msg',
+        'msg'   => 'Your registration code is ',
+        'otp_ttl'   => 10 * 60, //10 minutes
+        'phone_prefix' => '+38',
+        'auth' => [
+            'login' => getenv("SMS_AUTH_LOGIN"),
+            'password' => getenv("SMS_AUTH_PASS")
+        ]
+    ]
 ]);
 
 
