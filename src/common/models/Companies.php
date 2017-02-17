@@ -12,6 +12,7 @@ class Companies extends ModelBase implements ModelInterface
     public $address_s;             //company registration address
     public $phone_s;               //company contact phone
     public $email_s;               //company contact email
+    public $created_date_i;        //timestamp of registration
 
     public function __construct($code) {
         parent::__construct($code);

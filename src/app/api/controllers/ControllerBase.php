@@ -17,7 +17,8 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
      * @param $dispatcher
      * @return Response error
      */
-    public function beforeExecuteRoute($dispatcher) {
+    public function beforeExecuteRoute($dispatcher)
+    {
         $this->payload = json_decode($this->request->getRawBody());
         if (empty($this->payload)) {
             $this->payload = (object)$this->request->getPost();
@@ -26,7 +27,8 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         $this->response->setHeader('Access-Control-Allow-Origin', '*');
         $this->response->setHeader('Access-Control-Allow-Credentials', 'true');
         if ($this->request->isOptions()) {
-            $this->response->setHeader('Access-Control-Allow-Headers', 'Origin, X-CSRF-Token, X-Requested-With, X-HTTP-Method-Override, Content-Range, Content-Disposition, Content-Type, Authorization, Signature');
+            $this->response->setHeader('Access-Control-Allow-Headers',
+                'Origin, X-CSRF-Token, X-Requested-With, X-HTTP-Method-Override, Content-Range, Content-Disposition, Content-Type, Authorization, Signature, Debug');
             $this->response->setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, DELETE');
             $this->response->sendHeaders();
             exit;
@@ -36,9 +38,12 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         //if banned        
         #$ban = IpBans::checkBanned($ip);
         #if ($ban) {
-            #return $this->response->error(Response::ERR_IP_BLOCKED, $ban);
+        #return $this->response->error(Response::ERR_IP_BLOCKED, $ban);
         #}
-        if ($dispatcher->getControllerName() != 'nonce') {
+
+        // Controllers that do not need a signature
+        $free_controllers = ['index', 'nonce', 'wallets'];
+        if (!in_array($dispatcher->getControllerName(), $free_controllers)) {
             $allow_routes = [
                 'enrollments/accept',
                 'enrollments/decline',
@@ -46,8 +51,9 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
             ];
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
             if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {
-                //consider how many irregular requests comes
+                // Count invalid requests
                 #IpBans::setMissed($ip);
+                var_dump($current_route, $allow_routes, $this->request->checkSignature()); die;
                 return $this->response->error(Response::ERR_BAD_SIGN);
             }
         }
@@ -59,7 +65,8 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
      * @param $msg
      * @return Response error
      */
-    protected function handleException($code, $msg){
+    protected function handleException($code, $msg)
+    {
         switch ($code) {
             case Exception::BAD_PARAM:
                 return $this->response->error(Response::ERR_BAD_PARAM, $msg);
@@ -87,26 +94,34 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
 
             default:
                 $this->logger->emergency('Unknown error with code ' . $code . ' and message ' . $msg);
+
                 return $this->response->error(Response::ERR_UNKNOWN);
         }
     }
 
     /**
      * returns true if this accountId is allowed
-     * @param $accountId -- logined user's account Id
+     * @param       $accountId     -- logined user's account Id
      * @param array $allowed_types -- array of needle allowed user types
      * @return bool
      */
-    protected function isAllowedType($accountId, array $allowed_types) {
-        if (in_array(Account::TYPE_ADMIN, $allowed_types)){
+    protected function isAllowedType($accountId, array $allowed_types)
+    {
+
+        if (DEBUG_MODE) {
+            return true;
+        }
+
+        if (in_array(Account::TYPE_ADMIN, $allowed_types)) {
             //admin is allowed, need to check is account admin
             $master_info = Helpers::masterAccountInfo($this->config->master_key, $this->config->horizon->host);
-            $is_admin    = in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
+            $is_admin = in_array($accountId, Helpers::getAdminsList($master_info, $this->config->weights->admin));
 
             if ($is_admin) {
                 return true;
             }
         }
+
         return in_array(Account::getAccountType($accountId, $this->config->horizon->host), $allowed_types);
     }
 

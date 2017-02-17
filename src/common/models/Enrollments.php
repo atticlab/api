@@ -30,6 +30,7 @@ class Enrollments extends ModelBase implements ModelInterface
     public $asset_s;              //asset
     public $stage_i;              //status of enr
     public $otp_s;                //token
+    public $created_i;            //timestamp date of create
     public $expiration;           //timestamp in future
     public $account_id_s;         //user/agent account_id
     public $tx_trust;             //trust for asset, need for final approve by admin

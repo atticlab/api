@@ -130,26 +130,18 @@ class IpBans extends ModelBase implements ModelInterface
         $ipBan = false;
         //if ban isset return it
         if (self::isExist($ip)) {
-            try {
-                $ipBan = self::findFirst($ip);
-            } catch (Exception $e) {
-                DI::getDefault()->get('logger')->error('There is an error of found ban. ' . $e->getMessage());
-            }
+            $ipBan = self::findFirst($ip);
         //if no ban create it   
         } else {
             $ipBan = new self($ip);
-            try {
-                $ipBan->create();
-            } catch (Exception $e) {
-                DI::getDefault()->get('logger')->error('There is an error of create new ban. ' . $e->getMessage());
-            }            
+            $ipBan->create();
         }
         
         return $ipBan;
     }
-    
+
     //expects the ip converted to integer
-    public static function removeBan($ip) 
+    public static function removeBan($ip)
     {
         if (!is_numeric($ip)) {
             throw new Exception('Expects ip converted to integer');

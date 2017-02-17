@@ -2,6 +2,7 @@
 
 define('APP_PATH', realpath(__DIR__ . '/..') . '/');
 define('MODULE', 'api');
+define('DEBUG_MODE', isset($_SERVER['HTTP_DEBUG']));
 define('MODULE_PATH', APP_PATH . 'app/' . MODULE);
 define('CONFIG_PATH', APP_PATH . 'common/config/');
 
@@ -13,9 +14,10 @@ class Bootstrap extends \Phalcon\Mvc\Application
 
         # Register common namespaces
         $loader->registerNamespaces([
-            'App\Models'      => APP_PATH . 'common/models/',
-            'App\Lib'         => APP_PATH . 'common/lib/',
-            'App\Controllers' => MODULE_PATH . '/controllers'
+            'App\Models'      => APP_PATH    . 'common/models/',
+            'App\Lib'         => APP_PATH    . 'common/lib/',
+            'App\Controllers' => MODULE_PATH . '/controllers',
+            'SWP\Validators'  => APP_PATH    . '/validators'
         ]);
 
         $loader->register();

@@ -13,8 +13,6 @@ use Phalcon\DI;
 
 abstract class ModelBase
 {
-    const STRICT_MODE = 1;
-    const NORMAL_NODE = 2;
     /**
      * @var Riak $riak
      */
@@ -47,8 +45,8 @@ abstract class ModelBase
         self::setPrimaryAttributes();
         $riak = DI::getDefault()->get('riak');
 
-        $this->_riak     = $riak;
-        $this->_bucket   = new Bucket(self::$BUCKET_NAME);
+        $this->_riak = $riak;
+        $this->_bucket = new Bucket(self::$BUCKET_NAME);
         $this->_location = new Riak\Location($index, $this->_bucket);
     }
 
@@ -90,6 +88,7 @@ abstract class ModelBase
         }
 
         $this->setFromData($this->_object->getData());
+
         return $this;
     }
 
@@ -107,6 +106,7 @@ abstract class ModelBase
             ->atLocation($this->_location);
         $result = $command->build()->execute()->isSuccess();
         $this->loadData();
+
         return $result;
     }
 
@@ -129,6 +129,7 @@ abstract class ModelBase
             ->atLocation($this->_location);
         $result = $command->build()->execute()->isSuccess();
         $this->loadData();
+
         return $result;
     }
 
@@ -188,13 +189,12 @@ abstract class ModelBase
      * Static method to check if data exists by custom index
      * @param $field - name of field
      * @param $value - value of field
-     * @param $flag  - search mode
      * @return array - returns object
      */
     public static function isExistByField($field, $value)
     {
         self::setPrimaryAttributes();
-        $riak   = DI::getDefault()->get('riak');
+        $riak = DI::getDefault()->get('riak');
         $config = DI::getDefault()->get('config');
 
         $response = (new FetchObjects($riak))
@@ -212,13 +212,12 @@ abstract class ModelBase
      * Static method to get object by custom field
      * @param $field - name of field
      * @param $value - value of field
-     * @param $flag  - search mode
      * @return mixed - object or false
      */
     public static function findFirstByField($field, $value)
     {
         self::setPrimaryAttributes();
-        $riak   = DI::getDefault()->get('riak');
+        $riak = DI::getDefault()->get('riak');
         $config = DI::getDefault()->get('config');
 
         $response = (new FetchObjects($riak))
@@ -229,7 +228,7 @@ abstract class ModelBase
             ->execute();
 
         if ($response->getNumFound()) {
-            $doc  = $response->getDocs()[0];
+            $doc = $response->getDocs()[0];
             $data = false;
             $response = (new FetchObject($riak))
                 ->atLocation($doc->getLocation())
@@ -248,12 +247,12 @@ abstract class ModelBase
 
     /**
      * A way to obtain list of model's objects from DB
-     * @param $limit - limit of records
+     * @param $limit  - limit of records
      * @param $offset - offset for pagination
      * @return array of objects
      * @throws Exception::BAD_PARAM
      */
-    public static function find($limit = 25, $offset = 0)
+    public static function find($limit = 25, $offset = 0, $order_field = '_yz_rk', $order_direction = 'asc')
     {
         if (!$limit) {
             $limit = 25;
@@ -265,8 +264,8 @@ abstract class ModelBase
             throw new Exception(Exception::BAD_PARAM, 'offset');
         }
         self::setPrimaryAttributes();
-        $items  = [];
-        $riak   = DI::getDefault()->get('riak');
+        $items = [];
+        $riak = DI::getDefault()->get('riak');
         $config = DI::getDefault()->get('config');
 
         $response = (new FetchObjects($riak))
@@ -277,7 +276,7 @@ abstract class ModelBase
         }
         $response = $response
             ->withMaxRows($limit)
-            ->withSortField('_yz_rk asc')
+            ->withSortField($order_field . ' ' . $order_direction)
             ->build()
             ->execute();
         $docs = $response->getDocs();
@@ -294,18 +293,26 @@ abstract class ModelBase
                 $items[] = $data;
             }
         }
+
         return self::clearYzSuffixes($items);
     }
 
     /**
      * A way to obtain list of model's objects from DB by field name and value
-     * @param $limit - limit of records
+     * @param $limit  - limit of records
      * @param $offset - offset for pagination
      * @return array of objects
      * @throws Exception::BAD_PARAM
      */
-    public static function findWithField($field, $value, $limit = 25, $offset = 0, $flag = null)
-    {
+    public static function findWithField(
+        $field,
+        $value,
+        $limit = 25,
+        $offset = 0,
+        $order_field = '_yz_rk',
+        $order_direction = 'asc',
+        $strict_mode = true
+    ) {
         if (!$limit) {
             $limit = 25;
         }
@@ -316,20 +323,16 @@ abstract class ModelBase
             throw new Exception(Exception::BAD_PARAM, 'offset');
         }
         self::setPrimaryAttributes();
-        $items    = [];
-        $riak     = DI::getDefault()->get('riak');
-        $config   = DI::getDefault()->get('config');
+        $items = [];
+        $riak = DI::getDefault()->get('riak');
+        $config = DI::getDefault()->get('config');
         $response = new FetchObjects($riak);
-        switch ($flag) {
-            case self::NORMAL_NODE:
-                $response = $response
-                    ->withQuery($field . ':*' . $value . '*');
-                break;
-            case self::STRICT_MODE:
-            default:
-                $response = $response
-                    ->withQuery($field . ':' . $value);
-                break;
+        if ($strict_mode) {
+            $response = $response
+                ->withQuery($field . ':' . $value);
+        } else {
+            $response = $response
+                ->withQuery($field . ':*' . $value . '*');
         }
         $response = $response
             ->withIndexName(self::$BUCKET_NAME . $config->riak->search_index_suffics);
@@ -338,7 +341,7 @@ abstract class ModelBase
         }
         $response = $response
             ->withMaxRows($limit)
-            ->withSortField('_yz_rk asc')
+            ->withSortField($order_field . ' ' . $order_direction)
             ->build()
             ->execute();
 
@@ -356,6 +359,7 @@ abstract class ModelBase
                 $items[] = $data;
             }
         }
+
         return self::clearYzSuffixes($items);
     }
 
@@ -372,7 +376,7 @@ abstract class ModelBase
             throw new Exception(Exception::EMPTY_PARAM, 'primary_index');
         }
         $class = get_called_class();
-        $data  = new $class($id);
+        $data = new $class($id);
 
         return $data->loadData();
     }
@@ -382,8 +386,9 @@ abstract class ModelBase
      */
     public static function setPrimaryAttributes()
     {
+        $prefix = DEBUG_MODE ? 'debug_' : '';
         $class_name = explode('\\', get_called_class());
-        $real_class_name = mb_strtolower($class_name[count($class_name) - 1]);
+        $real_class_name = $prefix . mb_strtolower($class_name[count($class_name) - 1]);
 
         self::$BUCKET_NAME = $real_class_name;
     }
@@ -402,6 +407,7 @@ abstract class ModelBase
                 $data[$key] = $value;
             }
         }
+
         return $data;
     }
 
@@ -427,7 +433,8 @@ abstract class ModelBase
         }
     }
 
-    public static function clearYzSuffixes($data) {
+    public static function clearYzSuffixes($data)
+    {
         if (is_object($data)) {
             //single item
             self::clearRiakObject($data);
@@ -441,7 +448,8 @@ abstract class ModelBase
         return $data;
     }
 
-    private static function clearRiakObject(&$object) {
+    private static function clearRiakObject(&$object)
+    {
         $config = DI::getDefault()->get('config');
         $logger = DI::getDefault()->get('logger');
         if (!is_object($object)) {
@@ -449,7 +457,9 @@ abstract class ModelBase
             throw new Exception('Can not clear yokozuna sufficses. Object expected, get ' . gettype($object));
         }
         foreach (get_object_vars($object) as $key => $value) {
-            if (mb_substr($key, -2) && mb_substr($key, 0, -2) && in_array(mb_substr($key, -2), (array)$config->riak->yokozuna_sufficses)) {
+            if (mb_substr($key, -2) && mb_substr($key, 0, -2) && in_array(mb_substr($key, -2),
+                    (array)$config->riak->yokozuna_sufficses)
+            ) {
                 unset($object->{$key});
                 $object->{mb_substr($key, 0, -2)} = $value;
             }

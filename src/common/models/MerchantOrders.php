@@ -32,7 +32,7 @@ class MerchantOrders extends ModelBase
     public $success_url; //url for redirect user if payment status success
     public $fail_url; //url for redirect user if payment status fail
     public $status_i; //status of order
-    public $date; //date of order create
+    public $created_i; //timestamp
     public $payment_date; //date of payment complete
     public $bot_request_count; //count of bot request tries
     public $server_url_data; //ready formating data for sending to order server_url

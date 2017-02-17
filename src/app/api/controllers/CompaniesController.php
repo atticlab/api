@@ -15,7 +15,7 @@ class CompaniesController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         // Create new company
@@ -32,14 +32,15 @@ class CompaniesController extends ControllerBase
             return $this->handleException($e->getCode(), $e->getMessage());
         }
 
-        $company->title_s   = $this->payload->title   ?? null;
+        $company->title_s = $this->payload->title   ?? null;
         $company->address_s = $this->payload->address ?? null;
-        $company->email_s   = $this->payload->email   ?? null;
-        $company->phone_s   = $this->payload->phone   ?? null;
+        $company->email_s = $this->payload->email   ?? null;
+        $company->phone_s = $this->payload->phone   ?? null;
+        $company->created_date_i = time();
 
         try {
             if ($company->create()) {
-                return $this->response->success();
+                return $this->response->single();
             }
             $this->logger->emergency('Riak error while creating company');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -54,10 +55,10 @@ class CompaniesController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -66,10 +67,11 @@ class CompaniesController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
         }
         try {
-            $result = Companies::find($limit, $offset);
+            $result = Companies::find($limit, $offset, 'created_date_i', 'desc');
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
+
         return $this->response->items($result);
     }
 
@@ -79,7 +81,7 @@ class CompaniesController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         if (empty($code)) {

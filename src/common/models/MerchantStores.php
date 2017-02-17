@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use \Basho\Riak;
-use \Basho\Riak\Bucket;
-use \Basho\Riak\Command;
 use App\Lib\Exception;
 use Phalcon\DI;
-use Smartmoney\Stellar\Account;
-use Basho\Riak\Command\Builder\FetchObject;
-
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
-
 
 class MerchantStores extends ModelBase
 {
@@ -20,7 +12,7 @@ class MerchantStores extends ModelBase
     public $url_s;              //url of store
     public $name_s;             //"human" name of store
     public $merchant_id_s;      //merchant account id
-    public $date;               //date of registrations
+    public $created_i;          //timestamp
     public $store_id_s;         //store id (uuid v5)
     public $secret_key;         //secret key for verify data
 
@@ -74,9 +66,6 @@ class MerchantStores extends ModelBase
         }
         if (mb_strlen($this->name_s) > 20) {
             throw new Exception(Exception::BAD_PARAM, 'name');
-        }
-        if (empty($this->date)) {
-            throw new Exception(Exception::EMPTY_PARAM, 'date');
         }
         if (empty($this->store_id_s)) {
             throw new Exception(Exception::EMPTY_PARAM, 'store_id');

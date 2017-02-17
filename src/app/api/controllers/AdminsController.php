@@ -15,7 +15,8 @@ class AdminsController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         //create new admin
@@ -37,7 +38,7 @@ class AdminsController extends ControllerBase
 
         try {
             if ($admin->create()) {
-                return $this->response->success();
+                return $this->response->single();
             }
             $this->logger->emergency('Riak error while creating admin');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -52,7 +53,7 @@ class AdminsController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
@@ -79,11 +80,11 @@ class AdminsController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
 
-        $account_ids = $this->payload->account_ids ?? null;
+        $account_ids = $this->request->get('account_ids');
 
         if (empty($account_ids)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_ids');
@@ -108,15 +109,17 @@ class AdminsController extends ControllerBase
         return $this->response->items($result);
     }
 
-    public function deleteAction($account_id)
+    public function deleteAction()
     {
         $allowed_types = [
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
+
+        $account_id = $this->payload->account_id;
 
         if (empty($account_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_id');
@@ -130,9 +133,11 @@ class AdminsController extends ControllerBase
             $admin = Admins::findFirst($account_id);
             $admin->delete();
             $this->logger->info('Admin ' . $account_id . ' removed');
-            return $this->response->success();
+
+            return $this->response->single();
         } catch (\Exception $e) {
             $this->logger->error("Error removing admin: " . $account_id);
+
             return $this->handleException($e->getCode(), $e->getMessage());
         }
     }

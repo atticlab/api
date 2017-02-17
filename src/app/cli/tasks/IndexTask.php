@@ -24,12 +24,23 @@ class IndexTask extends TaskBase
             $bucket_name = mb_strtolower(str_replace('.php', '', $file));
             $index_name  = $bucket_name . $config->riak->search_index_suffics;
 
+            //create search index
+            (new \Basho\Riak\Command\Builder\Search\StoreIndex($riak))
+                ->withName($index_name)
+                ->build()
+                ->execute();
+            sleep(3);
+
+            //create search index for debug
+            $bucket_name = 'debug_' . mb_strtolower(str_replace('.php', '', $file));
+            $index_name  = $bucket_name . $config->riak->search_index_suffics;
+
             //create search index and associate it with bucket
             (new \Basho\Riak\Command\Builder\Search\StoreIndex($riak))
                 ->withName($index_name)
                 ->build()
                 ->execute();
-            sleep(5);
+            sleep(3);
         }
 
         //associate buckets with indexes
@@ -43,7 +54,18 @@ class IndexTask extends TaskBase
                 ->buildBucket($bucket_name)
                 ->build()
                 ->execute();
-            sleep(5);
+            sleep(3);
+
+            //for debug
+            $bucket_name = 'debug_' . mb_strtolower(str_replace('.php', '', $file));
+            $index_name  = $bucket_name . $config->riak->search_index_suffics;
+
+            (new \Basho\Riak\Command\Builder\Search\AssociateIndex($riak))
+                ->withName($index_name)
+                ->buildBucket($bucket_name)
+                ->build()
+                ->execute();
+            sleep(3);
         }
     }
 

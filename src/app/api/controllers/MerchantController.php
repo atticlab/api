@@ -21,11 +21,11 @@ class MerchantController extends ControllerBase
             Account::TYPE_MERCHANT
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         //get list of companies
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -33,7 +33,8 @@ class MerchantController extends ControllerBase
         if (!is_integer($offset)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
         }
-        $result = MerchantStores::findWithField('merchant_id_s', $requester, $limit, $offset);
+        $result = MerchantStores::findWithField('merchant_id_s', $requester, $limit, $offset, 'created_i', 'desc');
+
         return $this->response->items($result);
     }
 
@@ -43,7 +44,7 @@ class MerchantController extends ControllerBase
             Account::TYPE_MERCHANT
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         // Create new store
@@ -64,14 +65,14 @@ class MerchantController extends ControllerBase
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-        $store->name_s          = $this->payload->name ?? null;
-        $store->merchant_id_s   = $requester;
-        $store->secret_key      = MerchantStores::generateSecretKey();
-        $store->date            = time();
+        $store->name_s = $this->payload->name ?? null;
+        $store->merchant_id_s = $requester;
+        $store->secret_key = MerchantStores::generateSecretKey();
+        $store->created_i = time();
         try {
             if ($store->create()) {
                 //TODO: return data, not message
-                return $this->response->success();
+                return $this->response->single();
             }
             $this->logger->emergency('Riak error while creating store');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -80,16 +81,16 @@ class MerchantController extends ControllerBase
         }
     }
 
-    public function ordersListAction($store_id)
+    public function ordersListAction()
     {
         $allowed_types = [
             Account::TYPE_MERCHANT
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -97,9 +98,13 @@ class MerchantController extends ControllerBase
         if (!is_integer($offset)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
         }
+
+        $store_id = $this->payload->store_id;
+
         //get all orders for store
         try {
-            $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset);
+            $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset, 'created_i', 'desc');
+
             return $this->response->items($orders);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
@@ -111,6 +116,7 @@ class MerchantController extends ControllerBase
     {
         try {
             $order_data = MerchantOrders::getOrder($order_id);
+
             return $this->response->single($order_data);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
@@ -119,15 +125,15 @@ class MerchantController extends ControllerBase
 
     public function ordersCreateAction()
     {
-        $store_id       = $this->request->getPost('store_id');
-        $amount         = floatval(number_format($this->request->getPost('amount'), 2, '.', ''));
-        $currency       = $this->request->getPost('currency');
-        $order_id       = $this->request->getPost('order_id');
-        $server_url     = $this->request->getPost('server_url');
-        $success_url    = $this->request->getPost('success_url');
-        $fail_url       = $this->request->getPost('fail_url');
-        $details        = $this->request->getPost('details');
-        $signature      = $this->request->getPost('signature');
+        $store_id = $this->request->getPost('store_id');
+        $amount = floatval(number_format($this->request->getPost('amount'), 2, '.', ''));
+        $currency = $this->request->getPost('currency');
+        $order_id = $this->request->getPost('order_id');
+        $server_url = $this->request->getPost('server_url');
+        $success_url = $this->request->getPost('success_url');
+        $fail_url = $this->request->getPost('fail_url');
+        $details = $this->request->getPost('details');
+        $signature = $this->request->getPost('signature');
 
         if (empty($store_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
@@ -152,9 +158,9 @@ class MerchantController extends ControllerBase
 
         $store_url_host = parse_url($store_data->url, PHP_URL_HOST);
 
-        $server_url     = MerchantStores::formatUrl($server_url);
-        $success_url    = MerchantStores::formatUrl($success_url);
-        $fail_url       = MerchantStores::formatUrl($fail_url);
+        $server_url = MerchantStores::formatUrl($server_url);
+        $success_url = MerchantStores::formatUrl($success_url);
+        $fail_url = MerchantStores::formatUrl($fail_url);
 
         $store_url_host = MerchantStores::formatUrl($store_url_host);
 
@@ -202,16 +208,17 @@ class MerchantController extends ControllerBase
         //check signature
         //build data for verify data from order
         $signature_data = [
-            'store_id'  => $store_id,
-            'amount'    => $amount,
-            'currency'  => $currency,
-            'order_id'  => (string)$order_id,
-            'details'   => $details,
+            'store_id' => $store_id,
+            'amount'   => $amount,
+            'currency' => $currency,
+            'order_id' => (string)$order_id,
+            'details'  => $details,
         ];
 
         ksort($signature_data);
 
-        $verify_signature = base64_encode(hash('sha256', ($store_data->secret_key . base64_encode(json_encode($signature_data)))));
+        $verify_signature = base64_encode(hash('sha256',
+            ($store_data->secret_key . base64_encode(json_encode($signature_data)))));
 
         if ($verify_signature != $signature) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'signature');
@@ -225,24 +232,24 @@ class MerchantController extends ControllerBase
 
         $currency = $this->currency_map[$currency];
 
-        $order->store_id_s          = $store_id;
-        $order->amount_f            = $amount;
-        $order->currency_s          = $currency;
-        $order->external_order_id   = $order_id;
-        $order->server_url          = $server_url;
-        $order->success_url         = $success_url;
-        $order->fail_url            = $fail_url;
-        $order->details             = $details;
+        $order->store_id_s = $store_id;
+        $order->amount_f = $amount;
+        $order->currency_s = $currency;
+        $order->external_order_id = $order_id;
+        $order->server_url = $server_url;
+        $order->success_url = $success_url;
+        $order->fail_url = $fail_url;
+        $order->details = $details;
 
-        $order->date                = time();
-        $order->bot_request_count   = 0;
-        $order->status_i            = MerchantOrders::STATUS_WAIT_PAYMENT;
+        $order->created_i = time();
+        $order->bot_request_count = 0;
+        $order->status_i = MerchantOrders::STATUS_WAIT_PAYMENT;
 
         //build new data and signature for answer to merchant
         $answer_data = array_merge($signature_data, ['status' => 'ok']);
         ksort($answer_data);
 
-        $answer_data      = base64_encode(json_encode($answer_data));
+        $answer_data = base64_encode(json_encode($answer_data));
         $answer_signature = base64_encode(hash('sha256', ($store_data->secret_key . $answer_data)));
 
         $server_url_data = [
@@ -254,7 +261,8 @@ class MerchantController extends ControllerBase
 
         try {
             if ($order->create()) {
-                return $this->response->redirect(rtrim($this->config->merchant->transaction_url, '/') . '/' . $order->id, true);
+                return $this->response->redirect(rtrim($this->config->merchant->transaction_url,
+                        '/') . '/' . $order->id, true);
             }
             $this->logger->emergency('Riak error while creating order');
             throw new Exception(Exception::SERVICE_ERROR);

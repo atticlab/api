@@ -10,7 +10,8 @@ use Smartmoney\Stellar\Account;
 class InvoicesController extends ControllerBase
 {
 
-    public function createAction() {
+    public function createAction()
+    {
         $allowed_types = [
             //TODO: REMOVE DESTRIBUTION AGENT AFTER CRYPTO_UAH release
             Account::TYPE_DISTRIBUTION,
@@ -23,19 +24,20 @@ class InvoicesController extends ControllerBase
             Account::TYPE_SETTLEMENT
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $invoice                    = new Invoices();
-        $invoice->expires_i         = time() + $this->config->invoice->expired;
-        $invoice->created           = time();
-        $invoice->requested_i       = 0;
+
+        $invoice = new Invoices();
+        $invoice->expires_i = time() + $this->config->invoice->expired;
+        $invoice->created = time();
+        $invoice->requested_i = 0;
         $invoice->is_in_statistic_b = false;
-        $invoice->payer_s           = '';
-        $invoice->amount_f          = $this->payload->amount ?? null;
-        $invoice->asset_s           = $this->payload->asset  ?? null;
-        $invoice->account_s         = $requester;
-        $invoice->memo_s            = $this->payload->memo ?? null;
+        $invoice->payer_s = '';
+        $invoice->amount_f = $this->payload->amount ?? null;
+        $invoice->asset_s = $this->payload->asset  ?? null;
+        $invoice->account_s = $requester;
+        $invoice->memo_s = $this->payload->memo ?? null;
         try {
             if ($invoice->create()) {
                 return $this->response->single(['id' => $invoice->id]);
@@ -47,7 +49,8 @@ class InvoicesController extends ControllerBase
         }
     }
 
-    public function getAction($id) {
+    public function getAction($id)
+    {
         $allowed_types = [
             Account::TYPE_ANONYMOUS,
             Account::TYPE_REGISTERED,
@@ -58,7 +61,7 @@ class InvoicesController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)){
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         if (empty($id)) {
@@ -78,7 +81,7 @@ class InvoicesController extends ControllerBase
             return $this->response->error(Response::ERR_INV_REQUESTED);
         }
         $invoice->requested_i = time();
-        $invoice->payer_s   = $requester;
+        $invoice->payer_s = $requester;
         try {
             if ($invoice->update()) {
                 $data = [
@@ -91,6 +94,7 @@ class InvoicesController extends ControllerBase
                     'memo'      => $invoice->memo_s,
                     'requested' => $invoice->requested_i,
                 ];
+
                 return $this->response->single($data);
             }
             $this->logger->emergency('Riak error while updating invoice');
@@ -100,7 +104,8 @@ class InvoicesController extends ControllerBase
         }
     }
 
-    public function listAction() {
+    public function listAction()
+    {
         $allowed_types = [
             Account::TYPE_ANONYMOUS,
             Account::TYPE_REGISTERED,
@@ -111,10 +116,10 @@ class InvoicesController extends ControllerBase
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)){
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -136,15 +141,16 @@ class InvoicesController extends ControllerBase
         return $this->response->items($invoices);
     }
 
-    public function statisticsAction() {
+    public function statisticsAction()
+    {
         $allowed_types = [
             Account::TYPE_ADMIN
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)){
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');

@@ -16,7 +16,7 @@ class CardsController extends ControllerBase
             Account::TYPE_DISTRIBUTION
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
         if (empty($account_id)) {
@@ -29,6 +29,7 @@ class CardsController extends ControllerBase
         if (empty($card)) {
             return $this->response->error(Response::ERR_NOT_FOUND, 'card');
         }
+
         return $this->response->single($card);
     }
 
@@ -38,10 +39,10 @@ class CardsController extends ControllerBase
             Account::TYPE_DISTRIBUTION
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $limit  = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
+        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
         $offset = intval($this->request->get('offset')) ?? 0;
         if (!is_integer($limit)) {
             return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
@@ -57,7 +58,8 @@ class CardsController extends ControllerBase
             if (!Account::isValidAccountId($requester)) {
                 throw new Exception(Exception::BAD_PARAM, 'agent_id');
             }
-            $cards = Cards::findWithField('agent_id_s', $requester, $limit, $offset);
+            $cards = Cards::findWithField('agent_id_s', $requester, $limit, $offset, null, 'created_date_i', 'desc');
+
             return $this->response->items($cards);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
@@ -70,10 +72,10 @@ class CardsController extends ControllerBase
             Account::TYPE_DISTRIBUTION
         ];
         $requester = $this->request->getAccountId();
-        if (!$this->isAllowedType($requester, $allowed_types)) {
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
             return $this->response->error(Response::ERR_BAD_TYPE);
         }
-        $tx   = $this->payload->tx   ?? null;
+        $tx = $this->payload->tx ?? null;
         $data = $this->payload->data ?? null;
         if (empty($tx)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'tx');
@@ -81,6 +83,11 @@ class CardsController extends ControllerBase
         if (empty($data)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'data');
         }
+
+        if (DEBUG_MODE) {
+            return $this->response->single();
+        }
+
         $data = json_decode($data);
         $client = new Client();
         //send tx to horizon
@@ -90,17 +97,19 @@ class CardsController extends ControllerBase
             [
                 'http_errors' => false,
                 'form_params' => [
-                    "tx"      => $tx
+                    "tx" => $tx
                 ]
             ]
         );
         if ($response->getStatusCode() != 200) {
             $this->logger->error($response->getBody()->getContents());
+
             return $this->response->error(Response::ERR_TX, 'Can not submit transaction');
         }
         $body = json_decode($response->getBody()->getContents());
         if (empty($body) || empty($body->hash)) {
             $this->logger->error($body);
+
             return $this->response->error(Response::ERR_TX, 'Bad horizon response');
         }
 
@@ -138,14 +147,14 @@ class CardsController extends ControllerBase
                     }
 
                     $card->created_date_i = time();
-                    $card->used_date      = false;
-                    $card->is_used_b      = false;
+                    $card->used_date = false;
+                    $card->is_used_b = false;
 
                     //TODO: get type of cards from frontend
-                    $card->type_i     = 0; //0 - prepaid card, 1 - credit
-                    $card->seed       = $data->{$operation->to};
-                    $card->amount_f   = $operation->amount;
-                    $card->asset_s    = $operation->asset_code;
+                    $card->type_i = 0; //0 - prepaid card, 1 - credit
+                    $card->seed = $data->{$operation->to};
+                    $card->amount_f = $operation->amount;
+                    $card->asset_s = $operation->asset_code;
                     $card->agent_id_s = $requester;
 
                     try {
@@ -163,7 +172,7 @@ class CardsController extends ControllerBase
 
         } while (!empty($next_operations));
 
-        return $this->response->success();
+        return $this->response->single();
     }
 
 }

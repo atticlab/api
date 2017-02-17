@@ -6,6 +6,7 @@ declare(ticks = 1);
 
 define('APP_PATH', realpath(__DIR__ . '/../..') . '/');
 define('CONFIG_PATH', APP_PATH . 'common/config/');
+define('DEBUG_MODE', false);
 define('MODEL_PATH', APP_PATH . 'common/models/');
 
 class CliApplication

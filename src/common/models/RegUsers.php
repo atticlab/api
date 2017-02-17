@@ -23,6 +23,7 @@ class RegUsers extends ModelBase implements ModelInterface
     public $phone_s;                //phone
     public $address_s;              //address
     public $passport_s;             //passport series and number
+    public $created_i;              //timestamp
 
     public $account_id_s;           //user account id
     public $login_s;                //login on wallet

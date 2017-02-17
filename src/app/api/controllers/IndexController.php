@@ -7,11 +7,11 @@ class IndexController extends ControllerBase
 {
     public function indexAction()
     {
-        return $this->response->setJsonContent(['Crypto API']);
+        return $this->response->setJsonContent(['API']);
     }
 
     public function notFoundAction()
     {
-        return $this->response->error(Response::ERR_NOT_FOUND);
+        return $this->response->error(Response::ERR_NOT_FOUND, 'route', 404);
     }
 }
