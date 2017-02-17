@@ -109,6 +109,42 @@ class AdminsController extends ControllerBase
         return $this->response->json($result);
     }
 
+    //for compability on period of sdk migration
+    public function tempListAction()
+    {
+        $allowed_types = [
+            Account::TYPE_ADMIN
+        ];
+        $requester = $this->request->getAccountId();
+        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
+            return $this->response->error(Response::ERR_BAD_TYPE);
+        }
+
+        $account_ids = $this->payload->account_ids ?? null;
+
+        if (empty($account_ids)) {
+            return $this->response->error(Response::ERR_EMPTY_PARAM, 'account_ids');
+        }
+
+        if (!is_array($account_ids)) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'account_ids');
+        }
+
+        $result = [];
+        foreach ($account_ids as $key => $account_id) {
+            try {
+                $data = Admins::getDataByID($account_id);
+                if (!empty($data)) {
+                    $result[] = $data;
+                }
+            } catch (\Exception $e) {
+                return $this->handleException($e->getCode(), $e->getMessage());
+            }
+        }
+
+        return $this->response->json($result);
+    }
+
     public function deleteAction()
     {
         $allowed_types = [

@@ -173,6 +173,11 @@ $router->addPost('/admins/list', [
     'action'     => 'list',
 ]);
 
+$router->addPost('/admins/list', [
+    'controller' => 'admins',
+    'action'     => 'tempList',
+]);
+
 $router->addPost('/admins', [
     'controller' => 'admins',
     'action'     => 'create',

@@ -112,6 +112,7 @@ class MerchantController extends ControllerBase
         }
     }
 
+    //for compability on period of sdk migration
     public function tempOrdersListAction($store_id)
     {
         $allowed_types = [
