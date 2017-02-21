@@ -173,7 +173,7 @@ class EnrollmentsController extends ControllerBase
         $enrollment->login_s = $login;
         try {
             if ($enrollment->update()) {
-                return $this->response->json();
+                return $this->response->json([], false);
             }
             $this->logger->emergency('Riak error while updating enrollment');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -202,7 +202,7 @@ class EnrollmentsController extends ControllerBase
         $enrollment->stage_i = Enrollments::STAGE_DECLINED;
         try {
             if ($enrollment->update()) {
-                return $this->response->json();
+                return $this->response->json([], false);
             }
             $this->logger->emergency('Riak error while updating enrollment');
             throw new Exception(Exception::SERVICE_ERROR);
