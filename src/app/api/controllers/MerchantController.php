@@ -71,7 +71,7 @@ class MerchantController extends ControllerBase
         $store->created_i = time();
         try {
             if ($store->create()) {
-                return $this->response->json();
+                return $this->response->json((array)MerchantStores::clearYzSuffixes($store));
             }
             $this->logger->emergency('Riak error while creating store');
             throw new Exception(Exception::SERVICE_ERROR);
@@ -98,7 +98,8 @@ class MerchantController extends ControllerBase
             return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
         }
 
-        $store_id = $this->payload->store_id;
+        $store_id = $this->request->get('store_id');
+
         if (empty($store_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
         }
@@ -157,15 +158,15 @@ class MerchantController extends ControllerBase
 
     public function ordersCreateAction()
     {
-        $store_id = $this->request->getPost('store_id');
-        $amount = floatval(number_format($this->request->getPost('amount'), 2, '.', ''));
-        $currency = $this->request->getPost('currency');
-        $order_id = $this->request->getPost('order_id');
-        $server_url = $this->request->getPost('server_url');
-        $success_url = $this->request->getPost('success_url');
-        $fail_url = $this->request->getPost('fail_url');
-        $details = $this->request->getPost('details');
-        $signature = $this->request->getPost('signature');
+        $store_id = $this->payload->store_id;
+        $amount = floatval(number_format($this->payload->amount, 2, '.', ''));
+        $currency = $this->payload->currency;
+        $order_id = $this->payload->order_id;
+        $server_url = $this->payload->server_url;
+        $success_url = $this->payload->success_url;
+        $fail_url = $this->payload->fail_url;
+        $details = $this->payload->details;
+        $signature = $this->payload->signature;
 
         if (empty($store_id)) {
             return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
@@ -293,8 +294,16 @@ class MerchantController extends ControllerBase
 
         try {
             if ($order->create()) {
-                return $this->response->redirect(rtrim($this->config->merchant->transaction_url,
-                        '/') . '/' . $order->id, true);
+
+                $order_data = [
+                    'payment_url' => rtrim($this->config->merchant->transaction_url,
+                            '/') . '/' . $order->id,
+                    'id' => $order->id,
+                    'details' => $order->id,
+                    'external_order_id' => $order->external_order_id
+                ];
+
+                return $this->response->json($order_data, false);
             }
             $this->logger->emergency('Riak error while creating order');
             throw new Exception(Exception::SERVICE_ERROR);

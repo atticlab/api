@@ -62,7 +62,7 @@ class RegusersController extends ControllerBase
                             $this->logger->emergency('Cannot send email with welcome code to registered user (' . $reguser->email_s . ')');
                         }
 
-                        return $this->response->json();
+                        return $this->response->json((array)Enrollments::clearYzSuffixes($enrollment));
                     }
 
                     $this->logger->emergency('Riak error while creating enrollment for reguser');
