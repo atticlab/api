@@ -271,7 +271,7 @@ class SmsController extends ControllerBase
         if (gettype($balance) == "object") {$balance = intval($balance->GetCreditBalanceResult);}
 
         if ($balance < 1) {
-            throw new Exception(Exception::ERR_SMS_NO_FUNDS);
+            throw new Exception(Response::ERR_SMS_NO_FUNDS);
         }
 
         //add phone format for send
