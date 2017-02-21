@@ -375,6 +375,37 @@ $router->addPost('/wallets/notexist', [
     'action'     => 'notExist',
 ]);
 
+//sms
+$router->addGet('/sms/{account_id}', [
+    'controller' => 'sms',
+    'action' => 'get',
+]);
+
+$router->addGet('/sms/listbyphone/{phone}', [
+    'controller' => 'sms',
+    'action' => 'listByPhone',
+]);
+
+$router->addPost('/sms', [
+    'controller' => 'sms',
+    'action' => 'createSms',
+]);
+
+$router->addPost('/sms/submitOTP', [
+    'controller' => 'sms',
+    'action' => 'submitOTP',
+]);
+
+$router->addPost('/sms/resend', [
+    'controller' => 'sms',
+    'action' => 'resend',
+]);
+
+$router->addPost('/sms/check', [
+    'controller' => 'sms',
+    'action' => 'check',
+]);
+
 //404 not found
 $router->notFound([
     "controller" => "index",
