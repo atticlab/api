@@ -10,6 +10,8 @@ class Exception extends \Exception
     const SERVICE_ERROR = 'SERVICE_ERROR';
     const NOT_FOUND     = 'NOT_FOUND';
     const ALREADY_EXIST = 'ALREADY_EXIST';
+    const ERR_SMS_NO_FUNDS = 'ERR_SMS_NO_FUNDS';
+    const ERR_SMS_SEND = 'ERR_SMS_SEND';
 
     protected $code;
 
