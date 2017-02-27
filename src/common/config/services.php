@@ -45,7 +45,7 @@ $di->setShared('session', function () use ($config) {
 # RiakDB
 $di->setShared('riak', function () use ($config) {
     $this->nodes = (new Node\Builder)
-        ->onPort(8098)
+        ->onPort(getenv('RIAK_PORT'))
         ->buildCluster(array(getenv('RIAK_HOST')));
 
     return new Riak($this->nodes);
