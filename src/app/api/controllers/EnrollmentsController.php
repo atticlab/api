@@ -11,7 +11,6 @@ use Smartmoney\Stellar\Account;
 
 class EnrollmentsController extends ControllerBase
 {
-
     public function listAction()
     {
         $allowed_types = [

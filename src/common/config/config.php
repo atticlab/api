@@ -8,7 +8,7 @@ $config = new \Phalcon\Config([
     ],
 
     "nonce" => [
-        'ttl' => 30 * 60
+        'ttl' => 10 * 60
     ],
 
     "horizon" => [
@@ -32,7 +32,6 @@ $config = new \Phalcon\Config([
 
     "merchant" => [
         "transaction_url" => rtrim(getenv("MERCHANT_HOST"), '/') . '/transaction'
-        //"transaction_url" => 'http://merchant.euah.pw:8010' . '/transaction'
     ],
 
     "master_key" => getenv("MASTER_KEY"),
@@ -58,14 +57,14 @@ $config = new \Phalcon\Config([
 
     "sms" => [
         'max_phone_accounts' => 4,
-        'otp_length' => 6,
-        'url'   => 'http://turbosms.in.ua/api/wsdl.html',
-        'sender' => 'Msg',
-        'msg'   => 'Your registration code is ',
-        'otp_ttl'   => 10 * 60, //10 minutes
-        'phone_prefix' => '+38',
-        'auth' => [
-            'login' => getenv("SMS_AUTH_LOGIN"),
+        'otp_length'         => 6,
+        'url'                => 'http://turbosms.in.ua/api/wsdl.html',
+        'sender'             => 'Msg',
+        'msg'                => 'Your registration code is ',
+        'otp_ttl'            => 10 * 60, //10 minutes
+        'phone_prefix'       => '+38',
+        'auth'               => [
+            'login'    => getenv("SMS_AUTH_LOGIN"),
             'password' => getenv("SMS_AUTH_PASS")
         ]
     ]

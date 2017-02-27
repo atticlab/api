@@ -9,7 +9,6 @@ use Smartmoney\Stellar\Account;
 
 class CardsController extends ControllerBase
 {
-
     public function getAction($account_id)
     {
         $allowed_types = [
@@ -174,5 +173,4 @@ class CardsController extends ControllerBase
 
         return $this->response->json();
     }
-
 }

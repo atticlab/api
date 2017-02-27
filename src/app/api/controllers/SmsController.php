@@ -4,7 +4,6 @@ namespace App\Controllers;
 use App\Lib\Response;
 use App\Models\Sms;
 use App\Lib\Exception;
-use Basho\Riak\Command\Object;
 use DateTime;
 use Smartmoney\Stellar\Account;
 use SoapClient;
@@ -30,6 +29,7 @@ class SmsController extends ControllerBase
         $result['account_id'] = $sms->account_id;
         $result['is_confirmed'] = $sms->is_confirmed_b;
         $result['phone'] = $sms->phone_s;
+
         return $this->response->json($sms);
     }
 
@@ -51,16 +51,15 @@ class SmsController extends ControllerBase
             $data = Sms::findWithField('phone_s', $phone, $limit, $offset);
             $result = [];
             if ($data) {
-                $i=0;
+                $i = 0;
                 foreach ($data as $sms) {
-                    //var_dump($sms);
                     $result[++$i] = [];
                     $result[$i]['account_id'] = $sms->account_id;
                     $result[$i]['is_confirmed'] = $sms->is_confirmed;
                     $result[$i]['phone'] = $sms->phone;
                 }
-                //die();
             }
+
             return $this->response->json($result);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
@@ -125,7 +124,7 @@ class SmsController extends ControllerBase
         $result['account_id'] = $sms->account_id;
         $result['is_confirmed'] = $sms->is_confirmed_b;
         $result['phone'] = $sms->phone_s;
-        //$result['otp'] = $sms->otp_s;
+
         return $this->response->json($result);
     }
 
@@ -174,6 +173,7 @@ class SmsController extends ControllerBase
         $result['account_id'] = $sms->account_id;
         $result['is_confirmed'] = $sms->is_confirmed_b;
         $result['phone'] = $sms->phone_s;
+
         return $this->response->json($result);
     }
 
@@ -229,10 +229,12 @@ class SmsController extends ControllerBase
         $result['account_id'] = $sms->account_id;
         $result['is_confirmed'] = $sms->is_confirmed_b;
         $result['phone'] = $sms->phone_s;
+
         return $this->response->json($result);
     }
 
-    public function checkAction() {
+    public function checkAction()
+    {
         $account_id = $this->payload->account_id   ?? null;
         $phone = $this->payload->phone   ?? null;
 
@@ -256,11 +258,6 @@ class SmsController extends ControllerBase
 
     private function sendSMS($sms)
     {
-//        $sendResult = new \stdClass();
-//        $sendResult->SendSMSResult = new \stdClass();
-//        $sendResult->SendSMSResult->ResultArray = [];
-//        $sendResult->SendSMSResult->ResultArray[1] = "id-id";
-//        return $sendResult;
 
         $client = new SoapClient($this->config->sms->url);
 
@@ -268,7 +265,9 @@ class SmsController extends ControllerBase
         $balance = $client->GetCreditBalance();
 
         //sometimes it returns an object, fix for it
-        if (gettype($balance) == "object") {$balance = intval($balance->GetCreditBalanceResult);}
+        if (gettype($balance) == "object") {
+            $balance = intval($balance->GetCreditBalanceResult);
+        }
 
         if ($balance < 1) {
             throw new Exception(Exception::ERR_SMS_NO_FUNDS);
@@ -281,10 +280,11 @@ class SmsController extends ControllerBase
         }
 
         $sms = [
-            'sender' => $this->config->sms->sender,
+            'sender'      => $this->config->sms->sender,
             'destination' => $phone,
-            'text' => $this->config->sms->msg . $sms->otp_s
+            'text'        => $this->config->sms->msg . $sms->otp_s
         ];
+
         return $client->SendSMS($sms);
     }
 

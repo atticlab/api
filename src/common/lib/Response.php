@@ -30,9 +30,8 @@ class Response extends \Phalcon\Http\Response
         $resp['data'] = $data;
 
         if ($add_nonce) {
-            $config         = $this->getDi()->getConfig();
             $resp['nonce']  = $this->getDi()->getRequest()->getNonce();
-            $resp['ttl']    = $config->nonce->ttl;
+            $resp['ttl']    = $this->getDi()->getConfig()->nonce->ttl;
         }
 
         $resp['status'] = 'success';

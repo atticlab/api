@@ -64,6 +64,7 @@ class BansController extends ControllerBase
         $ip_ban->banned_to = $banned_to;
         try {
             $ip_ban->update();
+
             return $this->response->json();
         } catch (Exeption $e) {
             $this->logger->error('Failed to create/update ip ban -> ' . $e->getMessage());

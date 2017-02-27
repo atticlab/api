@@ -5,12 +5,10 @@ use App\Lib\Response;
 use App\Models\MerchantStores;
 use App\Models\MerchantOrders;
 use App\Lib\Exception;
-use GuzzleHttp\Tests\Psr7\Str;
 use Smartmoney\Stellar\Account;
 
 class MerchantController extends ControllerBase
 {
-
     private $currency_map = [
         'UAH' => 'EUAH'
     ];
@@ -111,38 +109,6 @@ class MerchantController extends ControllerBase
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
-    }
-
-    //for compability on period of sdk migration
-    public function tempOrdersListAction($store_id)
-    {
-        $allowed_types = [
-            Account::TYPE_MERCHANT
-        ];
-        $requester = $this->request->getAccountId();
-        if (!DEBUG_MODE && !$this->isAllowedType($requester, $allowed_types)) {
-            return $this->response->error(Response::ERR_BAD_TYPE);
-        }
-        $limit = intval($this->request->get('limit'))  ?? $this->config->riak->default_limit;
-        $offset = intval($this->request->get('offset')) ?? 0;
-        if (!is_integer($limit)) {
-            return $this->response->error(Response::ERR_BAD_PARAM, 'limit');
-        }
-        if (!is_integer($offset)) {
-            return $this->response->error(Response::ERR_BAD_PARAM, 'offset');
-        }
-        if (empty($store_id)) {
-            return $this->response->error(Response::ERR_EMPTY_PARAM, 'store_id');
-        }
-        //get all orders for store
-        try {
-            $orders = MerchantOrders::findWithField('store_id_s', $store_id, $limit, $offset, 'created_i', 'desc');
-
-            return $this->response->json($orders);
-        } catch (Exception $e) {
-            return $this->handleException($e->getCode(), $e->getMessage());
-        }
-
     }
 
     public function ordersGetAction($order_id)
@@ -296,10 +262,10 @@ class MerchantController extends ControllerBase
             if ($order->create()) {
 
                 $order_data = [
-                    'payment_url' => rtrim($this->config->merchant->transaction_url,
+                    'payment_url'       => rtrim($this->config->merchant->transaction_url,
                             '/') . '/' . $order->id,
-                    'id' => $order->id,
-                    'details' => $order->id,
+                    'id'                => $order->id,
+                    'details'           => $order->id,
                     'external_order_id' => $order->external_order_id
                 ];
 

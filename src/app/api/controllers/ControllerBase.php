@@ -42,12 +42,19 @@ abstract class ControllerBase extends \Phalcon\Mvc\Controller
         #}
 
         // Controllers that do not need a signature
-        $free_controllers = ['index', 'nonce', 'wallets'];
+        $free_controllers = ['index', 'nonce'];
         if (!in_array($dispatcher->getControllerName(), $free_controllers)) {
             $allow_routes = [
                 'enrollments/accept',
                 'enrollments/decline',
-                'merchant/ordersCreate'
+                'merchant/ordersCreate',
+                'wallets/index',
+                'wallets/getkdf',
+                'wallets/getparams',
+                'wallets/create',
+                'wallets/notExist',
+                'wallets/get',
+                'wallets/getWalletData',
             ];
             $current_route = $dispatcher->getControllerName() . '/' . $dispatcher->getActionName();
             if (!in_array($current_route, $allow_routes) && !$this->request->checkSignature()) {

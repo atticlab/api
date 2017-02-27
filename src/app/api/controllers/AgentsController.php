@@ -10,7 +10,6 @@ use Smartmoney\Stellar\Account;
 
 class AgentsController extends ControllerBase
 {
-
     public function createAction()
     {
         $allowed_types = [

@@ -269,8 +269,6 @@ class WalletsController extends ControllerBase
         $preparedData['phone'] = $wallet->phone;
         $preparedData['HDW'] = $wallet->HDW;
 
-        $this->logger->debug('Wallet received successfully', ['Path' => '/v2/wallets/show', 'Data:' => $preparedData]);
-
         return $this->response->json($preparedData, false);
     }
 
@@ -279,7 +277,11 @@ class WalletsController extends ControllerBase
         $update = false;
 
         try {
-            $wallet = $this->getWalletFromAuth();
+            $wallet_data = Wallets::findFirstByField('accountId_s', $this->request->getAccountId());
+            if (!$wallet_data) {
+                return $this->response->error(Response::ERR_NOT_FOUND, 'wallet');
+            }
+            $wallet = Wallets::findFirst($wallet_data->username);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -351,7 +353,11 @@ class WalletsController extends ControllerBase
     public function updatePasswordAction()
     {
         try {
-            $wallet = $this->getWalletFromAuth();
+            $wallet_data = Wallets::findFirstByField('accountId_s', $this->request->getAccountId());
+            if (!$wallet_data) {
+                return $this->response->error(Response::ERR_NOT_FOUND, 'wallet');
+            }
+            $wallet = Wallets::findFirst($wallet_data->username);
         } catch (Exception $e) {
             return $this->handleException($e->getCode(), $e->getMessage());
         }
@@ -376,47 +382,42 @@ class WalletsController extends ControllerBase
         }
     }
 
-    /**
-     * Check auth headers and return wallet object
-     * @return Wallets
-     **/
-    private function getWalletFromAuth()
+    public function getWalletDataAction()
     {
-        $auth = json_decode($this->request->getHeader('Signature'), true);
+        $email = $this->payload->email ?? null;
+        $phone = $this->payload->phone ?? null;
+        $account_id = $this->payload->accountId ?? null;
+        $username = $this->payload->username ?? null;
 
-        if (empty($auth)) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
+        if (
+            empty($email) &&
+            empty($phone) &&
+            empty($account_id) &&
+            empty($username)
+        ) {
+            return $this->response->error(Response::ERR_BAD_PARAM, 'criteria');
         }
 
-        $validation = new UserNameValidator();
-        $messages = $validation->validate($auth);
-        if (count($messages)) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
+        if (!empty($email)) {
+            $wallet = Wallets::findFirstByField('email_s', $email);
+        } elseif (!empty($phone)) {
+            $wallet = Wallets::findFirstByField('phone_s', $phone);
+        } elseif (!empty($account_id)) {
+            $wallet = Wallets::findFirstByField('accountId_s', $account_id);
+        } else {
+            $wallet = Wallets::getDataByID($username);
         }
 
-        $validation = new WalletIdValidator();
-        $messages = $validation->validate($auth);
-        if (count($messages)) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
+        if (!$wallet) {
+            return $this->response->error(Response::ERR_NOT_FOUND, 'wallet');
         }
 
-        $wallet = Wallets::findFirst($auth['username']);
+        $preparedData['accountId'] = $wallet->accountId;
+        $preparedData['phone'] = $wallet->phone;
+        $preparedData['email'] = $wallet->email;
+        $preparedData['uniqueId'] = $wallet->uniqueId;
 
-        if ($auth['walletId'] != $wallet->walletId) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
-        }
-
-        unset($this->payload->signature);
-
-        // Check signature
-        $is_signed = ed25519_sign_open($this->request->getRawBody(), base64_decode($wallet->publicKey),
-            base64_decode($auth['signature']));
-
-        if (!$is_signed) {
-            return $this->response->error(Response::ERR_BAD_SIGN);
-        }
-
-        return $wallet;
+        return $this->response->json($preparedData, false);
     }
 
     /**

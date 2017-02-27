@@ -11,58 +11,6 @@ $router->add('/nonce', [
     'action'     => 'index'
 ]);
 
-//TODO: remove old routes
-
-/* old */
-
-//invoices
-$router->addGet('/invoices', [
-    'controller' => 'invoices',
-    'action'     => 'list',
-]);
-
-$router->addGet('/invoices/{id}', [
-    'controller' => 'invoices',
-    'action'     => 'get'
-]);
-
-$router->addPost('/invoices', [
-    'controller' => 'invoices',
-    'action'     => 'create',
-]);
-
-$router->addGet('/invoices/statistics', [
-    'controller' => 'invoices',
-    'action'     => 'statistics',
-]);
-
-//companies
-$router->addGet('/companies/{id}', [
-    'controller' => 'companies',
-    'action'     => 'get',
-]);
-
-$router->addGet('/companies', [
-    'controller' => 'companies',
-    'action'     => 'list',
-]);
-
-$router->addPost('/companies', [
-    'controller' => 'companies',
-    'action'     => 'create',
-]);
-
-//agents
-$router->addGet('/agents', [
-    'controller' => 'agents',
-    'action'     => 'list',
-]);
-
-$router->addPost('/agents', [
-    'controller' => 'agents',
-    'action'     => 'create',
-]);
-
 //enrollments
 $router->addGet('/enrollments', [
     'controller' => 'enrollments',
@@ -97,104 +45,6 @@ $router->addPost('/enrollments/approve/{id}', [
     'controller' => 'enrollments',
     'action'     => 'approve',
 ]);
-
-//registered users
-$router->addGet('/reguser', [
-    'controller' => 'regusers',
-    'action'     => 'get',
-]);
-
-$router->addGet('/regusers', [
-    'controller' => 'regusers',
-    'action'     => 'list',
-]);
-
-$router->addPost('/reguser', [
-    'controller' => 'regusers',
-    'action'     => 'create',
-]);
-
-//cards
-$router->addGet('/cards/{id}', [
-    'controller' => 'cards',
-    'action'     => 'get',
-]);
-
-$router->addGet('/cards', [
-    'controller' => 'cards',
-    'action'     => 'list',
-]);
-
-$router->addPost('/cards', [
-    'controller' => 'cards',
-    'action'     => 'createCards',
-]);
-
-//merchant
-$router->addGet('/merchant/stores', [
-    'controller' => 'merchant',
-    'action'     => 'storesList',
-]);
-
-$router->addPost('/merchant/stores', [
-    'controller' => 'merchant',
-    'action'     => 'storesCreate'
-]);
-
-$router->addGet('/merchant/stores/{id}/orders', [
-    'controller' => 'merchant',
-    'action'     => 'tempOrdersList'
-]);
-
-$router->addGet('/merchant/orders/{id}', [
-    'controller' => 'merchant',
-    'action'     => 'ordersGet'
-]);
-
-$router->addPost('/merchant/orders', [
-    'controller' => 'merchant',
-    'action'     => 'ordersCreate'
-]);
-
-//bans
-$router->addGet('/bans/list', [
-    'controller' => 'bans',
-    'action'     => 'list'
-]);
-
-$router->addPost('/bans/manage', [
-    'controller' => 'bans',
-    'action'     => 'manage'
-]);
-
-//admins
-$router->addPost('/admins/list', [
-    'controller' => 'admins',
-    'action'     => 'list',
-]);
-
-$router->addPost('/admins/list', [
-    'controller' => 'admins',
-    'action'     => 'tempList',
-]);
-
-$router->addPost('/admins', [
-    'controller' => 'admins',
-    'action'     => 'create',
-]);
-
-$router->addGet('/admins/delete/{account_id}', [
-    'controller' => 'admins',
-    'action'     => 'delete',
-]);
-
-$router->addGet('/admins/{account_id}', [
-    'controller' => 'admins',
-    'action'     => 'get',
-]);
-
-/* old end*/
-
 
 //admins
 $router->addGet('/admins', [
@@ -373,6 +223,11 @@ $router->addPost('/wallets/updatepassword', [
 $router->addPost('/wallets/notexist', [
     'controller' => 'wallets',
     'action'     => 'notExist',
+]);
+
+$router->addPost('/wallets/getdata', [
+    'controller' => 'wallets',
+    'action'     => 'getWalletData',
 ]);
 
 //sms
