@@ -38,6 +38,9 @@ build:
 	docker-compose build
 	docker-compose up -d
 
+indexes:
+	docker exec crypto-api-php bash -c '/usr/local/bin/php /src/app/cli/cli.php index init'
+
 test:
 	docker exec crypto-api-php bash -c 'cd /src/tests; phpunit'
 

@@ -41,11 +41,11 @@ $config = new \Phalcon\Config([
     ],
 
     "smtp" => [
-        'host'     => 'smtp.gmail.com',
-        'port'     => '465',
-        'security' => 'ssl',
-        'username' => 'attic.it.lab@gmail.com',
-        'password' => 'atticlab/*-2020',
+        'host'     => getenv("SMTP_HOST"),
+        'port'     => getenv("SMTP_PORT"),
+        'security' => getenv("SMTP_SECURITY"),
+        'username' => getenv("SMTP_USER"),
+        'password' => getenv("SMTP_PASS"),
     ],
 
     "ban" => [

@@ -8,11 +8,6 @@
         "phpmailer/phpmailer": "^5.2",
         "monolog/monolog": "^1.21"
     },
-    "scripts": {
-        "post-install-cmd": [
-            "/usr/local/bin/php /src/app/cli/cli.php index init"
-        ]
-    },
     "repositories":[
         {
             "type": "git",
