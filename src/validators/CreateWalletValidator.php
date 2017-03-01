@@ -9,14 +9,14 @@ use Phalcon\Validation\Validator\StringLength as StringLength;
 
 class CreateWalletValidator extends Validation {
 	public function initialize() {
-		$this->add(
+		/*$this->add(
 			'username',
 			new PresenceOf(
 				array(
 					'message' => 'missing_field'
 				)
 			)
-		);
+		);*/
 
 		$this->add(
 			'walletId',
@@ -81,7 +81,7 @@ class CreateWalletValidator extends Validation {
 			)
 		);*/
 
-		$this->add(
+	/*	$this->add(
 			'username',
 			new StringLength(array(
 	             'max' => 255,
@@ -89,7 +89,7 @@ class CreateWalletValidator extends Validation {
 	             'messageMaximum' => 'The username is not 3-255 characters (too big)',
 	             'messageMinimum' => 'The username is not 3-255 characters (too small)'
 	         ))
-		);
+		);*/
 
 		$this->add(
 			'salt',

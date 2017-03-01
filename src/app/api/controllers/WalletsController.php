@@ -164,7 +164,9 @@ class WalletsController extends ControllerBase
             'bits'      => 256,
             'n'         => pow(2, 12),
             'r'         => 8,
-            'p'         => 1
+            'p'         => 1,
+            'passwordHashAlgorithm' => 'sha256',
+            'hashRounds'=> pow(2, 20)
         ];
 
         return $this->response->json($data, false);
@@ -201,6 +203,8 @@ class WalletsController extends ControllerBase
     {
         $validation = new CreateWalletValidator();
         $this->doValidation($validation, $this->payload);
+        $validation = new UserNameValidator();
+        $this->doValidation($validation, $this->payload);
 
         if (Wallets::isExist($this->payload->username)) {
             return $this->response->error(Response::ERR_ALREADY_EXISTS, 'username');
@@ -216,6 +220,43 @@ class WalletsController extends ControllerBase
         $wallet->keychainData = $this->payload->keychainData;
         $wallet->createdAt = date('D M d Y H:i:s O');
         $wallet->updatedAt = $wallet->createdAt;
+
+        try {
+            if (!$wallet->create()) {
+                $this->logger->emergency('Riak error while creating invoice');
+                throw new Exception(Exception::SERVICE_ERROR);
+            }
+
+            return $this->response->json([], false);
+        } catch (Exception $e) {
+            return $this->handleException($e->getCode(), $e->getMessage());
+        }
+    }
+
+    /**
+     * This is Create Wallet action
+     */
+    public function createWithPhoneAction()
+    {
+        $validation = new CreateWalletValidator();
+        $this->doValidation($validation, $this->payload);
+        $validation->add('username', new PhoneNumberValidator);
+
+        if (Wallets::isExist($this->payload->username)) {
+            return $this->response->error(Response::ERR_ALREADY_EXISTS, 'username');
+        }
+
+        $wallet = new Wallets($this->payload->username);
+        $wallet->walletId = $this->payload->walletId;
+        $wallet->accountId_s = @$this->payload->accountId;
+        $wallet->salt = $this->payload->salt;
+        $wallet->kdfParams = stripcslashes($this->payload->kdfParams);
+        $wallet->publicKey = $this->payload->publicKey;
+        $wallet->mainData = $this->payload->mainData;
+        $wallet->keychainData = $this->payload->keychainData;
+        $wallet->createdAt = date('D M d Y H:i:s O');
+        $wallet->updatedAt = $wallet->createdAt;
+        $wallet->phone_s = $this->payload->username;
 
         try {
             if (!$wallet->create()) {

@@ -205,6 +205,11 @@ $router->addPost('/wallets/create', [
     'action'     => 'create',
 ]);
 
+$router->addPost('/wallets/createphone', [
+    'controller' => 'wallets',
+    'action'     => 'createWithPhone',
+]);
+
 $router->addPost('/wallets/get', [
     'controller' => 'wallets',
     'action'     => 'get',
