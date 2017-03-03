@@ -162,11 +162,9 @@ class WalletsController extends ControllerBase
         $data = [
             'algorithm' => 'scrypt',
             'bits'      => 256,
-            'n'         => pow(2, 1),
+            'n'         => pow(2, 12),
             'r'         => 8,
-            'p'         => 1,
-            'passwordHashAlgorithm' => 'sha256',
-            'hashRounds'=> pow(2, 19)
+            'p'         => 1
         ];
 
         return $this->response->json($data, false);
