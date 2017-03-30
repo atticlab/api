@@ -2,5 +2,6 @@
 <div><a href="<?=rtrim(getenv("WELCOME_HOST"), '/')?>">Complete your registration</a></div>
 
 <?php if (!empty($password)): ?>
+    Your company code: <b><?=$company_code?></b>
     Your password: <b><?=$password?></b>
 <?php endif ?>

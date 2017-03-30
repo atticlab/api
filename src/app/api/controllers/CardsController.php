@@ -168,7 +168,7 @@ class CardsController extends ControllerBase
                         //TODO: get type of cards from frontend
                         $card->type_i     = 0; //0 - prepaid card, 1 - credit
                         $card->seed       = $data->{$operation->account};
-                        $card->amount_f   = floatval(number_format($balance->balance, 2));
+                        $card->amount_f   = round($balance->balance, 2);
                         $card->asset_s    = $balance->asset_code;
                         $card->agent_id_s = $requester;
 

@@ -57,7 +57,13 @@ class AgentsController extends ControllerBase
                         } else {
                             // Send email to registered user
                             $sent = $this->mailer->send($company->email, 'Welcome to smartmoney',
-                                ['enrollment_created', ['password' => $enrollment->otp_s]]);
+                                ['enrollment_created',
+                                    [
+                                        'password' => $enrollment->otp_s,
+                                        'company_code' => $cmp_code
+                                    ]
+                                ]
+                            );
                             if (!$sent) {
                                 $this->logger->emergency('Cannot send email with welcome code to company (' . $company->email . ')');
                             }
