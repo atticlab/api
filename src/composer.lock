@@ -12,8 +12,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/atticlab/stellar-php",
-                "reference": "82b560251f27149d5a4dc8e2cba6b071d0165654"
+                "url": "https://github.com/atticlab/stellar-php",
+                "reference": "645d774d80f472e6e9c179f33dc8de2f0185ce13"
             },
             "require": {
                 "ext-curl": "*",
